@@ -11,3 +11,4 @@
 - When changing a shared component's orientation, clear inherited positioning offsets explicitly; the vertical wizard rail's sticky `top` offset initially overlapped the new horizontal timeline.
 - When Git HTTPS upload returns repeated HTTP 408 from a synced Windows workspace, use the authenticated GitHub Git Data API for the repository tree; verify the resulting commit tree and do not ask the user to repeat credentials.
 - Public repositories need a real README and license before the first publish: document scope, architecture, setup, environment boundaries, security, and deployment prerequisites.
+- During long AWS or production-build operations, report the concrete current stage immediately after each external state change; do not leave progress implicit in terminal output.

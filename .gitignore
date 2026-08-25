@@ -11,6 +11,9 @@ tsconfig.*.tsbuildinfo
 .env
 .env.*
 !.env.example
+cdk.out/
+cdk.context.json
+infra/cdk-outputs.json
 tmp/
 extract_all_page.js
 extract_old_files.js

@@ -6,6 +6,8 @@ export type VerificationStatus =
 
 export type TestType = "happy" | "edge" | "boundary" | "adversarial";
 
+export type RegionalCoverageStatus = "not_requested" | "pending" | "generated" | "tested";
+
 export type JudgmentMethod = "deterministic" | "tool_call" | "llm";
 
 export type Agent = {
@@ -35,14 +37,63 @@ export type VerificationTest = {
   type: TestType;
   languageCode: string;
   sourceTestId?: string;
+  languageGroupId?: string;
+  regionalCoverageStatus?: RegionalCoverageStatus;
   inputMessage: string;
   expectedBehavior: string;
   createdAt: string;
 };
 
+export type VerificationRunStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+
+export type TestResult = "pass" | "fail" | "critical_fail";
+
+export type TestRun = {
+  id: string;
+  verificationRunId: string;
+  testId: string;
+  agentResponse: string;
+  toolCalls: unknown[];
+  actualState: Record<string, unknown>;
+  expectedState: Record<string, unknown>;
+  result: TestResult;
+  judgedBy: JudgmentMethod;
+  runAt: string;
+};
+
+export type VerificationRun = {
+  id: string;
+  agentId: string;
+  ownerId: string;
+  agentVersion: string;
+  contractVersion: string;
+  testSuiteVersion: string;
+  status: VerificationRunStatus;
+  startedAt: string;
+  completedAt?: string;
+  totalTests: number;
+  passed: number;
+  failed: number;
+  criticalFailed: number;
+};
+
+export type VerificationStatusRecord = {
+  id: string;
+  verificationRunId: string;
+  agentId: string;
+  agentVersion: string;
+  overallScore: number;
+  status: VerificationStatus;
+  issuedAt: string;
+  validUntil: string;
+  publicId: string;
+  hash: string;
+};
+
 export type Evidence = {
   id: string;
   testRunId: string;
+  verificationRunId?: string;
   expectedBehavior: string;
   actualBehavior: string;
   toolCalls: unknown[];
