@@ -1,7 +1,260 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  QueryCommand as DocumentQueryCommand,
+  TransactWriteCommand,
+  UpdateCommand
+} from "@aws-sdk/lib-dynamodb";
 import { requireEnv } from "@/lib/env";
+import type {
+  Agent,
+  AgentContract,
+  Evidence,
+  ReliabilityScore,
+  TestRun,
+  VerificationRun,
+  VerificationStatusRecord,
+  VerificationTest
+} from "@/lib/domain";
+
+let documentClient: DynamoDBDocumentClient | undefined;
 
 export function getDynamoDb() {
-  requireEnv("AWS_REGION");
-  requireEnv("AGENTPROOF_DYNAMODB_TABLE");
-  throw new Error("DynamoDB client is not installed until AWS wiring begins.");
+  if (!documentClient) {
+    documentClient = DynamoDBDocumentClient.from(
+      new DynamoDBClient({ region: requireEnv("AWS_REGION") })
+    );
+  }
+  return documentClient;
+}
+
+const tableName = () => requireEnv("AGENTPROOF_DYNAMODB_TABLE");
+const now = () => new Date().toISOString();
+
+export async function createAgent(input: {
+  ownerId: string;
+  name: string;
+  endpointUrl: string;
+  version: string;
+}) {
+  const id = `agent_${crypto.randomUUID()}`;
+  const createdAt = now();
+  const item: Agent & Record<string, unknown> = {
+    PK: `AGENT#${id}`,
+    SK: "META",
+    entityType: "Agent",
+    id,
+    ownerId: input.ownerId,
+    name: input.name,
+    endpointUrl: input.endpointUrl,
+    currentVersion: input.version,
+    createdAt,
+    GSI1PK: `OWNER#${input.ownerId}`,
+    GSI1SK: `AGENT#${createdAt}#${id}`
+  };
+
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: item,
+    ConditionExpression: "attribute_not_exists(PK)"
+  }));
+  return item;
+}
+
+export async function listAgentsByOwner(ownerId: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    IndexName: "GSI1",
+    KeyConditionExpression: "GSI1PK = :pk AND begins_with(GSI1SK, :sk)",
+    ExpressionAttributeValues: { ":pk": `OWNER#${ownerId}`, ":sk": "AGENT#" },
+    ScanIndexForward: false
+  }));
+  return (result.Items ?? []) as Array<Agent & Record<string, unknown>>;
+}
+
+export async function getAgent(id: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `AGENT#${id}`, SK: "META" }
+  }));
+  return (result.Item ?? null) as (Agent & Record<string, unknown>) | null;
+}
+
+export async function getAgentForOwner(id: string, ownerId: string) {
+  const agent = await getAgent(id);
+  return agent?.ownerId === ownerId ? agent : null;
+}
+
+export async function createContractVersion(input: Omit<AgentContract, "id" | "createdAt">) {
+  const item = {
+    PK: `AGENT#${input.agentId}`,
+    SK: `CONTRACT#${input.version}`,
+    entityType: "AgentContract",
+    id: `contract_${crypto.randomUUID()}`,
+    ...input,
+    createdAt: now()
+  };
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: item,
+    ConditionExpression: "attribute_not_exists(PK)"
+  }));
+  return item as AgentContract & Record<string, unknown>;
+}
+
+export async function getContract(agentId: string, version: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `AGENT#${agentId}`, SK: `CONTRACT#${version}` }
+  }));
+  return (result.Item ?? null) as (AgentContract & Record<string, unknown>) | null;
+}
+
+export async function getLatestContract(agentId: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    ExpressionAttributeValues: { ":pk": `AGENT#${agentId}`, ":sk": "CONTRACT#" },
+    ScanIndexForward: false,
+    Limit: 1
+  }));
+  return (result.Items?.[0] ?? null) as (AgentContract & Record<string, unknown>) | null;
+}
+
+export async function saveTests(agentId: string, tests: VerificationTest[]) {
+  if (tests.length > 100) throw new Error("A test suite cannot exceed 100 tests per write.");
+  await getDynamoDb().send(new TransactWriteCommand({
+    TransactItems: tests.map((test) => ({
+      Put: {
+        TableName: tableName(),
+        Item: {
+          PK: `AGENT#${agentId}`,
+          SK: `TEST#${test.id}`,
+          entityType: "VerificationTest",
+          ...test
+        },
+        ConditionExpression: "attribute_not_exists(PK)"
+      }
+    }))
+  }));
+  return tests;
+}
+
+export async function listTests(agentId: string, contractId?: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    ExpressionAttributeValues: { ":pk": `AGENT#${agentId}`, ":sk": "TEST#" }
+  }));
+  const tests = (result.Items ?? []) as VerificationTest[];
+  return contractId ? tests.filter((test) => test.contractId === contractId) : tests;
+}
+
+export async function createVerificationRun(input: Omit<VerificationRun, "id">) {
+  const id = `run_${crypto.randomUUID()}`;
+  const item = {
+    PK: `RUN#${id}`,
+    SK: "META",
+    entityType: "VerificationRun",
+    id,
+    ...input,
+    GSI3PK: `AGENT#${input.agentId}`,
+    GSI3SK: `RUN#${input.startedAt}`
+  };
+  await getDynamoDb().send(new PutCommand({ TableName: tableName(), Item: item }));
+  return item as VerificationRun & Record<string, unknown>;
+}
+
+export async function getRun(id: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `RUN#${id}`, SK: "META" }
+  }));
+  return (result.Item ?? null) as (VerificationRun & Record<string, unknown>) | null;
+}
+
+export async function getRunForOwner(id: string, ownerId: string) {
+  const run = await getRun(id);
+  return run?.ownerId === ownerId ? run : null;
+}
+
+export async function getRunRecords(id: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    KeyConditionExpression: "PK = :pk",
+    ExpressionAttributeValues: { ":pk": `RUN#${id}` }
+  }));
+  return result.Items ?? [];
+}
+
+export async function updateRun(input: Partial<VerificationRun> & { id: string }) {
+  const entries = Object.entries(input).filter(([key]) => key !== "id");
+  if (!entries.length) return getRun(input.id);
+  const names: Record<string, string> = {};
+  const values: Record<string, unknown> = {};
+  const assignments = entries.map(([key, value], index) => {
+    const name = `#n${index}`;
+    const valueName = `:v${index}`;
+    names[name] = key;
+    values[valueName] = value;
+    return `${name} = ${valueName}`;
+  });
+  const result = await getDynamoDb().send(new UpdateCommand({
+    TableName: tableName(),
+    Key: { PK: `RUN#${input.id}`, SK: "META" },
+    UpdateExpression: `SET ${assignments.join(", ")}`,
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+    ReturnValues: "ALL_NEW"
+  }));
+  return result.Attributes ?? null;
+}
+
+export async function saveTestRun(testRun: TestRun) {
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: { PK: `RUN#${testRun.verificationRunId}`, SK: `TESTRUN#${testRun.id}`, entityType: "TestRun", ...testRun }
+  }));
+}
+
+export async function saveEvidence(evidence: Evidence) {
+  if (!evidence.verificationRunId) throw new Error("Evidence must include its verification run ID.");
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: { PK: `RUN#${evidence.verificationRunId}`, SK: `EVIDENCE#${evidence.id}`, entityType: "Evidence", ...evidence }
+  }));
+}
+
+export async function saveScore(runId: string, score: ReliabilityScore) {
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: { PK: `RUN#${runId}`, SK: "SCORE", entityType: "ReliabilityScore", id: `score_${runId}`, verificationRunId: runId, ...score, computedAt: now() }
+  }));
+}
+
+export async function saveVerificationStatus(status: VerificationStatusRecord) {
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: {
+      PK: `RUN#${status.verificationRunId}`,
+      SK: "STATUS",
+      entityType: "VerificationStatus",
+      GSI2PK: `PUBLIC#${status.publicId}`,
+      GSI2SK: `REPORT#${status.issuedAt}`,
+      ...status
+    }
+  }));
+}
+
+export async function getPublicReport(publicId: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    IndexName: "GSI2",
+    KeyConditionExpression: "GSI2PK = :pk",
+    ExpressionAttributeValues: { ":pk": `PUBLIC#${publicId}` },
+    Limit: 1
+  }));
+  return (result.Items?.[0] ?? null) as VerificationStatusRecord | null;
 }

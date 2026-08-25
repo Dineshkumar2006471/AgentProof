@@ -9,13 +9,32 @@ export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export function handleApiError(error: unknown) {
+  if (error instanceof ApiError) {
+    return jsonError(error.message, error.status);
+  }
+
   if (error instanceof ZodError) {
     return jsonError(error.issues[0]?.message ?? "Invalid request.", 422);
   }
 
   if (error instanceof Error) {
-    return jsonError(error.message, 500);
+    const errorName = error.name;
+    if (["NotAuthorizedException", "UserNotFoundException", "AccessDeniedException"].includes(errorName)) {
+      return jsonError("Authentication failed.", 401);
+    }
+    if (["UsernameExistsException", "CodeMismatchException", "InvalidPasswordException", "LimitExceededException"].includes(errorName)) {
+      return jsonError("The authentication request could not be completed.", 422);
+    }
+    console.error(error);
+    return jsonError("Internal server error.", 500);
   }
 
   return jsonError("Unexpected server error.", 500);
