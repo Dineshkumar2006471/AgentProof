@@ -62,11 +62,12 @@
 
 ## Production Backend Foundation
 
-- [ ] Add AWS CDK development stack for Cognito, DynamoDB, S3, SQS, Lambda, and IAM.
-- [ ] Add server-only AWS clients and environment output contract.
-- [ ] Implement complete custom Cognito auth flow with secure sessions.
-- [ ] Implement single-table DynamoDB repositories and owner isolation.
-- [ ] Replace sample agent/contract/test/run/report API behavior.
-- [ ] Implement OpenAI structured contract and test generation.
-- [ ] Implement SQS-backed Node.js 20 verification worker.
-- [ ] Add focused backend tests and run typecheck/build verification.
+- [x] Add AWS CDK development stack for Cognito, DynamoDB, S3, SQS, Lambda, and IAM.
+- [x] Add server-only AWS clients and environment output contract.
+- [x] Implement complete custom Cognito auth flow with secure sessions.
+- [x] Implement single-table DynamoDB repositories and owner isolation.
+- [x] Replace sample agent/contract/test/run/report API behavior.
+- [x] Implement OpenAI structured contract and test generation.
+- [x] Implement SQS-backed Node.js 20 verification worker.
+- [x] Run typecheck/build verification and local route smoke checks.
+
