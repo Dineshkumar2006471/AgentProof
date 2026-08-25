@@ -9,3 +9,6 @@
 - Treat Fraunces as a restrained display face: reserve large scale for the landing hero and keep product headings close to section-title scale.
 - Keep the authenticated shell structurally distinct from the landing shell: full-width fixed Paper Cream header with a clear bottom rule, not a dark floating capsule.
 - When changing a shared component's orientation, clear inherited positioning offsets explicitly; the vertical wizard rail's sticky `top` offset initially overlapped the new horizontal timeline.
+- When Git HTTPS upload returns repeated HTTP 408 from a synced Windows workspace, use the authenticated GitHub Git Data API for the repository tree; verify the resulting commit tree and do not ask the user to repeat credentials.
+- Public repositories need a real README and license before the first publish: document scope, architecture, setup, environment boundaries, security, and deployment prerequisites.
+
