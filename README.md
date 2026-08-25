@@ -67,15 +67,16 @@ flowchart LR
 - **Evidence storage:** S3 for larger raw payloads and report artifacts.
 - **Async execution:** SQS-backed worker boundary so verification runs do not depend on a browser connection.
 - **Language model:** OpenAI only for the Level 1 build. No Gemini or Firebase dependency.
-- **Payments:** Dodo Payments webhooks update server-side entitlement state.
+- **Payments:** Dodo Payments webhooks update server-side entitlement state after HTTPS hosting is available.
 
 ## Repository map
 
 ```text
 src/app/                  App Router pages and API routes
 src/components/           Shared product UI and report primitives
-src/lib/                  Domain models, validation, AWS, OpenAI, and sample data
+src/lib/                  Domain models, validation, AWS, OpenAI, auth, and reports
 workers/                  Verification worker boundary
+fixtures/                 Deterministic conformance agent for development acceptance
 public/                   Product imagery and report assets
 AgentProof-PRD.md         Product requirements and delivery priorities
 AgentProof-design.md      Visual system, screen specs, and motion rules
@@ -84,7 +85,7 @@ amplify.yml               AWS Amplify build configuration
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 22 or newer
 - npm 10 or newer
 - An AWS profile with least-privilege development permissions for the configured account
 - An OpenAI project API key for model-backed contract/test generation
@@ -96,6 +97,9 @@ AWS and OpenAI credentials are intentionally not included in this repository. Pr
 ```powershell
 npm install
 npm run dev -- --hostname 127.0.0.1 -p 3000
+
+# In a second terminal, for local worker acceptance
+npm run fixture:dev
 ```
 
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
@@ -114,6 +118,9 @@ Copy `.env.example` to `.env.local` for local development. Keep `.env.local` unt
 | `DODO_API_KEY` | Dodo server credential | payment operations |
 | `DODO_WEBHOOK_SECRET` | Dodo signature verification secret | payment webhooks |
 | `DODO_*_PRICE_ID` | Product price identifiers | checkout |
+| `AGENTPROOF_ENVIRONMENT` | Development or production secret namespace | server/worker |
+
+Agent endpoint bearer tokens are accepted by the authenticated agent-creation route and written to AWS Secrets Manager. They are never returned to the browser or stored in report data.
 
 Use AWS IAM Identity Center or an AWS profile for local AWS access. Do not paste credentials into source files, commit history, tickets, or chat.
 
@@ -123,14 +130,30 @@ Run these before opening a pull request or deploying:
 
 ```powershell
 npm run typecheck
+npm test -- --run
 npm run build
+
+# Synthesize infrastructure without deploying
+npm run infra:synth
+npm run infra:synth:production
 ```
 
 The UI should also be checked at desktop and mobile widths, with reduced motion enabled, across all primary routes.
 
 ## AWS deployment
 
-The intended production path is AWS Amplify Hosting connected to the repository, with AWS-managed service configuration for Cognito, DynamoDB, S3, SQS, and the verification worker. Create the Amplify HTTPS domain before registering the Dodo webhook:
+The development and production CDK stacks are separate. Deploy them with the existing IAM Identity Center profile:
+
+```powershell
+$env:AWS_PROFILE = "agentproof-dev"
+$env:AWS_REGION = "ap-south-1"
+npm run infra:deploy
+npm run infra:deploy:production
+```
+
+Seed each environment's OpenAI secret through AWS Secrets Manager. Do not put the value in CDK source or CloudFormation parameters.
+
+The remaining hosting step is to connect this GitHub repository in Amplify Console, attach the environment-specific SSR role output, configure the environment variables from the CDK outputs, and deploy the `main` branch. No public Amplify URL exists until that connection and first deployment are complete. Create the Amplify HTTPS domain before registering the Dodo webhook:
 
 `https://<amplify-domain>/api/webhooks/dodo`
 

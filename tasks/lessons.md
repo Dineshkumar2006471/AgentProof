@@ -12,3 +12,7 @@
 - When Git HTTPS upload returns repeated HTTP 408 from a synced Windows workspace, use the authenticated GitHub Git Data API for the repository tree; verify the resulting commit tree and do not ask the user to repeat credentials.
 - Public repositories need a real README and license before the first publish: document scope, architecture, setup, environment boundaries, security, and deployment prerequisites.
 - During long AWS or production-build operations, report the concrete current stage immediately after each external state change; do not leave progress implicit in terminal output.
+- OpenAI Structured Outputs requires every declared object property to be required; model optionality belongs in typed values or arrays, not optional schema properties.
+- Keep public resource identifiers, contract version identifiers, and DynamoDB sort keys separate; repository methods should translate between them.
+- Page protection should redirect to sign-in while API protection should return `401`; do not use a server-page API helper as the page authorization boundary.
+- A local endpoint fixture validates worker behavior, but Lambda cannot reach `localhost`; AWS acceptance must use an externally reachable staging endpoint.

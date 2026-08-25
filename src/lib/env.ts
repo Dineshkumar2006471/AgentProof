@@ -3,6 +3,7 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   AWS_REGION: z.string().min(1).optional(),
+  AGENTPROOF_ENVIRONMENT: z.string().min(1).default("development"),
   AGENTPROOF_DYNAMODB_TABLE: z.string().min(1).optional(),
   AGENTPROOF_REPORTS_BUCKET: z.string().min(1).optional(),
   AGENTPROOF_VERIFICATION_QUEUE_URL: z.string().min(1).optional(),
@@ -18,6 +19,7 @@ const serverEnvSchema = z.object({
 export const env = serverEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   AWS_REGION: process.env.AWS_REGION,
+  AGENTPROOF_ENVIRONMENT: process.env.AGENTPROOF_ENVIRONMENT,
   AGENTPROOF_DYNAMODB_TABLE: process.env.AGENTPROOF_DYNAMODB_TABLE,
   AGENTPROOF_REPORTS_BUCKET: process.env.AGENTPROOF_REPORTS_BUCKET,
   AGENTPROOF_VERIFICATION_QUEUE_URL:

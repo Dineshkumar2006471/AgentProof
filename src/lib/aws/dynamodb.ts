@@ -18,6 +18,7 @@ import type {
   VerificationStatusRecord,
   VerificationTest
 } from "@/lib/domain";
+import { createEndpointSecret } from "@/lib/aws/secrets";
 
 let documentClient: DynamoDBDocumentClient | undefined;
 
@@ -38,9 +39,17 @@ export async function createAgent(input: {
   name: string;
   endpointUrl: string;
   version: string;
+  endpointAuthType?: "none" | "bearer";
+  endpointAuthToken?: string;
 }) {
   const id = `agent_${crypto.randomUUID()}`;
   const createdAt = now();
+  const endpointAuthType = input.endpointAuthType ?? "none";
+  let endpointSecretArn: string | undefined;
+  if (endpointAuthType === "bearer") {
+    if (!input.endpointAuthToken) throw new Error("A bearer token is required for authenticated endpoints.");
+    endpointSecretArn = await createEndpointSecret(id, input.endpointAuthToken);
+  }
   const item: Agent & Record<string, unknown> = {
     PK: `AGENT#${id}`,
     SK: "META",
@@ -49,6 +58,8 @@ export async function createAgent(input: {
     ownerId: input.ownerId,
     name: input.name,
     endpointUrl: input.endpointUrl,
+    endpointAuthType,
+    ...(endpointSecretArn ? { endpointSecretArn } : {}),
     currentVersion: input.version,
     createdAt,
     GSI1PK: `OWNER#${input.ownerId}`,
@@ -110,6 +121,17 @@ export async function getContract(agentId: string, version: string) {
     Key: { PK: `AGENT#${agentId}`, SK: `CONTRACT#${version}` }
   }));
   return (result.Item ?? null) as (AgentContract & Record<string, unknown>) | null;
+}
+
+export async function getContractById(agentId: string, contractId: string) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    FilterExpression: "id = :id",
+    ExpressionAttributeValues: { ":pk": `AGENT#${agentId}`, ":sk": "CONTRACT#", ":id": contractId },
+    Limit: 100
+  }));
+  return (result.Items?.[0] ?? null) as (AgentContract & Record<string, unknown>) | null;
 }
 
 export async function getLatestContract(agentId: string) {
@@ -189,6 +211,41 @@ export async function getRunRecords(id: string) {
   return result.Items ?? [];
 }
 
+export async function getVerificationStatus(runId: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `RUN#${runId}`, SK: "STATUS" }
+  }));
+  return (result.Item ?? null) as VerificationStatusRecord | null;
+}
+
+export async function getReliabilityScore(runId: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `RUN#${runId}`, SK: "SCORE" }
+  }));
+  return (result.Item ?? null) as (ReliabilityScore & { verificationRunId: string }) | null;
+}
+
+export async function listRunsByAgent(agentId: string, limit = 20) {
+  const result = await getDynamoDb().send(new DocumentQueryCommand({
+    TableName: tableName(),
+    IndexName: "GSI3",
+    KeyConditionExpression: "GSI3PK = :pk AND begins_with(GSI3SK, :sk)",
+    ExpressionAttributeValues: { ":pk": `AGENT#${agentId}`, ":sk": "RUN#" },
+    ScanIndexForward: false,
+    Limit: limit
+  }));
+  return (result.Items ?? []) as Array<VerificationRun & Record<string, unknown>>;
+}
+
+export async function getLatestAgentVerification(agentId: string) {
+  const runs = await listRunsByAgent(agentId, 1);
+  const run = runs[0];
+  if (!run) return null;
+  return { run, status: await getVerificationStatus(run.id), score: await getReliabilityScore(run.id) };
+}
+
 export async function updateRun(input: Partial<VerificationRun> & { id: string }) {
   const entries = Object.entries(input).filter(([key]) => key !== "id");
   if (!entries.length) return getRun(input.id);
@@ -210,6 +267,23 @@ export async function updateRun(input: Partial<VerificationRun> & { id: string }
     ReturnValues: "ALL_NEW"
   }));
   return result.Attributes ?? null;
+}
+
+export async function claimVerificationRun(id: string) {
+  try {
+    await getDynamoDb().send(new UpdateCommand({
+      TableName: tableName(),
+      Key: { PK: `RUN#${id}`, SK: "META" },
+      UpdateExpression: "SET #status = :running, workerStartedAt = :startedAt",
+      ConditionExpression: "#status = :queued",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: { ":running": "RUNNING", ":queued": "QUEUED", ":startedAt": now() }
+    }));
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConditionalCheckFailedException") return false;
+    throw error;
+  }
 }
 
 export async function saveTestRun(testRun: TestRun) {

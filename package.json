@@ -6,10 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
     "lint": "next lint",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "infra:synth": "cdk synth",
-    "infra:deploy": "cdk deploy --all --require-approval broadening"
+    "infra:deploy": "cdk deploy --all --require-approval broadening",
+    "infra:synth:production": "cdk synth --context environment=production",
+    "infra:deploy:production": "cdk deploy AgentProof-production --context environment=production --require-approval broadening",
+    "fixture:dev": "tsx fixtures/agent-server/server.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1117.0",

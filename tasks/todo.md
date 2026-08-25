@@ -66,7 +66,32 @@
 - [x] Add server-only AWS clients and environment output contract.
 - [x] Implement complete custom Cognito auth flow with secure sessions.
 - [x] Implement single-table DynamoDB repositories and owner isolation.
-- [x] Replace sample agent/contract/test/run/report API behavior.
-- [x] Implement OpenAI structured contract and test generation.
-- [x] Implement SQS-backed Node.js 20 verification worker.
-- [x] Run typecheck/build verification and local route smoke checks.
+- [x] Replace remaining sample-data page reads with authenticated repositories.
+- [x] Repair and harden OpenAI structured contract and test generation.
+- [x] Implement authenticated endpoint credentials and deterministic fixture coverage.
+- [x] Complete idempotent SQS worker evidence, scoring, and report flow.
+- [x] Add automated unit, route-isolation, and worker tests.
+- [x] Upgrade worker infrastructure to Node.js 22 and add production safeguards.
+- [x] Deploy separate development and production AWS resources.
+- [ ] Connect Amplify Hosting and complete the public HTTPS deployment.
+- [ ] Run the closed-beta readiness gate with at least three real agent endpoints.
+
+## Production Readiness Slice
+
+- [x] Fix OpenAI Structured Outputs schema rejection for contract drafting.
+- [x] Return provider failures as safe, actionable API responses.
+- [x] Enforce unique contract revisions and idempotent run processing.
+- [x] Add per-agent endpoint authentication without browser exposure.
+- [x] Add deterministic fixture scenarios for pass, boundary, timeout, malformed, and critical cases.
+- [x] Replace sample-data dashboard, dossier, and report pages.
+- [x] Add automated tests and development acceptance coverage.
+
+## Review Notes: Production Readiness Slice
+
+- OpenAI contract drafting now uses a Structured Outputs-compatible required schema and returns safe `502` provider errors.
+- The complete English verification path is proven through the local deterministic fixture and deployed worker: queue, Lambda claim, evidence, score, and status.
+- Critical-policy blocking and endpoint-unreachable failure behavior were verified independently.
+- `npm run typecheck`, `npm test -- --run`, and `npm run build` pass.
+- Development and production CDK stacks are deployed in `ap-south-1`.
+- Amplify Hosting is not connected yet, so there is no public HTTPS URL and Dodo webhooks cannot be configured yet.
+- Closed-beta readiness still requires real external agent endpoints, production smoke tests, monitoring review, and rollback procedures.

@@ -1,6 +1,6 @@
 import { handleApiError, jsonOk } from "@/lib/api";
 import { generateTestsSchema } from "@/lib/validation";
-import { getAgentForOwner, getContract, saveTests } from "@/lib/aws/dynamodb";
+import { getAgentForOwner, getContractById, saveTests } from "@/lib/aws/dynamodb";
 import { requireUser } from "@/lib/auth/require-user";
 import { generateTests } from "@/lib/openai/test-generator";
 
@@ -14,7 +14,7 @@ export async function POST(request: Request, context: GenerateTestsContext) {
     const input = generateTestsSchema.parse(await request.json());
     const user = await requireUser();
     if (!await getAgentForOwner(id, user.sub)) return jsonOk({ error: "Agent not found." }, { status: 404 });
-    const contract = await getContract(id, input.contractId);
+    const contract = await getContractById(id, input.contractId);
     if (!contract) return jsonOk({ error: "Contract not found." }, { status: 404 });
     const tests = await generateTests(contract, id);
     await saveTests(id, tests);

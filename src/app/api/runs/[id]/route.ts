@@ -14,6 +14,7 @@ export async function GET(_request: Request, context: RunsRouteContext) {
     if (!run) return jsonOk({ error: "Run not found." }, { status: 404 });
     const records = await getRunRecords(id);
     const testResults = records.filter((record) => record.entityType === "TestRun");
+    const status = records.find((record) => record.entityType === "VerificationStatus") ?? null;
     const completed = testResults.length;
 
     return jsonOk({
@@ -22,7 +23,8 @@ export async function GET(_request: Request, context: RunsRouteContext) {
         completed,
         percent: run.totalTests ? Math.round((completed / run.totalTests) * 100) : 0
       },
-      testResults
+      testResults,
+      status
     });
   } catch (error) {
     return handleApiError(error);

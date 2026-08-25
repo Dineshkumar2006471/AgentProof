@@ -17,7 +17,14 @@ export async function POST(request: Request) {
     const input = createAgentSchema.parse(await request.json());
     const user = await requireUser();
 
-    const agent = await createAgent({ ownerId: user.sub, ...input });
+    const agent = await createAgent({
+      ownerId: user.sub,
+      name: input.name,
+      endpointUrl: input.endpointUrl,
+      version: input.version,
+      endpointAuthType: input.endpointAuthType,
+      endpointAuthToken: input.endpointAuthToken
+    });
     return jsonOk({ agent }, { status: 201 });
   } catch (error) {
     return handleApiError(error);

@@ -15,8 +15,16 @@ export type Agent = {
   ownerId: string;
   name: string;
   endpointUrl: string;
+  endpointAuthType?: "none" | "bearer";
+  endpointSecretArn?: string;
   currentVersion: string;
   createdAt: string;
+};
+
+export type FailureRule = {
+  rule: string;
+  action: string;
+  severity: "info" | "minor" | "major" | "critical";
 };
 
 export type AgentContract = {
@@ -26,7 +34,7 @@ export type AgentContract = {
   capabilities: string[];
   restrictions: string[];
   requiredBehavior: string[];
-  failurePolicy: Record<string, string[]>;
+  failurePolicy: FailureRule[];
   createdAt: string;
 };
 
@@ -53,6 +61,7 @@ export type TestRun = {
   verificationRunId: string;
   testId: string;
   agentResponse: string;
+  rawPayloadS3Key?: string;
   toolCalls: unknown[];
   actualState: Record<string, unknown>;
   expectedState: Record<string, unknown>;
@@ -88,6 +97,15 @@ export type VerificationStatusRecord = {
   validUntil: string;
   publicId: string;
   hash: string;
+  score: ReliabilityScore;
+  agentName: string;
+  totalTests: number;
+  passed: number;
+  failed: number;
+  critical: number;
+  lastVerified: string;
+  whatWasTested: string[];
+  evidenceSummary: Array<Pick<Evidence, "whyItFailed" | "severity">>;
 };
 
 export type Evidence = {
@@ -96,6 +114,7 @@ export type Evidence = {
   verificationRunId?: string;
   expectedBehavior: string;
   actualBehavior: string;
+  rawPayloadS3Key?: string;
   toolCalls: unknown[];
   expectedState: Record<string, unknown>;
   actualState: Record<string, unknown>;

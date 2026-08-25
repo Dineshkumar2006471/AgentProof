@@ -16,9 +16,31 @@ export class ApiError extends Error {
   }
 }
 
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+export class UpstreamServiceError extends Error {
+  constructor(message: string, public readonly service: string) {
+    super(message);
+    this.name = "UpstreamServiceError";
+  }
+}
+
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
     return jsonError(error.message, error.status);
+  }
+
+  if (error instanceof ConflictError) {
+    return jsonError(error.message, 409);
+  }
+
+  if (error instanceof UpstreamServiceError) {
+    return jsonError(error.message, 502);
   }
 
   if (error instanceof ZodError) {

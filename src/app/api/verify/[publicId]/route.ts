@@ -10,7 +10,25 @@ export async function GET(_request: Request, context: PublicVerifyContext) {
     const { publicId } = await context.params;
 
     const report = await getPublicReport(publicId);
-    return report ? jsonOk({ publicReport: report }) : jsonOk({ error: "Report not found." }, { status: 404 });
+    if (!report) return jsonOk({ error: "Report not found." }, { status: 404 });
+    return jsonOk({
+      publicReport: {
+        publicId: report.publicId,
+        agentName: report.agentName,
+        agentVersion: report.agentVersion,
+        status: report.status,
+        score: report.score,
+        totalTests: report.totalTests,
+        passed: report.passed,
+        failed: report.failed,
+        critical: report.critical,
+        lastVerified: report.lastVerified,
+        validUntil: report.validUntil,
+        whatWasTested: report.whatWasTested,
+        evidenceSummary: report.evidenceSummary,
+        hash: report.hash
+      }
+    });
   } catch (error) {
     return handleApiError(error);
   }

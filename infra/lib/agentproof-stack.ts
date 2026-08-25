@@ -1,5 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
@@ -122,7 +123,7 @@ export class AgentProofStack extends Stack {
 
     const worker = new nodejs.NodejsFunction(this, "VerificationWorker", {
       functionName: `agentproof-verification-worker-${suffix}`,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       entry: "workers/test-runner-worker/handler.ts",
       handler: "handler",
       timeout: Duration.minutes(5),
@@ -132,6 +133,7 @@ export class AgentProofStack extends Stack {
         removalPolicy: RemovalPolicy.RETAIN
       }),
       environment: {
+        AGENTPROOF_ENVIRONMENT: suffix,
         AGENTPROOF_DYNAMODB_TABLE: table.tableName,
         AGENTPROOF_REPORTS_BUCKET: reportsBucket.bucketName,
         AGENTPROOF_VERIFICATION_QUEUE_URL: verificationQueue.queueUrl,
@@ -147,10 +149,36 @@ export class AgentProofStack extends Stack {
       actions: ["secretsmanager:GetSecretValue"],
       resources: [openAiSecret.ref]
     }));
+    worker.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["secretsmanager:GetSecretValue"],
+      resources: [this.formatArn({ service: "secretsmanager", resource: `secret:agentproof/agents/${suffix}/*` })]
+    }));
     worker.addEventSource(new eventSources.SqsEventSource(verificationQueue, {
       batchSize: 1,
       reportBatchItemFailures: true
     }));
+
+    new cloudwatch.Alarm(this, "WorkerErrorsAlarm", {
+      alarmName: `agentproof-worker-errors-${suffix}`,
+      metric: worker.metricErrors({ period: Duration.minutes(5), statistic: "Sum" }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    });
+    new cloudwatch.Alarm(this, "DeadLetterAlarm", {
+      alarmName: `agentproof-verification-dlq-${suffix}`,
+      metric: deadLetterQueue.metricApproximateNumberOfMessagesVisible({ period: Duration.minutes(5), statistic: "Maximum" }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    });
+    new cloudwatch.Alarm(this, "QueueAgeAlarm", {
+      alarmName: `agentproof-verification-queue-age-${suffix}`,
+      metric: verificationQueue.metricApproximateAgeOfOldestMessage({ period: Duration.minutes(5), statistic: "Maximum" }),
+      threshold: 300,
+      evaluationPeriods: 2,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    });
 
     const amplifyComputeRole = new iam.Role(this, "AmplifySsrComputeRole", {
       roleName: `agentproof-amplify-ssr-${suffix}`,
@@ -163,6 +191,10 @@ export class AgentProofStack extends Stack {
     amplifyComputeRole.addToPolicy(new iam.PolicyStatement({
       actions: ["secretsmanager:GetSecretValue"],
       resources: [openAiSecret.ref]
+    }));
+    amplifyComputeRole.addToPolicy(new iam.PolicyStatement({
+      actions: ["secretsmanager:CreateSecret"],
+      resources: [this.formatArn({ service: "secretsmanager", resource: `secret:agentproof/agents/${suffix}/*` })]
     }));
 
     new cdk.CfnOutput(this, "AwsRegion", { value: this.region, exportName: `AgentProof-${suffix}-Region` });

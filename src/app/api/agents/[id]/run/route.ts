@@ -1,6 +1,6 @@
 import { startRunSchema } from "@/lib/validation";
 import { ApiError, handleApiError, jsonOk } from "@/lib/api";
-import { createVerificationRun, getAgentForOwner, getContract, getLatestContract, listTests, updateRun } from "@/lib/aws/dynamodb";
+import { createVerificationRun, getAgentForOwner, getContractById, getLatestContract, listTests, updateRun } from "@/lib/aws/dynamodb";
 import { enqueueVerification } from "@/lib/aws/sqs";
 import { requireUser } from "@/lib/auth/require-user";
 
@@ -15,7 +15,7 @@ export async function POST(request: Request, context: RunRouteContext) {
     const user = await requireUser();
     const agent = await getAgentForOwner(id, user.sub);
     if (!agent) return jsonOk({ error: "Agent not found." }, { status: 404 });
-    const contract = input.contractId ? await getContract(id, input.contractId) : await getLatestContract(id);
+    const contract = input.contractId ? await getContractById(id, input.contractId) : await getLatestContract(id);
     if (!contract) throw new ApiError(422, "Create a contract before starting verification.");
     const tests = await listTests(id, contract.id);
     if (!tests.length) throw new ApiError(422, "Generate a test matrix before starting verification.");

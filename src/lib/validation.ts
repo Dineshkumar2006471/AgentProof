@@ -1,12 +1,24 @@
 import { z } from "zod";
 
+export const failureRuleSchema = z.object({
+  rule: z.string().min(1),
+  action: z.string().min(1),
+  severity: z.enum(["info", "minor", "major", "critical"])
+});
+
 export const createAgentSchema = z.object({
   name: z.string().min(2),
   endpointUrl: z.string().url(),
   version: z.string().min(1),
   description: z.string().min(20),
   mustNeverDo: z.string().optional(),
-  successCriteria: z.string().optional()
+  successCriteria: z.string().optional(),
+  endpointAuthType: z.enum(["none", "bearer"]).default("none"),
+  endpointAuthToken: z.string().min(1).max(4096).optional()
+}).superRefine((value, context) => {
+  if (value.endpointAuthType === "bearer" && !value.endpointAuthToken) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthToken"], message: "A bearer token is required." });
+  }
 });
 
 export const updateContractSchema = z.object({
@@ -14,7 +26,7 @@ export const updateContractSchema = z.object({
   capabilities: z.array(z.string().min(1)).min(1),
   restrictions: z.array(z.string().min(1)).default([]),
   requiredBehavior: z.array(z.string().min(1)).default([]),
-  failurePolicy: z.record(z.array(z.string())).default({})
+  failurePolicy: z.array(failureRuleSchema).default([])
 });
 
 export const startRunSchema = z.object({
