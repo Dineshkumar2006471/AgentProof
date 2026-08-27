@@ -113,6 +113,7 @@
 - [x] Read verified Cognito name and email claims for the authenticated workspace identity.
 - [x] Remove Cognito subject/user IDs from the profile UI and keep only user-facing account details.
 - [x] Uppercase profile page headings and action labels to match the internal platform hierarchy.
+- [x] Remove the profile page identity heading and hide the email line below the sidebar name.
 - [ ] Verify the identity display with a newly created account and an existing account that has no name attribute.
 
 ### Account Identity Privacy Review

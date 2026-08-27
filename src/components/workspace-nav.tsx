@@ -45,7 +45,6 @@ export function WorkspaceNav() {
   }, []);
 
   const accountName = identity?.name?.trim() || identity?.username?.trim() || identity?.email?.split("@")[0] || "Account";
-  const accountEmail = identity?.email || (identity?.username?.includes("@") ? identity.username : "Signed-in account");
   const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "A";
 
   function isActive(href: string) {
@@ -100,7 +99,7 @@ export function WorkspaceNav() {
         <div className="workspace-sidebar__footer">
           <div className="workspace-account-summary">
             <span className="workspace-avatar" aria-hidden="true">{initials}</span>
-            <span><strong>{accountName}</strong><small>{accountEmail}</small></span>
+            <span><strong>{accountName}</strong></span>
           </div>
           <button type="button" disabled={signingOut} onClick={signOut} className="workspace-signout">
             <LogOut size={16} />

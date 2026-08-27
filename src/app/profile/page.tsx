@@ -12,9 +12,7 @@ export default async function ProfilePage() {
   return (
     <AppShell title="PROFILE SETTINGS" section="ACCOUNT"><div className="workspace-page profile-page">
         <header className="workspace-page-header">
-          <span className="eyebrow">ACCOUNT / PROFILE</span>
-          <h1 className="section-title mt-4">YOUR ACCOUNT IDENTITY</h1>
-          <p className="body-lg mt-3 max-w-2xl">Manage the account that owns your agent registry, verification runs, and published evidence.</p>
+          <p className="body-lg max-w-3xl">Manage the account that owns your agent registry, verification runs, and published evidence.</p>
         </header>
 
         <div className="settings-layout">
