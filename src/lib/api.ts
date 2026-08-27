@@ -49,11 +49,29 @@ export function handleApiError(error: unknown) {
 
   if (error instanceof Error) {
     const errorName = error.name;
+    if (errorName === "SyntaxError") {
+      return jsonError("Invalid JSON request.", 400);
+    }
+    if (["CredentialsProviderError", "ExpiredTokenException", "UnrecognizedClientException", "InvalidClientTokenId"].includes(errorName)) {
+      return jsonError("AWS authentication is unavailable. Re-authenticate the development SSO session.", 503);
+    }
     if (["NotAuthorizedException", "UserNotFoundException", "AccessDeniedException"].includes(errorName)) {
       return jsonError("Authentication failed.", 401);
     }
-    if (["UsernameExistsException", "CodeMismatchException", "InvalidPasswordException", "LimitExceededException"].includes(errorName)) {
+    if (errorName === "UserNotConfirmedException") {
+      return jsonError("Confirm your email address before signing in.", 422);
+    }
+    if (errorName === "PasswordResetRequiredException") {
+      return jsonError("Reset your password before signing in.", 422);
+    }
+    if (["UsernameExistsException", "CodeMismatchException", "InvalidPasswordException", "InvalidParameterException"].includes(errorName)) {
       return jsonError("The authentication request could not be completed.", 422);
+    }
+    if (["LimitExceededException", "TooManyRequestsException"].includes(errorName)) {
+      return jsonError("Too many authentication attempts. Try again later.", 429);
+    }
+    if (errorName === "ResourceNotFoundException") {
+      return jsonError("Authentication is not configured correctly. Check the Cognito environment settings.", 503);
     }
     console.error(error);
     return jsonError("Internal server error.", 500);

@@ -14,15 +14,23 @@ function isProduction() {
   return process.env.NODE_ENV === "production";
 }
 
-const verifier = () => CognitoJwtVerifier.create({
+const accessTokenVerifier = () => CognitoJwtVerifier.create({
   userPoolId: requireEnv("COGNITO_USER_POOL_ID"),
   tokenUse: "access",
+  clientId: requireEnv("COGNITO_CLIENT_ID")
+});
+
+const idTokenVerifier = () => CognitoJwtVerifier.create({
+  userPoolId: requireEnv("COGNITO_USER_POOL_ID"),
+  tokenUse: "id",
   clientId: requireEnv("COGNITO_CLIENT_ID")
 });
 
 export type AuthenticatedUser = {
   sub: string;
   username?: string;
+  name?: string;
+  email?: string;
 };
 
 export async function setSession(result: AuthenticationResultType) {
@@ -51,13 +59,28 @@ async function accessToken() {
   return (await cookies()).get(cookieNames.access)?.value;
 }
 
+async function identityClaims() {
+  const token = (await cookies()).get(cookieNames.id)?.value;
+  if (!token) return {};
+
+  try {
+    const payload = await idTokenVerifier().verify(token);
+    return {
+      name: typeof payload.name === "string" ? payload.name : undefined,
+      email: typeof payload.email === "string" ? payload.email : undefined
+    };
+  } catch {
+    return {};
+  }
+}
+
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const token = await accessToken();
   if (!token) return null;
 
   try {
-    const payload = await verifier().verify(token);
-    return { sub: payload.sub, username: payload.username };
+    const payload = await accessTokenVerifier().verify(token);
+    return { sub: payload.sub, username: payload.username, ...(await identityClaims()) };
   } catch {
     const refreshToken = (await cookies()).get(cookieNames.refresh)?.value;
     if (!refreshToken) return null;
@@ -67,8 +90,8 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       return null;
     }
     await setSession(refreshed);
-    const payload = await verifier().verify(refreshed.AccessToken);
-    return { sub: payload.sub, username: payload.username };
+    const payload = await accessTokenVerifier().verify(refreshed.AccessToken);
+    return { sub: payload.sub, username: payload.username, ...(await identityClaims()) };
   }
 }
 

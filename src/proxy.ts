@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPaths = ["/dashboard", "/agents"];
+const protectedPaths = ["/dashboard", "/agents", "/profile"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const isProtected = protectedPaths.some((path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + "/"));
   if (!isProtected) return NextResponse.next();
   if (request.cookies.has("agentproof-access-token")) return NextResponse.next();
@@ -13,5 +13,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/agents/:path*"]
+  matcher: ["/dashboard/:path*", "/agents/:path*", "/profile/:path*"]
 };

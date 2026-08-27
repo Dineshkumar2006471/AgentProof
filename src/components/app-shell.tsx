@@ -1,44 +1,30 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { LogoLockup } from "@/components/logo-lockup";
+import { ProfileMenu } from "@/components/profile-menu";
+import { WorkspaceNav } from "@/components/workspace-nav";
 
 type AppShellProps = {
   children: React.ReactNode;
+  title?: string;
+  section?: string;
 };
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, title = "Workspace", section = "AGENTPROOF" }: AppShellProps) {
   return (
-    <main className="page-shell">
-      <header className="app-topbar">
-        <div
-          className="floating-nav-main"
-          style={{
-            justifyContent: "space-between",
-            borderBottom: "none",
-          }}
-        >
-          <Link href="/dashboard">
-            <LogoLockup compact />
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <Link
-              href="/dashboard"
-              style={{
-                color: "var(--ink-graphite)",
-                textTransform: "uppercase",
-                position: "relative",
-              }}
-            >
-              Dashboard
-            </Link>
-            <Link href="/agents/new" className="button">
-              <Plus size={15} strokeWidth={2.5} />
-              New Agent
-            </Link>
+    <div className="workspace-shell">
+      <WorkspaceNav />
+      <div className="workspace-main">
+        <header className="workspace-topbar">
+          <div className="workspace-topbar__context">
+            <Link href="/" className="workspace-topbar__mobile-brand" aria-label="AgentProof home">AP</Link>
+            <div><span className="eyebrow">{section}</span><h1>{title}</h1></div>
           </div>
-        </div>
-      </header>
-      <div className="app-main">{children}</div>
-    </main>
+          <div className="workspace-topbar__actions">
+            <span className="workspace-live-status"><i aria-hidden="true" /> Live workspace</span>
+            <ProfileMenu />
+          </div>
+        </header>
+        <main className="workspace-content">{children}</main>
+      </div>
+    </div>
   );
 }

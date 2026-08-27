@@ -14,7 +14,10 @@ export const createAgentSchema = z.object({
   mustNeverDo: z.string().optional(),
   successCriteria: z.string().optional(),
   endpointAuthType: z.enum(["none", "bearer"]).default("none"),
-  endpointAuthToken: z.string().min(1).max(4096).optional()
+  endpointAuthToken: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().min(1).max(4096).optional()
+  )
 }).superRefine((value, context) => {
   if (value.endpointAuthType === "bearer" && !value.endpointAuthToken) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthToken"], message: "A bearer token is required." });

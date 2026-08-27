@@ -1,173 +1,319 @@
 # AgentProof
 
-AgentProof turns an AI agent's operational claims into executable tests, runs those tests against the live agent endpoint, and produces evidence-backed verification reports that buyers can understand.
+AgentProof is an evidence-first verification workspace for AI agents. Teams register an agent, turn its natural-language promise into executable tests, run those tests against a live endpoint, and publish a reliability report backed by response evidence.
 
-## Contents
+This repository contains the Next.js web application, authenticated workspace, verification APIs, local fixture agent, AWS infrastructure, and asynchronous test-runner worker.
 
-- [Product](#product)
-- [Level 1 scope](#level-1-scope)
-- [Architecture](#architecture)
-- [Repository map](#repository-map)
-- [Requirements](#requirements)
-- [Local development](#local-development)
-- [Environment variables](#environment-variables)
-- [Quality checks](#quality-checks)
-- [AWS deployment](#aws-deployment)
-- [Security](#security)
-- [License](#license)
+## Product Model
 
-## Product
+1. **Register** an agent name, version, endpoint, authentication, capabilities, restrictions, and success criteria.
+2. **Generate** a versioned test matrix from the contract.
+3. **Execute** the tests against the live agent endpoint.
+4. **Judge** each response using deterministic checks and an AI-assisted semantic judge where needed.
+5. **Store** raw evidence, test results, score, and verification status.
+6. **Share** a public report that does not expose private account data.
 
-AgentProof is a verification workspace for production AI agents. A builder supplies an agent endpoint and plain-language promises. AgentProof converts those promises into a versioned contract and test matrix, executes the tests, stores the evidence, and exposes a private builder report and a sanitized public report.
+## Beta Access Model
 
-The product model is:
+AgentProof launches as an open beta for the target cohort. Anyone in the cohort can create an account through the public sign-up screen; there is no email allowlist or invite-only gate. Email confirmation remains required before sign-in.
 
-`Claim -> Contract -> Execution -> Evidence -> Verification status`
+The beta is open with operational guardrails: each account can register a configurable number of agents, and each agent has a configurable daily verification-run limit. These limits protect the shared AWS queue and OpenAI budget while allowing real users to test the complete product flow. The beta defaults are five agents per account and ten runs per agent per 24 hours; set `AGENTPROOF_BETA_MODE=true` in the deployed environment to enforce them.
 
-The interface is intentionally evidence-first: operational contracts, test IDs, timestamps, response traces, scores, and validity metadata are treated as first-class product objects.
-
-## Level 1 scope
-
-Level 1 is the reliable core build:
-
-- Agent registration with name, version, endpoint, and connector contract.
-- OpenAI-assisted contract drafting and executable test generation.
-- Test execution against a configured `POST /run` agent endpoint.
-- Durable run and evidence records, with failure reasons and status transitions.
-- Builder dashboard, agent dossier, live execution console, private verification report, and sanitized public report.
-- Verification score, validity metadata, checksum/report identity, and public report URL.
-- AWS-native runtime boundaries and Dodo Payments integration points.
-
-Regional-language expansion, cross-model judging, advanced monitoring, team administration, and enterprise controls remain extension points for later levels. Hindi, Telugu, Tamil, Kannada, and other required regional-language coverage belongs in the language test-matrix expansion, not in the initial Level 1 release unless explicitly promoted.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    Browser[Next.js web app] --> Amplify[AWS Amplify Hosting]
-    Amplify --> API[Next.js server routes]
-    API --> Cognito[AWS Cognito]
-    API --> DDB[(DynamoDB)]
-    API --> S3[(S3 evidence objects)]
-    API --> OpenAI[OpenAI API]
-    API --> SQS[SQS verification queue]
-    SQS --> Worker[Runner worker]
-    Worker --> Agent[Customer agent POST /run]
-    Worker --> DDB
-    Worker --> S3
-    Dodo[Dodo Payments] --> Webhook[/api/webhooks/dodo]
-    Webhook --> DDB
-```
-
-### Runtime boundaries
-
-- **Web and API:** Next.js App Router, hosted on AWS Amplify.
-- **Identity:** Amazon Cognito. Authentication state is never implemented with client-only flags.
-- **Persistence:** DynamoDB for agents, contracts, runs, evidence indexes, and billing state.
-- **Evidence storage:** S3 for larger raw payloads and report artifacts.
-- **Async execution:** SQS-backed worker boundary so verification runs do not depend on a browser connection.
-- **Language model:** OpenAI only for the Level 1 build. No Gemini or Firebase dependency.
-- **Payments:** Dodo Payments webhooks update server-side entitlement state after HTTPS hosting is available.
-
-## Repository map
+## How Verification Works
 
 ```text
-src/app/                  App Router pages and API routes
-src/components/           Shared product UI and report primitives
-src/lib/                  Domain models, validation, AWS, OpenAI, auth, and reports
-workers/                  Verification worker boundary
-fixtures/                 Deterministic conformance agent for development acceptance
-public/                   Product imagery and report assets
-AgentProof-PRD.md         Product requirements and delivery priorities
-AgentProof-design.md      Visual system, screen specs, and motion rules
-amplify.yml               AWS Amplify build configuration
+Agent contract
+      |
+      v
+Generated test matrix
+      |
+      v
+Queued verification run ---> SQS ---> test-runner Lambda
+                                      |
+                                      v
+                              POST /run to agent
+                                      |
+                                      v
+                   deterministic checks + semantic judgment
+                                      |
+                                      v
+             test results + evidence + reliability score
+                                      |
+                                      v
+             owner dashboard and optional public report
+```
+
+Each test result is `PASS`, `FAIL`, or `CRITICAL`. Run status is derived from the evidence:
+
+| Run outcome | Meaning |
+| --- | --- |
+| `VERIFIED` | Score is at least 90 and there are no critical failures. |
+| `CONDITIONAL` | Score is at least 70 but meaningful failures remain. |
+| `FAILED` | The score is below 70 without a critical failure. |
+| `BLOCKED` | A critical failure was detected, such as a prohibited action. |
+| `QUEUED` / `RUNNING` | The run has not reached a terminal result. |
+
+## System Architecture
+
+```text
+                         +----------------------+
+                         |  Browser / Operator  |
+                         +----------+-----------+
+                                    |
+                                    v
+                         +----------------------+
+                         | Next.js App Router   |
+                         | UI + protected APIs  |
+                         +---+-------+----------+
+                             |       |
+                 Cognito auth|       |agent/run/report operations
+                             v       v
+                       +-----+-------+------+
+                       | Amazon Cognito      |
+                       | DynamoDB             |
+                       | S3 reports          |
+                       +----------+-----------+
+                                  |
+                                  | enqueue verification
+                                  v
+                       +----------------------+
+                       | Amazon SQS            |
+                       +----------+-----------+
+                                  |
+                                  v
+                       +----------------------+
+                       | Test-runner Lambda    |
+                       | endpoint + evidence   |
+                       +----+------------+-----+
+                            |            |
+                HTTPS POST  |            | secrets when configured
+                            v            v
+                    +-----------+   +----------------+
+                    | Agent API |   | Secrets Manager|
+                    +-----------+   +----------------+
+```
+
+### Runtime Responsibilities
+
+- **Next.js:** renders the product, protects routes, validates requests, and coordinates agent/run/report operations.
+- **Cognito:** owns user identity and session tokens.
+- **DynamoDB:** stores agents, contracts, generated tests, runs, evidence, scores, and public-report metadata.
+- **S3:** stores report artifacts where configured.
+- **SQS:** separates a user request from long-running verification execution.
+- **Test-runner Lambda:** calls the agent endpoint, captures bounded evidence, evaluates results, and persists the run.
+- **Secrets Manager:** supplies endpoint credentials to the worker without putting secrets in contracts or reports.
+
+## User Flow
+
+```text
+[Sign up / Sign in]
+          |
+          v
+[Dashboard: KPIs and agent registry]
+          |
+          +--> [Create agent]
+          |          |
+          |          v
+          |   [Identity -> Contract -> Tests]
+          |          |
+          |          v
+          |   [Run verification]
+          |          |
+          +----------+
+                     v
+              [Agent dossier]
+                     |
+        +------------+-------------+
+        v                          v
+[Runs and evidence]          [Private report]
+                                      |
+                                      v
+                              [Public report link]
+```
+
+## Endpoint Contract
+
+The agent endpoint must accept a JSON POST request and return a JSON response. The exact fields can vary, but the endpoint must be stable enough for generated tests to exercise the contract.
+
+```http
+POST /run
+Content-Type: application/json
+Authorization: Bearer <optional-secret>
+```
+
+```json
+{
+  "input": "A generated verification scenario",
+  "test_id": "test-001",
+  "metadata": {
+    "agent_id": "agent-id",
+    "run_id": "run-id"
+  }
+}
+```
+
+The worker captures the response as evidence, applies HTTP/error and prohibited-action checks, and uses the semantic judge to compare the response with the expected behavior.
+
+## Repository Structure
+
+```text
+Agent-Proof/
+|-- src/
+|   |-- app/                  Next.js routes, pages, and API handlers
+|   |-- components/           Shared shell, tables, forms, reports, and UI
+|   |-- lib/                  Domain types, validation, auth, API clients
+|-- workers/
+|   `-- test-runner-worker/   SQS-triggered verification worker
+|-- fixtures/
+|   `-- agent-server/         Deterministic local agent for development
+|-- infra/
+|   `-- lib/                  AWS CDK application and infrastructure stack
+|-- public/                   Brand and landing-page assets
+|-- tasks/                    Delivery checklist and engineering lessons
+|-- amplify.yml               Amplify SSR build configuration
+|-- .env.example              Environment variable reference
+`-- package.json              Scripts and dependency definitions
 ```
 
 ## Requirements
 
-- Node.js 22 or newer
-- npm 10 or newer
-- An AWS profile with least-privilege development permissions for the configured account
-- An OpenAI project API key for model-backed contract/test generation
+- Node.js 20 or newer
+- npm
+- AWS credentials for deployed development or production resources
+- An OpenAI API key for test generation and semantic judgment
+- A Cognito user pool and app client for authenticated environments
 
-AWS and OpenAI credentials are intentionally not included in this repository. Production secrets belong in AWS-managed secret storage or the deployment environment.
+For local UI work, the deterministic fixture agent is sufficient. A complete AWS verification run requires a publicly reachable HTTPS endpoint because the worker blocks private and localhost addresses by default.
 
-## Local development
+## Local Development
 
-```powershell
-npm install
-npm run dev -- --hostname 127.0.0.1 -p 3000
+```bash
+npm ci
+cp .env.example .env.local
+```
 
-# In a second terminal, for local worker acceptance
+Start the fixture agent in one terminal:
+
+```bash
 npm run fixture:dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
+The fixture listens on `http://127.0.0.1:4010/run`. Include `malformed`, `critical`, `boundary`, or `timeout` in test input to exercise failure paths; other inputs produce a passing response.
 
-The primary product routes are `/dashboard`, `/agents/new`, `/agents/:id`, `/agents/:id/run`, `/agents/:id/report/:run`, `/verify/:publicId`, `/pricing`, and the Cognito-facing auth screens.
+Start Next.js in another terminal:
 
-## Environment variables
+```bash
+npm run dev -- --hostname 127.0.0.1 -p 3000
+```
 
-Copy `.env.example` to `.env.local` for local development. Keep `.env.local` untracked.
+Open `http://127.0.0.1:3000`. Use the local fixture for application and worker development only. It cannot be a production AWS worker target unless local endpoints are explicitly enabled for a controlled test.
 
-| Variable | Purpose | Required for |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | OpenAI project credential | contract/test generation |
-| `OPENAI_MODEL` | Approved OpenAI model name | contract/test generation |
-| `AWS_REGION` | AWS deployment region | AWS services |
-| `DODO_API_KEY` | Dodo server credential | payment operations |
-| `DODO_WEBHOOK_SECRET` | Dodo signature verification secret | payment webhooks |
-| `DODO_*_PRICE_ID` | Product price identifiers | checkout |
-| `AGENTPROOF_ENVIRONMENT` | Development or production secret namespace | server/worker |
+## Environment Variables
 
-Agent endpoint bearer tokens are accepted by the authenticated agent-creation route and written to AWS Secrets Manager. They are never returned to the browser or stored in report data.
+Copy `.env.example` to `.env.local` and provide values appropriate to the environment. Never commit `.env.local` or real credentials.
 
-Use AWS IAM Identity Center or an AWS profile for local AWS access. Do not paste credentials into source files, commit history, tickets, or chat.
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_APP_URL` | Canonical application URL used in links and reports. |
+| `AWS_REGION` | AWS region for application services. |
+| `AGENTPROOF_BETA_MODE` | Enables open-beta usage limits when set to `true`. |
+| `AGENTPROOF_BETA_MAX_AGENTS_PER_USER` | Maximum agents one beta account can register; defaults to `5`. |
+| `AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY` | Maximum verification runs per agent in a rolling 24-hour window; defaults to `10`. |
+| `AGENTPROOF_DYNAMODB_TABLE` | DynamoDB table name. |
+| `AGENTPROOF_REPORTS_BUCKET` | S3 bucket for report artifacts. |
+| `AGENTPROOF_VERIFICATION_QUEUE_URL` | SQS queue consumed by the worker. |
+| `NEXT_PUBLIC_COGNITO_USER_POOL_ID` | Browser Cognito user-pool identifier. |
+| `NEXT_PUBLIC_COGNITO_CLIENT_ID` | Browser Cognito app-client identifier. |
+| `COGNITO_USER_POOL_ID` / `COGNITO_CLIENT_ID` | Server-side Cognito identifiers. |
+| `OPENAI_API_KEY` | Test-generation and semantic-judge credential. |
+| `OPENAI_MODEL` | Model used by the worker and test generator. |
+| `DODO_API_KEY` | Server-side billing credential. |
+| `DODO_WEBHOOK_SECRET` | Signature secret for billing webhooks. |
+| `DODO_FREE_PRICE_ID` / `DODO_BUILDER_PRICE_ID` / `DODO_AGENCY_PRICE_ID` | Dodo plan identifiers. |
+| `SARVAM_API_KEY` | Optional speech/transcription integration credential. |
 
-## Quality checks
+## Quality Checks
 
-Run these before opening a pull request or deploying:
-
-```powershell
+```bash
 npm run typecheck
 npm test -- --run
 npm run build
-
-# Synthesize infrastructure without deploying
-npm run infra:synth
-npm run infra:synth:production
+npx eslint .
+git diff --check
 ```
 
-The UI should also be checked at desktop and mobile widths, with reduced motion enabled, across all primary routes.
+Also check the browser at `1280x720`, `1440x900`, and `390x844`. Confirm redirects, profile actions, agent creation, test generation, run polling, reports, and mobile navigation without horizontal overflow.
 
-## AWS deployment
+## AWS Deployment
 
-The development and production CDK stacks are separate. Deploy them with the existing IAM Identity Center profile:
+Infrastructure is defined in `infra/` using AWS CDK. Deploy separate development and production stacks so Cognito, DynamoDB, S3, SQS, and worker resources remain isolated.
 
-```powershell
-$env:AWS_PROFILE = "agentproof-dev"
-$env:AWS_REGION = "ap-south-1"
-npm run infra:deploy
-npm run infra:deploy:production
+1. Authenticate with the intended AWS SSO profile.
+2. Confirm the target account and region.
+3. Deploy or update the CDK stack.
+4. Copy stack outputs into the Amplify environment variables.
+5. Connect the repository branch to Amplify and wait for the production build.
+6. Configure the canonical HTTPS URL and Cognito callback/logout URLs.
+7. Configure Dodo webhooks only after the HTTPS URL is stable.
+8. Run the end-to-end acceptance checklist below.
+
+```bash
+cd infra
+npm ci
+npx cdk diff -c environment=dev
+npx cdk deploy -c environment=dev
 ```
 
-Seed each environment's OpenAI secret through AWS Secrets Manager. Do not put the value in CDK source or CloudFormation parameters.
+A successful infrastructure deployment does not prove that verification works. Application, worker, endpoint reachability, Cognito callbacks, queue permissions, and report access must be tested together.
 
-The remaining hosting step is to connect this GitHub repository in Amplify Console, attach the environment-specific SSR role output, configure the environment variables from the CDK outputs, and deploy the `main` branch. No public Amplify URL exists until that connection and first deployment are complete. Create the Amplify HTTPS domain before registering the Dodo webhook:
+## First Verification Run
 
-`https://<amplify-domain>/api/webhooks/dodo`
+1. Create a test user in Cognito and sign in through the deployed app.
+2. Register one agent with a real HTTPS `POST /run` endpoint.
+3. Describe one capability, one prohibited behavior, and one measurable success criterion.
+4. Generate the test matrix and inspect every generated test before running it.
+5. Start a verification run and wait for a terminal status.
+6. Open evidence for at least one passing and one failing test.
+7. Confirm the score and status match the observed evidence.
+8. Open the private report, copy its public link, and verify it signed out.
+9. Confirm the public report contains evidence but no endpoint credential, token, or private account data.
 
-Subscribe the webhook only to the payment and subscription events the application handles, and verify the Dodo signature before mutating billing state.
+## Open-Beta Test Matrix
 
-## Security
+Test at least four real agents or controlled bots before public launch. Use different failure modes, not four copies of the same happy path.
 
-- Never commit `.env.local`, API keys, AWS access keys, webhook secrets, or customer evidence.
-- Validate all endpoint inputs and webhook payloads at the server boundary.
-- Treat customer agent responses as untrusted data.
-- Redact internal URLs, raw metadata, and sensitive traces from public reports.
-- Use least-privilege IAM roles and separate development and production resources.
-- Keep asynchronous verification isolated from the request-serving process.
+| Test target | What to verify |
+| --- | --- |
+| Support agent | Correct answers, refusal of unsupported claims, and stable JSON shape. |
+| Booking or scheduling agent | Confirmation only after availability is checked; no fabricated booking. |
+| Lead-qualification agent | Required fields are collected and sensitive inputs are handled safely. |
+| Sales or recommendation agent | Recommendations follow constraints and do not invent availability. |
+| Intentionally flawed agent | Known violations produce explainable `FAIL` or `BLOCKED` evidence. |
+
+For each target, record endpoint version, contract, expected result, observed result, run ID, report URL, and defects. The intentionally flawed target is strongly recommended even when only four agents are available.
+
+## Open-Beta Launch Gate
+
+- Public sign-up, email confirmation, sign-in, expiry, profile, and sign-out work in the deployed environment.
+- Beta limits are enabled and a limit response is clear without exposing internal details.
+- A real HTTPS endpoint completes registration through public report.
+- At least four materially different agents have been tested.
+- At least one intentional failure produces expected, explainable evidence.
+- Secrets are stored in environment management or Secrets Manager.
+- Cognito callback URLs, Dodo webhook signatures, and public-report access are verified.
+- Queue and worker failures are visible in logs and alarms.
+- A rollback path is exercised or documented.
+- This README, `.env.example`, and the operator checklist match deployment.
+
+## Security Boundaries
+
+- Agent, run, and report queries are owner-scoped on the server.
+- Public reports use opaque identifiers and expose only intended report data.
+- Endpoint credentials are not sent to the browser or stored in public contracts.
+- The worker blocks private network targets by default to reduce SSRF risk.
+- Request and response bodies are bounded before persistence.
+- Secrets, tokens, and production environment files must never be committed.
 
 ## License
 
-AgentProof is released under the [MIT License](LICENSE).
+Proprietary. All rights reserved unless a separate license agreement states otherwise.

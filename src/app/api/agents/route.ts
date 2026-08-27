@@ -1,7 +1,8 @@
 import { createAgentSchema } from "@/lib/validation";
-import { handleApiError, jsonOk } from "@/lib/api";
+import { ApiError, handleApiError, jsonOk } from "@/lib/api";
 import { createAgent, listAgentsByOwner } from "@/lib/aws/dynamodb";
 import { requireUser } from "@/lib/auth/require-user";
+import { env } from "@/lib/env";
 
 export async function GET() {
   try {
@@ -16,6 +17,15 @@ export async function POST(request: Request) {
   try {
     const input = createAgentSchema.parse(await request.json());
     const user = await requireUser();
+    if (env.AGENTPROOF_BETA_MODE === "true") {
+      const existingAgents = await listAgentsByOwner(user.sub);
+      if (existingAgents.length >= env.AGENTPROOF_BETA_MAX_AGENTS_PER_USER) {
+        throw new ApiError(
+          429,
+          `Open beta limit reached. Each account can register up to ${env.AGENTPROOF_BETA_MAX_AGENTS_PER_USER} agents.`
+        );
+      }
+    }
 
     const agent = await createAgent({
       ownerId: user.sub,
