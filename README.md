@@ -226,6 +226,7 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | `NEXT_PUBLIC_COGNITO_CLIENT_ID` | Browser Cognito app-client identifier. |
 | `COGNITO_USER_POOL_ID` / `COGNITO_CLIENT_ID` | Server-side Cognito identifiers. |
 | `OPENAI_API_KEY` | Test-generation and semantic-judge credential. |
+| `OPENAI_SECRET_ARN` | Optional Secrets Manager ARN used by the SSR app instead of a direct API key. |
 | `OPENAI_MODEL` | Model used by the worker and test generator. |
 | `DODO_API_KEY` | Server-side billing credential. |
 | `DODO_WEBHOOK_SECRET` | Signature secret for billing webhooks. |
@@ -244,18 +245,26 @@ git diff --check
 
 Also check the browser at `1280x720`, `1440x900`, and `390x844`. Confirm redirects, profile actions, agent creation, test generation, run polling, reports, and mobile navigation without horizontal overflow.
 
+## Continuous Integration
+
+GitHub Actions runs the same application and infrastructure checks on pull requests and pushes to `main` through `.github/workflows/ci.yml`. The workflow uses Node.js 22, installs from the lockfile, and does not require AWS credentials or production secrets.
+
+Protect `main` in repository settings and require the `Quality and build` check before merging. Amplify should deploy only the protected `main` branch after the checks pass.
+
 ## AWS Deployment
 
 Infrastructure is defined in `infra/` using AWS CDK. Deploy separate development and production stacks so Cognito, DynamoDB, S3, SQS, and worker resources remain isolated.
 
-1. Authenticate with the intended AWS SSO profile.
+1. Authenticate with the intended AWS SSO profile. The local app and CDK commands require this; Amplify runtime does not.
 2. Confirm the target account and region.
-3. Deploy or update the CDK stack.
-4. Copy stack outputs into the Amplify environment variables.
-5. Connect the repository branch to Amplify and wait for the production build.
-6. Configure the canonical HTTPS URL and Cognito callback/logout URLs.
-7. Configure Dodo webhooks only after the HTTPS URL is stable.
-8. Run the end-to-end acceptance checklist below.
+3. Deploy or update the `AgentProof-production` CDK stack.
+4. Seed the OpenAI value into the production Secrets Manager secret output by the stack.
+5. Copy production stack outputs into the Amplify environment variables, including `OPENAI_SECRET_ARN`.
+6. Connect `Dineshkumar2006471/AgentProof` branch `main` to Amplify and wait for the production build.
+7. Set `NEXT_PUBLIC_APP_URL` to the generated Amplify HTTPS URL.
+8. Configure any applicable Cognito callback/logout URLs and rerun authentication smoke tests.
+9. Configure Dodo webhooks only after the HTTPS URL is stable.
+10. Run the end-to-end acceptance checklist below.
 
 ```bash
 cd infra
@@ -265,6 +274,8 @@ npx cdk deploy -c environment=dev
 ```
 
 A successful infrastructure deployment does not prove that verification works. Application, worker, endpoint reachability, Cognito callbacks, queue permissions, and report access must be tested together.
+
+Amplify provides the always-on public application URL. The local `3002` server is only a development process and can be stopped without affecting the deployed application.
 
 ## First Verification Run
 

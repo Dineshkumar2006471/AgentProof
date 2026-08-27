@@ -107,6 +107,19 @@
 - [ ] Add a stable public HTTPS endpoint pack and test the full flow with at least two cohort accounts.
 - [ ] Review CloudWatch queue, worker, OpenAI, and Cognito alarms before cohort onboarding.
 
+## Public Beta Deployment Execution
+
+- [x] Add GitHub Actions checks for typecheck, tests, lint, build, infrastructure synthesis, and diff whitespace.
+- [x] Configure Amplify build instructions to use Node.js 22.
+- [x] Formalize `OPENAI_SECRET_ARN` for production SSR secret retrieval.
+- [ ] Reauthenticate the configured AWS CLI profile and verify the target account.
+- [ ] Confirm or deploy the `AgentProof-production` CDK stack and seed the OpenAI secret.
+- [ ] Protect `main` with the GitHub Actions quality check and merge the release branch.
+- [ ] Connect `main` to Amplify Hosting and configure production environment variables.
+- [ ] Obtain and verify the generated Amplify HTTPS URL while the local server is stopped.
+- [ ] Complete production auth, verification, report, quota, monitoring, and rollback smoke tests.
+- [ ] Add the custom domain only after the Amplify URL passes the full acceptance gate.
+
 ## Account Identity Privacy
 
 - [x] Replace the authenticated sidebar workspace label with the signed-in user’s full name and email.
@@ -212,3 +225,9 @@
 - `AGENTPROOF_BETA_MODE=true` now enforces configurable limits of five agents per account and ten runs per agent in a rolling 24-hour window by default.
 - Limit failures return actionable `429` responses without exposing AWS, queue, or provider details.
 - The README, `.env.example`, checklist, and engineering lessons now use the open-beta policy consistently.
+
+### Public Beta Deployment Review
+
+- Repository-controlled CI/CD work is implemented; no AWS credentials are stored in GitHub Actions.
+- Amplify remains unconnected because the local AWS session is expired and the app must be connected through the AWS account/console.
+- The local server on port `3002` is not a production host and must not be treated as the always-on beta URL.
