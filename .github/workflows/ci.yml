@@ -1,0 +1,61 @@
+name: AgentProof CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agentproof-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      AGENTPROOF_ENVIRONMENT: ci
+      AGENTPROOF_BETA_MODE: "false"
+      AGENTPROOF_BETA_MAX_AGENTS_PER_USER: "5"
+      AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: "10"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Build application
+        run: npm run build
+
+      - name: Synthesize development infrastructure
+        run: npm run infra:synth
+
+      - name: Synthesize production infrastructure
+        run: npm run infra:synth:production
+
+      - name: Check patch whitespace
+        run: git diff --check

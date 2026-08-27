@@ -6,7 +6,7 @@ let clientPromise: Promise<OpenAI> | undefined;
 
 async function resolveApiKey() {
   if (env.OPENAI_API_KEY) return env.OPENAI_API_KEY;
-  const secretArn = process.env.OPENAI_SECRET_ARN;
+  const secretArn = env.OPENAI_SECRET_ARN;
   if (!secretArn) return requireEnv("OPENAI_API_KEY");
   const secret = await new SecretsManagerClient({ region: requireEnv("AWS_REGION") }).send(
     new GetSecretValueCommand({ SecretId: secretArn })
