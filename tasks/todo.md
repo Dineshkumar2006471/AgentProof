@@ -120,10 +120,10 @@
 - [x] Migrated the auth route guard from deprecated `middleware.ts` to the Next 16 `proxy.ts` convention.
 - [x] Re-authenticated the `agentproof-dev` AWS SSO profile and verified the expected assumed role.
 - [x] `npm run typecheck`, `npm test -- --run`, `npx eslint .`, `npm run build`, `npm run infra:synth`, and `npm run infra:synth:production` pass; lint has one non-blocking font warning.
-- [x] Local server is running at `http://127.0.0.1:3000`.
+- [x] Local server is running at `http://127.0.0.1:3002`.
 - [ ] Connect Amplify Hosting and obtain a public HTTPS URL.
 - [ ] Run the authenticated AWS end-to-end acceptance flow with a real endpoint.
-- [ ] Test at least three real agent endpoints across two users.
+- [ ] Test at least four real agent endpoints across two users, including one intentionally flawed endpoint.
 - [ ] Configure Dodo webhook only after the Amplify HTTPS URL exists.
 
 ## Visual Quality Repair
@@ -159,6 +159,15 @@
 - `npm run typecheck`, `npm test -- --run`, `npm run build`, `npx eslint .`, and `git diff --check` pass.
 - Local route smoke checks pass for `/`, `/pricing`, and `/auth/sign-in`; protected workspace routes return the expected unauthenticated `307` redirect.
 - The in-app browser could not reach the host-local dev server even though PowerShell receives `200` from `http://127.0.0.1:3002/`; authenticated screenshot checks therefore remain unavailable until the browser can access the local server and a valid session is present.
+
+### Closed-Beta Commit Review
+
+- Replaced the README with production setup guidance, plain-text architecture and user-flow diagrams, endpoint contract, deployment sequence, first-run checklist, closed-beta test matrix, and launch gate.
+- Excluded the local review recording and generated video frames from Git while retaining required source and public assets.
+- Committed the current beta-preparation state as `fdc1406` (`chore: prepare AgentProof for closed beta`).
+- Pushed branch `codex/production-repair` to `origin`.
+- Final verification: typecheck passed; 5 tests passed; production build passed; ESLint passed with one existing non-blocking custom-font warning; `git diff --cached --check` passed.
+- Remaining work is external to this repository: Amplify HTTPS deployment, Cognito production callbacks, real agent endpoint testing, monitoring/rollback review, and Dodo webhook configuration.
 
 ### Review
 
