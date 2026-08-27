@@ -259,6 +259,7 @@ body {
 .workspace-page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 28px; border-bottom: 1px solid var(--color-outline-variant); padding-bottom: 24px; }
 .workspace-page-header__copy { min-width: 0; }
 .workspace-page-header__copy .eyebrow { overflow-wrap: anywhere; }
+.workspace-page-header__copy .mono { overflow-wrap: anywhere; }
 .workspace-page-header__copy h1 { margin: 8px 0 0; color: var(--color-ink-graphite); font: 600 32px/1.15 var(--font-mono); letter-spacing: -.02em; }
 .workspace-page-header__copy p { max-width: 760px; margin-top: 10px; border-left: 2px solid var(--color-seal-indigo); padding-left: 12px; }
 .workspace-page-header__actions { display: flex; flex-wrap: wrap; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 10px; }
@@ -345,6 +346,7 @@ body {
 .dossier-layout, .run-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr); gap: 20px; align-items: start; min-width: 0; }
 .dossier-main, .dossier-side { display: grid; min-width: 0; gap: 16px; }
 .run-layout > *, .run-layout .workspace-panel { min-width: 0; max-width: 100%; }
+.dossier-layout > *, .dossier-layout .workspace-panel { min-width: 0; max-width: 100%; }
 .metadata-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
 .metadata-grid > div { border-top: 1px solid var(--color-outline-variant); padding: 16px 20px; }
 .metadata-grid > div:nth-child(odd) { border-right: 1px solid var(--color-outline-variant); }
@@ -373,6 +375,8 @@ body {
 .report-summary__score small { color: var(--color-on-surface-variant); font-size: 14px; }
 .report-kpi-grid .metric-card__value { min-width: 0; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
 .report-kpi-grid--private .metric-card:last-child .metric-card__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dossier-kpi-grid .metric-card__value { min-width: 0; font-size: 22px; line-height: 1.15; overflow-wrap: anywhere; }
+.dossier-side .embed-code { max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
 .report-kpis { margin: 0; border-top: 1px solid var(--color-outline-variant); }
 .evidence-detail { display: grid; gap: 10px; border-left: 2px solid var(--color-evidence-amber); padding-left: 14px; color: var(--color-on-surface-variant); font: 400 12px/1.5 var(--font-mono); }
 .evidence-detail code { overflow: auto; background: var(--color-surface-container-highest); padding: 10px; }
