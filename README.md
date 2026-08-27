@@ -13,6 +13,12 @@ This repository contains the Next.js web application, authenticated workspace, v
 5. **Store** raw evidence, test results, score, and verification status.
 6. **Share** a public report that does not expose private account data.
 
+## Beta Access Model
+
+AgentProof launches as an open beta for the target cohort. Anyone in the cohort can create an account through the public sign-up screen; there is no email allowlist or invite-only gate. Email confirmation remains required before sign-in.
+
+The beta is open with operational guardrails: each account can register a configurable number of agents, and each agent has a configurable daily verification-run limit. These limits protect the shared AWS queue and OpenAI budget while allowing real users to test the complete product flow. The beta defaults are five agents per account and ten runs per agent per 24 hours; set `AGENTPROOF_BETA_MODE=true` in the deployed environment to enforce them.
+
 ## How Verification Works
 
 ```text
@@ -210,6 +216,9 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Canonical application URL used in links and reports. |
 | `AWS_REGION` | AWS region for application services. |
+| `AGENTPROOF_BETA_MODE` | Enables open-beta usage limits when set to `true`. |
+| `AGENTPROOF_BETA_MAX_AGENTS_PER_USER` | Maximum agents one beta account can register; defaults to `5`. |
+| `AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY` | Maximum verification runs per agent in a rolling 24-hour window; defaults to `10`. |
 | `AGENTPROOF_DYNAMODB_TABLE` | DynamoDB table name. |
 | `AGENTPROOF_REPORTS_BUCKET` | S3 bucket for report artifacts. |
 | `AGENTPROOF_VERIFICATION_QUEUE_URL` | SQS queue consumed by the worker. |
@@ -269,7 +278,7 @@ A successful infrastructure deployment does not prove that verification works. A
 8. Open the private report, copy its public link, and verify it signed out.
 9. Confirm the public report contains evidence but no endpoint credential, token, or private account data.
 
-## Closed-Beta Test Matrix
+## Open-Beta Test Matrix
 
 Test at least four real agents or controlled bots before public launch. Use different failure modes, not four copies of the same happy path.
 
@@ -283,9 +292,10 @@ Test at least four real agents or controlled bots before public launch. Use diff
 
 For each target, record endpoint version, contract, expected result, observed result, run ID, report URL, and defects. The intentionally flawed target is strongly recommended even when only four agents are available.
 
-## Closed-Beta Launch Gate
+## Open-Beta Launch Gate
 
-- Sign-up, sign-in, expiry, profile, and sign-out work in the deployed environment.
+- Public sign-up, email confirmation, sign-in, expiry, profile, and sign-out work in the deployed environment.
+- Beta limits are enabled and a limit response is clear without exposing internal details.
 - A real HTTPS endpoint completes registration through public report.
 - At least four materially different agents have been tested.
 - At least one intentional failure produces expected, explainable evidence.

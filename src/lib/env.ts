@@ -4,6 +4,9 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   AWS_REGION: z.string().min(1).optional(),
   AGENTPROOF_ENVIRONMENT: z.string().min(1).default("development"),
+  AGENTPROOF_BETA_MODE: z.enum(["true", "false"]).default("false"),
+  AGENTPROOF_BETA_MAX_AGENTS_PER_USER: z.coerce.number().int().positive().default(5),
+  AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: z.coerce.number().int().positive().default(10),
   AGENTPROOF_DYNAMODB_TABLE: z.string().min(1).optional(),
   AGENTPROOF_REPORTS_BUCKET: z.string().min(1).optional(),
   AGENTPROOF_VERIFICATION_QUEUE_URL: z.string().min(1).optional(),
@@ -20,6 +23,9 @@ export const env = serverEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   AWS_REGION: process.env.AWS_REGION,
   AGENTPROOF_ENVIRONMENT: process.env.AGENTPROOF_ENVIRONMENT,
+  AGENTPROOF_BETA_MODE: process.env.AGENTPROOF_BETA_MODE,
+  AGENTPROOF_BETA_MAX_AGENTS_PER_USER: process.env.AGENTPROOF_BETA_MAX_AGENTS_PER_USER,
+  AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: process.env.AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY,
   AGENTPROOF_DYNAMODB_TABLE: process.env.AGENTPROOF_DYNAMODB_TABLE,
   AGENTPROOF_REPORTS_BUCKET: process.env.AGENTPROOF_REPORTS_BUCKET,
   AGENTPROOF_VERIFICATION_QUEUE_URL:
@@ -33,12 +39,12 @@ export const env = serverEnvSchema.parse({
   SARVAM_API_KEY: process.env.SARVAM_API_KEY
 });
 
-export function requireEnv(name: keyof typeof env) {
+export function requireEnv<T extends keyof typeof env>(name: T): NonNullable<(typeof env)[T]> {
   const value = env[name];
 
-  if (!value) {
+  if (value === undefined || value === "") {
     throw new Error(`Missing required environment variable: ${name}`);
   }
 
-  return value;
+  return value as NonNullable<(typeof env)[T]>;
 }

@@ -26,3 +26,4 @@
 - For internal product redesigns, use reference screenshots for information architecture and density, then keep data contracts and brand tokens unchanged; a shared shell and reusable table/KPI primitives prevent each route from becoming a separate form artifact.
 - Next 16 development assets can return `403` only when the browser host is absent from `allowedDevOrigins`; verify asset requests with the browser `Origin` header instead of relying on plain curl responses.
 - For mobile hero headlines, model each intended line as its own non-wrapping element and use an explicit mobile size/gap; relying on a text node plus a tiny spacer lets long monospace phrases wrap unpredictably.
+- When the product owner changes beta access from invite-only to cohort-wide access, update both the written launch policy and the server boundary; public signup still needs email confirmation and explicit usage limits.

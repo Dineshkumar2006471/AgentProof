@@ -75,7 +75,7 @@
 - [x] Upgrade worker infrastructure to Node.js 22 and add production safeguards.
 - [x] Deploy separate development and production AWS resources.
 - [ ] Connect Amplify Hosting and complete the public HTTPS deployment.
-- [ ] Run the closed-beta readiness gate with at least three real agent endpoints.
+- [ ] Run the open-beta readiness gate with at least three real agent endpoints.
 
 ## Production Readiness Slice
 
@@ -95,7 +95,17 @@
 - `npm run typecheck`, `npm test -- --run`, and `npm run build` pass.
 - Development and production CDK stacks are deployed in `ap-south-1`.
 - Amplify Hosting is not connected yet, so there is no public HTTPS URL and Dodo webhooks cannot be configured yet.
-- Closed-beta readiness still requires real external agent endpoints, production smoke tests, monitoring review, and rollback procedures.
+- Open-beta readiness still requires real external agent endpoints, production smoke tests, monitoring review, and rollback procedures.
+
+## Open Beta Guardrails
+
+- [x] Replace the invite-only/email-allowlist decision with public cohort sign-up and required email confirmation.
+- [x] Add configurable per-account agent limits for beta environments.
+- [x] Add configurable rolling 24-hour verification-run limits per agent.
+- [x] Document the open-beta access model, limits, and launch gate in the README and `.env.example`.
+- [ ] Enable beta limits in the deployed Amplify environment and confirm the expected `429` responses.
+- [ ] Add a stable public HTTPS endpoint pack and test the full flow with at least two cohort accounts.
+- [ ] Review CloudWatch queue, worker, OpenAI, and Cognito alarms before cohort onboarding.
 
 ## Landing Page Refinement Review
 
@@ -160,11 +170,11 @@
 - Local route smoke checks pass for `/`, `/pricing`, and `/auth/sign-in`; protected workspace routes return the expected unauthenticated `307` redirect.
 - The in-app browser could not reach the host-local dev server even though PowerShell receives `200` from `http://127.0.0.1:3002/`; authenticated screenshot checks therefore remain unavailable until the browser can access the local server and a valid session is present.
 
-### Closed-Beta Commit Review
+### Open-Beta Commit Review
 
-- Replaced the README with production setup guidance, plain-text architecture and user-flow diagrams, endpoint contract, deployment sequence, first-run checklist, closed-beta test matrix, and launch gate.
+- Replaced the README with production setup guidance, plain-text architecture and user-flow diagrams, endpoint contract, deployment sequence, first-run checklist, open-beta test matrix, guardrails, and launch gate.
 - Excluded the local review recording and generated video frames from Git while retaining required source and public assets.
-- Committed the current beta-preparation state as `fdc1406` (`chore: prepare AgentProof for closed beta`).
+- Recorded the existing beta-preparation commit as `fdc1406` (`chore: prepare AgentProof for closed beta`); the current launch policy is now open beta with guardrails.
 - Pushed branch `codex/production-repair` to `origin`.
 - Final verification: typecheck passed; 5 tests passed; production build passed; ESLint passed with one existing non-blocking custom-font warning; `git diff --cached --check` passed.
 - Remaining work is external to this repository: Amplify HTTPS deployment, Cognito production callbacks, real agent endpoint testing, monitoring/rollback review, and Dodo webhook configuration.
@@ -172,10 +182,17 @@
 ### Review
 
 - `npm run typecheck` passed.
-- `npm test -- --run` passed: 2 files, 5 tests.
+- `npm test -- --run` passed: 4 files, 8 tests, including the rolling open-beta run-window test.
 - `npm run build` passed and emitted the protected `/profile` route.
-- Targeted ESLint passed with no findings.
+- `npx eslint .` passed with one existing non-blocking `@next/next/no-page-custom-font` warning in `src/app/layout.tsx`.
 - `git diff --check` passed.
 - Local smoke checks: `/` and `/auth/sign-in` return 200; unauthenticated `/profile` redirects to sign-in; malformed/invalid auth input returns JSON 400/422 responses.
 - Browser verification at the requested mobile width found and fixed landing-page horizontal overflow; the local server is running at `http://localhost:3002`.
 - Real Cognito sign-in remains blocked until the expired `agentproof-dev` AWS SSO session is refreshed.
+
+### Open-Beta Guardrails Review
+
+- Public cohort signup remains enabled through Cognito self-signup; email confirmation is still required before sign-in.
+- `AGENTPROOF_BETA_MODE=true` now enforces configurable limits of five agents per account and ten runs per agent in a rolling 24-hour window by default.
+- Limit failures return actionable `429` responses without exposing AWS, queue, or provider details.
+- The README, `.env.example`, checklist, and engineering lessons now use the open-beta policy consistently.

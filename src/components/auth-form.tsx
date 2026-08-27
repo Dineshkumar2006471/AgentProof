@@ -100,6 +100,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       <div className="w-full max-w-md bg-white border border-[var(--color-outline-variant)] shadow-sm rounded-lg p-8">
         <div className="flex justify-center mb-10"><Link href="/"><Image src="/logo-agentproof.png" alt="AgentProof" width={140} height={34} priority style={{ mixBlendMode: "multiply" }} /></Link></div>
         <h1 className="text-2xl font-bold text-center mb-8 tracking-tighter uppercase">{title}</h1>
+        {currentMode === "sign-up" && !isConfirmation && <p className="mb-6 border-l-2 border-[var(--color-evidence-amber)] pl-3 text-sm text-[var(--color-on-surface-variant)]">Open beta access for the cohort. Confirm your email to start testing.</p>}
         {message && <p className="mb-6 border-l-2 border-[var(--color-pass-moss)] pl-3 text-sm text-[var(--color-pass-moss)]">{message}</p>}
         {error && <p role="alert" className="mb-6 border-l-2 border-[var(--color-fail-clay)] pl-3 text-sm text-[var(--color-fail-clay)]">{error}</p>}
         <form className="space-y-6" onSubmit={handleSubmit}>
