@@ -11,8 +11,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogoLockup } from "@/components/logo-lockup";
+
+type WorkspaceIdentity = {
+  name?: string;
+  username?: string;
+  email?: string;
+};
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -25,6 +31,22 @@ export function WorkspaceNav() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [identity, setIdentity] = useState<WorkspaceIdentity | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { user?: WorkspaceIdentity } | null) => {
+        if (mounted && payload?.user) setIdentity(payload.user);
+      })
+      .catch(() => undefined);
+    return () => { mounted = false; };
+  }, []);
+
+  const accountName = identity?.name?.trim() || identity?.username?.trim() || identity?.email?.split("@")[0] || "Account";
+  const accountEmail = identity?.email || (identity?.username?.includes("@") ? identity.username : "Signed-in account");
+  const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "A";
 
   function isActive(href: string) {
     if (href.includes("#")) return false;
@@ -77,8 +99,8 @@ export function WorkspaceNav() {
 
         <div className="workspace-sidebar__footer">
           <div className="workspace-account-summary">
-            <span className="workspace-avatar" aria-hidden="true">AP</span>
-            <span><strong>AgentProof</strong><small>Beta workspace</small></span>
+            <span className="workspace-avatar" aria-hidden="true">{initials}</span>
+            <span><strong>{accountName}</strong><small>{accountEmail}</small></span>
           </div>
           <button type="button" disabled={signingOut} onClick={signOut} className="workspace-signout">
             <LogOut size={16} />

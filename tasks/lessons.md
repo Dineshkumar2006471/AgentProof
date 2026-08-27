@@ -27,3 +27,4 @@
 - Next 16 development assets can return `403` only when the browser host is absent from `allowedDevOrigins`; verify asset requests with the browser `Origin` header instead of relying on plain curl responses.
 - For mobile hero headlines, model each intended line as its own non-wrapping element and use an explicit mobile size/gap; relying on a text node plus a tiny spacer lets long monospace phrases wrap unpredictably.
 - When the product owner changes beta access from invite-only to cohort-wide access, update both the written launch policy and the server boundary; public signup still needs email confirmation and explicit usage limits.
+- Never render Cognito `sub` values as a username or profile label; verified ID-token name/email claims are the user-facing identity, while the subject remains an internal ownership key.

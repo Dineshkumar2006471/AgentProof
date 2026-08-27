@@ -107,6 +107,21 @@
 - [ ] Add a stable public HTTPS endpoint pack and test the full flow with at least two cohort accounts.
 - [ ] Review CloudWatch queue, worker, OpenAI, and Cognito alarms before cohort onboarding.
 
+## Account Identity Privacy
+
+- [x] Replace the authenticated sidebar workspace label with the signed-in user’s full name and email.
+- [x] Read verified Cognito name and email claims for the authenticated workspace identity.
+- [x] Remove Cognito subject/user IDs from the profile UI and keep only user-facing account details.
+- [x] Uppercase profile page headings and action labels to match the internal platform hierarchy.
+- [ ] Verify the identity display with a newly created account and an existing account that has no name attribute.
+
+### Account Identity Privacy Review
+
+- The shared sidebar now resolves the signed-in display name and email from `/api/auth/me`; it no longer shows the AgentProof workspace name as the account identity.
+- The profile surface no longer renders the Cognito subject or labels it as username/email.
+- `npm run typecheck`, `npm test -- --run`, `npm run build`, `npx eslint .`, and `git diff --check` pass after the identity changes.
+- Authenticated visual verification still requires a valid Cognito session; the unauthenticated profile redirect remains verified locally.
+
 ## Landing Page Refinement Review
 
 - Rebuilt the hero around a calm message center with animated evidence lanes, grid traces, signal bars, and verification markers.
