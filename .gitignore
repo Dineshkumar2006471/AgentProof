@@ -1,5 +1,6 @@
 .next/
 .next.stale.*/
+.next.*
 node_modules/
 node_modules.partial/
 node_modules.partial.*/
@@ -22,3 +23,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Local review recordings and generated frame extraction
+*.mp4
+tasks/video_frames/

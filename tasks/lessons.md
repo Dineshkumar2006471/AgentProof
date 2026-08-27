@@ -16,3 +16,13 @@
 - Keep public resource identifiers, contract version identifiers, and DynamoDB sort keys separate; repository methods should translate between them.
 - Page protection should redirect to sign-in while API protection should return `401`; do not use a server-page API helper as the page authorization boundary.
 - A local endpoint fixture validates worker behavior, but Lambda cannot reach `localhost`; AWS acceptance must use an externally reachable staging endpoint.
+- Preserve approved auth markup while repairing behavior; shared client logic should wrap the existing visual shell instead of introducing a new auth layout.
+- For dynamic report routes, a successful build is not enough: validate the exact URL parameter name and distinguish a missing report (`404`) from unavailable AWS credentials (`503`).
+- When upgrading Next across a major version, update the flat ESLint config at the same time and rebuild from a clean generated directory before judging runtime regressions.
+- Keep fixed product navigation opaque; translucent shell backgrounds can let scrolled timeline content bleed through the header and make a correct layout look broken.
+- When a font choice is disputed visually, pair the theme token with an explicit utility on the affected headings so the intended family is inspectable and deterministic.
+- For beta auth debugging, verify the local AWS SSO session separately from Cognito route behavior; map expired provider credentials to an actionable message instead of the generic request failure.
+- Keep the authenticated shell account-oriented: the brand mark returns home, while workspace actions belong inside the dashboard rather than in every global header.
+- For internal product redesigns, use reference screenshots for information architecture and density, then keep data contracts and brand tokens unchanged; a shared shell and reusable table/KPI primitives prevent each route from becoming a separate form artifact.
+- Next 16 development assets can return `403` only when the browser host is absent from `allowedDevOrigins`; verify asset requests with the browser `Origin` header instead of relying on plain curl responses.
+- For mobile hero headlines, model each intended line as its own non-wrapping element and use an explicit mobile size/gap; relying on a text node plus a tiny spacer lets long monospace phrases wrap unpredictably.

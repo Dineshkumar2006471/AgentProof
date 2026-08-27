@@ -11,10 +11,10 @@ export function VerificationStamp({
 }: VerificationStampProps) {
   const strokeColor =
     status === "VERIFIED"
-      ? "var(--pass-moss)"
+      ? "var(--color-pass-moss)"
       : status === "CONDITIONAL"
-      ? "var(--evidence-amber)"
-      : "var(--fail-clay)";
+      ? "var(--color-evidence-amber)"
+      : "var(--color-fail-clay)";
 
   return (
     <div
@@ -69,7 +69,7 @@ export function VerificationStamp({
           y="20"
           textAnchor="middle"
           fill={strokeColor}
-          fontFamily="var(--font-mono)"
+          fontFamily="var(--font-data-label)"
           fontSize="6"
           fontWeight="700"
           letterSpacing="0.1em"
@@ -83,7 +83,7 @@ export function VerificationStamp({
           y="88"
           textAnchor="middle"
           fill={strokeColor}
-          fontFamily="var(--font-mono)"
+          fontFamily="var(--font-data-label)"
           fontSize="7"
           fontWeight="700"
           letterSpacing="0.08em"

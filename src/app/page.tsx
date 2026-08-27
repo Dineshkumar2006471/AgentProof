@@ -2,303 +2,182 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
-import { FlaskConical, Briefcase, Zap } from "lucide-react";
+import { HeroGradient } from "@/components/hero-gradient";
+import { SketchyPipelineTerminal } from "@/components/sketchy-pipeline-terminal";
+import { InteractiveCapabilities } from "@/components/interactive-capabilities";
+import { useState } from "react";
+import {
+  Menu,
+  ArrowRight,
+  FileText
+} from "lucide-react";
 
-/* ── Verification Steps ─────────────────────────────────────────────── */
-const howItWorksSteps = [
-  { num: "01", label: "Describe what your agent promises", body: "Builder describes capabilities, restrictions, and success criteria in plain language." },
-  { num: "02", label: "We generate real tests", body: "Happy path, edge cases, adversarial — not scripted demos, real verification scenarios." },
-  { num: "03", label: "We run them against your live agent", body: "Tests execute against your actual endpoint, not a fake transcript." },
-  { num: "04", label: "We collect evidence", body: "Every result traces to tool calls, state changes, and failure reason." },
-  { num: "05", label: "You get a Reliability Score", body: "Score plus VERIFIED, CONDITIONAL, FAILED, or BLOCKED." },
-];
-
-const tickerItems = [
-  "Forensic Ledger",
-  "Empirical Proof",
-  "No Hallucinations",
-  "Verifiable AI",
-  "Evidence-Based",
-  "Immutable Audit Trail",
-];
-
-/* ═══════════════════════════════════════════════════════════════
-   Landing Page Component
-   ═══════════════════════════════════════════════════════════════ */
-export default function LandingPage() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const tickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const scrollEl = scrollRef.current;
-    const navEl = navRef.current;
-
-    const onScroll = () => {
-      if (!scrollEl || !navEl) return;
-      if (scrollEl.scrollTop > 50) {
-        navEl.classList.add("scrolled");
-      } else {
-        navEl.classList.remove("scrolled");
-      }
-    };
-    scrollEl?.addEventListener("scroll", onScroll);
-
-    /* ── IntersectionObserver for reveals ────────────────────── */
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-          }
-        });
-      },
-      { root: scrollEl, rootMargin: "0px", threshold: 0.15 }
-    );
-
-    document.querySelectorAll(".reveal-element").forEach((el) => {
-      observer.observe(el);
-    });
-
-    /* ── Horizontal Scrolling Ticker (requestAnimationFrame) ── */
-    let tickerAnimationId: number;
-    let tickerPos = 0;
-    const animateTicker = () => {
-      if (tickerRef.current) {
-        tickerPos -= 0.5;
-        if (tickerPos <= -tickerRef.current.scrollWidth / 2) {
-          tickerPos = 0;
-        }
-        tickerRef.current.style.transform = `translateX(${tickerPos}px)`;
-      }
-      tickerAnimationId = requestAnimationFrame(animateTicker);
-    };
-    animateTicker();
-
-    return () => {
-      scrollEl?.removeEventListener("scroll", onScroll);
-      observer.disconnect();
-      cancelAnimationFrame(tickerAnimationId);
-    };
-  }, []);
-
+export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <main className="page-shell" style={{ overflow: "hidden" }}>
-      {/* ── Navigation (kept as-is per user request) ─────────── */}
-      <nav ref={navRef} className="main-nav" id="main-nav">
-        <div className="nav-inner">
-          <div className="nav-logo">
-            <Image
-              src="/logo-agentproof.png"
-              alt="AgentProof"
-              width={165}
-              height={40}
-              priority
-              style={{ mixBlendMode: "multiply" }}
-            />
+    <div className="overflow-x-clip bg-[var(--color-surface-bright)] min-h-screen font-body-md text-[var(--color-on-surface)] selection:bg-[var(--color-seal-indigo)] selection:text-white">
+      {/* 1. Navbar */}
+      <nav className="fixed top-0 w-full z-50 bg-[var(--color-surface-bright)]/80 backdrop-blur-md border-b border-[var(--color-outline-variant)]">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-4">
+          <Link href="/" aria-label="AgentProof home" className="flex items-center gap-2">
+            <Image src="/logo-agentproof.png" alt="AgentProof" width={140} height={34} priority style={{ mixBlendMode: "multiply" }} />
+          </Link>
+          <div className="hidden md:flex space-x-8">
+            <Link className="font-data-label text-sm text-[var(--color-seal-indigo)] font-bold transition-colors" href="#platform">Platform</Link>
+            <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">Evidence</Link>
+            <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#pricing">Pricing</Link>
           </div>
-          <div className="nav-links">
-            <Link href="#problem">Platform</Link>
-            <Link href="#how-it-works">Evidence</Link>
-            <Link href="#proof">Verification</Link>
-            <Link href="/pricing">Pricing</Link>
-          </div>
-          <div>
-            <Link href="/auth/sign-in" className="btn-primary">
-              Get started
-            </Link>
-          </div>
+          <Link href="/auth/sign-in" className="hidden md:flex bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+            Get started
+          </Link>
+          <button type="button" aria-label="Toggle navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)} className="md:hidden text-[var(--color-on-surface)]">
+            <Menu className="w-6 h-6" />
+          </button>
         </div>
+        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-in">Get started</Link></div></div>}
       </nav>
 
-      {/* ── Scroll Container (no snap) ───────────────────────── */}
-      <div ref={scrollRef} className="lp-scroll" id="story-scroll">
-
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            HERO — Clean cream bg, large sans-serif headline
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <section className="lp-hero">
-          <div className="lp-hero__inner">
-            <h1 className="lp-hero__headline">
-              You claim it works. Prove it
+      {/* 2. Hero Section */}
+      <header className="relative pt-32 pb-32 md:pt-48 md:pb-40 px-6 overflow-hidden">
+        <HeroGradient />
+        <div className="landing-hero-grid max-w-7xl mx-auto relative z-10 grid min-w-0 lg:grid-cols-2 gap-12 items-center">
+          <div className="landing-hero-copy min-w-0 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-[var(--color-seal-indigo)] font-data-label text-xs font-bold mb-8 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-pass-moss)] animate-pulse"></span>
+              AgentProof is now available in beta
+            </div>
+            <h1 className="landing-hero-title font-mono font-bold text-4xl md:text-5xl lg:text-[54px] text-[var(--color-ink-graphite)] mb-6 leading-none tracking-tighter uppercase">
+              <span className="block whitespace-nowrap">YOU CLAIM IT WORKS</span>
+              <span className="mt-3 block whitespace-nowrap text-[var(--color-accent-violet)]">PROVE IT</span>
             </h1>
-            <p className="lp-hero__sub reveal-element visible">
-              Convert agent promises into executable tests, run them against the real endpoint, and issue a report a client can understand.
+            <p className="font-mono text-lg md:text-xl text-[var(--color-on-surface-variant)] mb-10 max-w-lg leading-relaxed">
+              The verification infrastructure for AI agents. We convert natural-language promises into executable contracts, then prove whether your agent keeps them.
             </p>
-            <div className="lp-hero__cta reveal-element visible">
-              <Link href="/agents/new" className="lp-btn lp-btn--primary">
-                Get your first verification free →
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <Link href="/auth/sign-in" className="bg-[var(--color-accent-violet)] text-white font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-lg shadow-[var(--color-accent-violet)]/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                Verify an Agent
+                <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="#how-it-works" className="lp-btn lp-btn--outline">
-                See how it works
+              <Link href="/verify/demo-public-id" className="bg-white border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-sm hover:shadow-md hover:border-[var(--color-accent-violet)]/30 transition-all flex items-center justify-center gap-2">
+                View Sample Report
+                <FileText className="w-4 h-4" />
               </Link>
             </div>
           </div>
-        </section>
 
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            HORIZONTAL TICKER (continuous motion)
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="lp-ticker">
-          <div className="lp-ticker__track">
-            <div ref={tickerRef} className="lp-ticker__inner">
-              {/* Duplicate items for seamless loop */}
-              {[...tickerItems, ...tickerItems, ...tickerItems, ...tickerItems].map((text, i) => (
-                <span key={i} className="lp-ticker__item">
-                  {text}
-                  <span className="lp-ticker__dot">•</span>
-                </span>
-              ))}
+          {/* Pipeline Hero Graphic */}
+          <div className="landing-hero-art relative z-20 min-w-0">
+            <SketchyPipelineTerminal />
+          </div>
+        </div>
+      </header>
+
+      {/* 3. The Trust Ticker */}
+      <div id="evidence" className="ticker-wrap border-y border-[var(--color-ink-graphite)] bg-[var(--color-ink-graphite)] py-4 shadow-sm relative z-20">
+        <div className="ticker font-data-label text-sm text-[var(--color-outline-variant)] uppercase tracking-widest font-bold flex">
+          {/* Double content for seamless looping */}
+          <div className="flex shrink-0">
+            <span className="mx-8">AGENTPROOF VERIFIED</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">EMPIRICAL PROOF</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">NO FLUIDITY</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">DETERMINISTIC EVALUATION</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">FORENSIC AUTHORITY</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+          </div>
+          <div className="flex shrink-0">
+            <span className="mx-8">AGENTPROOF VERIFIED</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">EMPIRICAL PROOF</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">NO FLUIDITY</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">DETERMINISTIC EVALUATION</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+            <span className="mx-8">FORENSIC AUTHORITY</span><span className="text-[var(--color-hero-gradient-start)]">•</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Core Capabilities (Interactive Tabbed UI) */}
+      <section className="py-32 px-6 bg-[var(--color-paper-cream)] border-b border-[var(--color-outline-variant)]" id="platform">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">The Proof Engine</h2>
+            <p className="font-mono text-xl text-[var(--color-on-surface-variant)] max-w-2xl mx-auto">
+              Not just an LLM judging another LLM. We rely on a deterministic-first judgment hierarchy.
+            </p>
+          </div>
+
+          <InteractiveCapabilities />
+        </div>
+      </section>
+
+      {/* 5. Pricing */}
+      <section className="py-32 px-6 bg-[var(--color-surface-bright)]" id="pricing">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">Pay for verified deployments.</h2>
+            <p className="font-mono text-xl text-[var(--color-on-surface-variant)]">Simple, predictable pricing for agencies of all sizes.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 items-center">
+            {/* Free Tier */}
+            <div className="bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
+              <h3 className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] mb-4">FREE</h3>
+              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹0</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">forever</div>
+              <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 1 Agent</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 25 Tests per run</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Basic Reliability Score</li>
+              </ul>
+              <Link href="/auth/sign-up" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Get Started</Link>
+            </div>
+
+            {/* Builder Tier (Highlighted) */}
+            <div className="bg-white p-10 rounded-2xl shadow-xl border-2 border-[var(--color-ink-graphite)] relative transform md:-translate-y-4">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-ink-graphite)] text-white font-data-label text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Recommended</div>
+              <h3 className="font-data-label text-sm font-bold text-[var(--color-ink-graphite)] mb-4">BUILDER</h3>
+              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹999</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">per month</div>
+              <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Multiple Agents</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Unlimited Tests</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Public Verification Reports</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Regression Suite</li>
+              </ul>
+              <Link href="/pricing" className="w-full bg-[var(--color-ink-graphite)] text-white font-data-label text-sm font-bold py-3 rounded shadow-sm hover:bg-black transition-colors text-center block">Upgrade to Builder</Link>
+            </div>
+
+            {/* Agency Tier */}
+            <div className="bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
+              <h3 className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] mb-4">AGENCY</h3>
+              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹4,999</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">per month</div>
+              <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Everything in Builder</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> White-label Reports</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Client Portals</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Scheduled Re-verification</li>
+              </ul>
+              <a href="mailto:sales@agentproof.dev" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Contact Sales</a>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            WHAT IS AGENTPROOF — 3-card grid (Vesto style)
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <section className="lp-section" id="problem">
-          <div className="lp-container">
-            <div className="lp-section__header">
-              <p className="lp-overline reveal-element">What is AgentProof</p>
-              <h2 className="lp-section__title reveal-element">
-                Modern AI development cannot run on hallucinations.
-              </h2>
-              <p className="lp-section__desc reveal-element">
-                AgentProof is an empirical verification engine for AI agents. We help indie builders, small agencies, and freelancers turn ephemeral AI claims into concrete, undeniable evidence for their clients.
-              </p>
-            </div>
-
-            <div className="lp-cards">
-              <div className="lp-card reveal-element" style={{ "--stagger": 0 } as React.CSSProperties}>
-                <div className="lp-card__icon"><FlaskConical size={32} color="var(--seal-indigo)" /></div>
-                <h3 className="lp-card__title">For Indie Builders</h3>
-                <p className="lp-card__body">Deploy with confidence. Stop relying on manual prompt-testing and let our engine simulate thousands of edge cases to verify your agent&apos;s bounds.</p>
-              </div>
-              <div className="lp-card reveal-element" style={{ "--stagger": 1 } as React.CSSProperties}>
-                <div className="lp-card__icon"><Briefcase size={32} color="var(--seal-indigo)" /></div>
-                <h3 className="lp-card__title">For Small Agencies</h3>
-                <p className="lp-card__body">Prove your value. Hand your clients a verified AgentProof reliability score along with your deliverables to show your AI actually works.</p>
-              </div>
-              <div className="lp-card reveal-element" style={{ "--stagger": 2 } as React.CSSProperties}>
-                <div className="lp-card__icon"><Zap size={32} color="var(--seal-indigo)" /></div>
-                <h3 className="lp-card__title">For Freelancers</h3>
-                <p className="lp-card__body">Win more contracts. Stand out from the crowd by guaranteeing your autonomous solutions are empirically verified against edge cases and hallucinations.</p>
-              </div>
-            </div>
+      {/* 6. Footer */}
+      <footer className="bg-[var(--color-paper-cream)] border-t border-[var(--color-outline-variant)] py-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-2">
+            <Image src="/logo-agentproof.png" alt="AgentProof" width={140} height={34} style={{ mixBlendMode: "multiply" }} />
           </div>
-        </section>
-
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            HOW IT WORKS — Steps + CSS Diagram
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <section className="lp-section lp-section--white" id="how-it-works">
-          <div className="lp-container">
-            <div className="lp-split">
-              {/* Left: Steps */}
-              <div className="lp-split__left">
-                <p className="lp-overline reveal-element">The Workflow</p>
-                <h2 className="lp-section__title reveal-element" style={{ textAlign: "left", marginBottom: "1rem" }}>
-                  Five steps to verified AI
-                </h2>
-                <p className="lp-section__desc reveal-element" style={{ textAlign: "left", maxWidth: "none", marginBottom: "2.5rem" }}>
-                  Our architecture enforces a disciplined grid of verification, turning ephemeral claims into concrete evidence.
-                </p>
-                <div className="lp-steps reveal-element">
-                  {howItWorksSteps.map((step) => (
-                    <div className="lp-step" key={step.num}>
-                      <span className="lp-step__num">{step.num}</span>
-                      <div>
-                        <strong className="lp-step__label">{step.label}</strong>
-                        <p className="lp-step__body">{step.body}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: CSS Workflow Diagram */}
-              <div className="lp-split__right reveal-element">
-                <div className="lp-diagram">
-                  {/* Target */}
-                  <div className="lp-diagram__block lp-diagram__block--target">
-                    <span className="lp-diagram__label">Target System</span>
-                    <span className="lp-diagram__value">Customer Support AI</span>
-                  </div>
-                  <div className="lp-diagram__connector" />
-
-                  {/* Engine */}
-                  <div className="lp-diagram__block lp-diagram__block--engine">
-                    <span className="lp-diagram__engine-label">AgentProof Engine</span>
-                    <div className="lp-diagram__row">
-                      <span>Generating Adversarial Inputs</span>
-                      <span className="lp-diagram__status">[100%]</span>
-                    </div>
-                    <div className="lp-diagram__row">
-                      <span>Executing Tool Call Analysis</span>
-                      <span className="lp-diagram__status lp-diagram__status--active">[ACTIVE]</span>
-                    </div>
-                    <div className="lp-diagram__row">
-                      <span>Semantic Drift Check</span>
-                      <span className="lp-diagram__status">[WAITING]</span>
-                    </div>
-                  </div>
-                  <div className="lp-diagram__connector" />
-
-                  {/* Results */}
-                  <div className="lp-diagram__results">
-                    <div className="lp-diagram__result lp-diagram__result--score">
-                      <span className="lp-diagram__result-label">Reliability Score</span>
-                      <span className="lp-diagram__result-value">94.2%</span>
-                    </div>
-                    <div className="lp-diagram__result lp-diagram__result--hash">
-                      <span className="lp-diagram__result-label">Status</span>
-                      <span className="lp-diagram__result-value lp-diagram__result-value--small">VERIFIED ✓</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap justify-center gap-8">
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#platform">Platform</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">Evidence</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo-public-id">Verification</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/pricing">Pricing</Link>
           </div>
-        </section>
-
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            CTA Section (dark, like Vesto's green band)
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <section className="lp-cta" id="proof">
-          <div className="lp-container" style={{ textAlign: "center" }}>
-            <h2 className="lp-cta__headline reveal-element">
-              Ready to prove your agent works?
-            </h2>
-            <p className="lp-cta__sub reveal-element">
-              Join the builders and enterprises who demand verifiable AI.
-            </p>
-            <Link href="/agents/new" className="lp-btn lp-btn--white reveal-element">
-              Start your first verification — free →
-            </Link>
+          <div className="font-data-label text-xs text-[var(--color-on-surface-variant)] text-center md:text-right">
+            © 2026 AgentProof.<br/>Forensic Authority in AI Verification.
           </div>
-        </section>
-
-        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            FOOTER
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <footer className="lp-footer">
-          <div className="lp-container">
-            <div className="lp-footer__inner">
-              <Image
-                src="/logo-agentproof.png"
-                alt="AgentProof"
-                width={120}
-                height={28}
-                style={{ filter: "grayscale(1)", mixBlendMode: "multiply", opacity: 0.7 }}
-              />
-              <span className="lp-footer__copy">
-                © 2026 AgentProof. Forensic Authority in AI Verification.
-              </span>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </main>
+        </div>
+      </footer>
+    </div>
   );
 }

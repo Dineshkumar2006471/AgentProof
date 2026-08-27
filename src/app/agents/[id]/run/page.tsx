@@ -1,53 +1,74 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, Check, CircleAlert, CircleDashed, LoaderCircle, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { ActionButton, EvidenceLedger, EvidenceRow, PageHeader, ProofPanel, TerminalWindow } from "@/components/proof-ui";
+import { KpiGrid } from "@/components/proof-ui";
+import { StatusPill } from "@/components/status-pill";
+import type { TestRun, VerificationRun, VerificationStatusRecord } from "@/lib/domain";
 
-type RunPayload = {
-  run: { id: string; status: string; totalTests: number; completed: number; percent: number };
-  testResults: Array<{ id: string; testId: string; result: "pass" | "fail" | "critical_fail"; agentResponse?: string; judgedBy?: string }>;
-  status?: { publicId?: string; overallScore?: number; status?: string } | null;
-};
+type RunPayload = { run: VerificationRun & { completed: number; percent: number }; testResults: TestRun[]; status: VerificationStatusRecord | null };
 
-export default function RunPage() {
-  const searchParams = useSearchParams();
-  const runId = searchParams.get("run");
-  const [payload, setPayload] = useState<RunPayload | null>(null);
+async function loadRun(runId: string) {
+  const response = await fetch(`/api/runs/${encodeURIComponent(runId)}`, { cache: "no-store" });
+  const payload = (await response.json().catch(() => ({}))) as Partial<RunPayload> & { error?: string };
+  if (!response.ok) throw new Error(payload.error || "The verification run could not be loaded.");
+  return payload as RunPayload;
+}
+
+function resultState(result: TestRun): "PASS" | "WARN" | "CRITICAL" {
+  if (result.result === "pass") return "PASS";
+  if (result.result === "critical_fail") return "CRITICAL";
+  return "WARN";
+}
+
+function stateIcon(state: ReturnType<typeof resultState>) {
+  if (state === "PASS") return <Check size={15} />;
+  if (state === "CRITICAL") return <ShieldAlert size={15} />;
+  return <CircleAlert size={15} />;
+}
+
+export default function VerificationRun() {
+  return <Suspense fallback={<AppShell title="Verification run" section="LIVE EXECUTION"><div className="workspace-page"><div className="workspace-empty"><LoaderCircle className="animate-spin" /><span>Loading verification console...</span></div></div></AppShell>}><VerificationRunContent /></Suspense>;
+}
+
+function VerificationRunContent() {
+  const runId = useSearchParams().get("run");
+  const [data, setData] = useState<RunPayload | null>(null);
   const [error, setError] = useState("");
-  const [logs, setLogs] = useState<string[]>([]);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!runId) return;
-    let active = true;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const poll = async () => {
       try {
-        const response = await fetch("/api/runs/" + runId, { cache: "no-store" });
-        const next = await response.json() as RunPayload & { error?: string };
-        if (!response.ok) throw new Error(next.error || "Unable to load verification run.");
-        if (!active) return;
-        setPayload(next);
-        setLogs((current) => current.length ? current : ["Verification run accepted by SQS.", "Waiting for the worker to claim the run.", "Connector contract: POST /run"]);
-      } catch (reason) {
-        if (active) setError(reason instanceof Error ? reason.message : "Unable to load verification run.");
+        const next = await loadRun(runId);
+        if (cancelled) return;
+        setData(next);
+        setError("");
+        if (next.run.status === "QUEUED" || next.run.status === "RUNNING") timer = setTimeout(poll, 2000);
+      } catch (caught) {
+        if (!cancelled) setError(caught instanceof Error ? caught.message : "The verification run could not be loaded.");
       }
     };
     void poll();
-    const timer = window.setInterval(() => void poll(), 1500);
-    return () => { active = false; window.clearInterval(timer); };
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [runId]);
 
-  const results = useMemo(() => payload?.testResults ?? [], [payload?.testResults]);
-  const finished = payload?.run.status === "COMPLETED" || payload?.run.status === "FAILED";
-  const terminalLines = useMemo(() => {
-    const lines = [...logs];
-    results.slice(-6).forEach((result) => lines.push("[" + result.result.toUpperCase() + "] " + result.testId + " / judged by " + (result.judgedBy || "runner")));
-    if (finished) lines.push("---", "Run " + payload?.run.status + ".", payload?.status?.overallScore !== undefined ? "Reliability score: " + payload.status.overallScore + " / 100" : "No score was issued.");
-    return lines;
-  }, [finished, logs, payload, results]);
+  const run = data?.run;
+  const complete = run?.status === "COMPLETED" || run?.status === "FAILED";
 
-  if (!runId) return <AppShell><div className="product-page"><PageHeader eyebrow="LIVE EXECUTION" title="No run selected" description="Start a verification from an agent contract to open the live execution console." actions={<ActionButton href="/dashboard">Back to registry</ActionButton>} /></div></AppShell>;
-
-  return <AppShell><div className="product-page"><PageHeader eyebrow="LIVE EXECUTION" title={finished ? "Verification complete" : "Verification in progress"} description={"Run " + runId + " · " + (payload?.run.totalTests ?? 0) + " scenarios"} actions={finished && payload?.status?.publicId ? <ActionButton href={"/verify/" + payload.status.publicId}>View verification report</ActionButton> : <span className="status-line"><span>{payload?.run.status ?? "QUEUED"}</span><strong className="tone-pass">{payload?.run.percent ?? 0}%</strong></span>} />{error && <p className="mono tone-fail">{error}</p>}<ProofPanel dark className="run-progress"><div><span>SCENARIOS COMPLETED</span><strong>{payload?.run.completed ?? 0} / {payload?.run.totalTests ?? 0}</strong></div><div><span>RUN STATE</span><strong>{payload?.run.status ?? "QUEUED"}</strong></div><div className="run-progress__bar"><i style={{ width: (payload?.run.percent ?? 0) + "%" }} /></div></ProofPanel><div className="run-grid"><EvidenceLedger title="LIVE SCENARIO STREAM">{results.length ? results.map((result, index) => <EvidenceRow key={result.id} id={"T-" + String(index + 1).padStart(2, "0")} category="EXECUTION" title={result.testId} state={result.result === "critical_fail" ? "CRITICAL" : result.result === "fail" ? "WARN" : "PASS"} detail={result.agentResponse || "Response recorded in private evidence."} />) : <EvidenceRow id="QUEUE" category="RUNNER" title="Waiting for execution evidence" state="RUNNING" detail="The worker will insert one evidence row per test." />}</EvidenceLedger><TerminalWindow>{terminalLines.map((line, index) => <div key={line + "-" + index} className={line.includes("PASS") ? "terminal-pass" : line.includes("score") || line.includes("Run ") ? "terminal-highlight" : ""}>{line}</div>)}</TerminalWindow></div></div></AppShell>;
+  return <AppShell title="Verification run" section="LIVE EXECUTION"><div className="workspace-page">
+    <section className="run-header"><div className="flex flex-wrap items-start justify-between gap-5"><div><span className="eyebrow text-[var(--color-paper-cream)]">LIVE EXECUTION</span><h2 className="section-title mt-3 text-white">Verification run</h2><p className="run-header__meta mt-3">{run ? `${run.agentId} / v${run.agentVersion} / ${run.testSuiteVersion}` : runId ? `RUN / ${runId}` : "RUN / MISSING IDENTIFIER"}</p></div>{data?.status && <StatusPill status={data.status.status} />}</div><div className="mt-7"><div className="flex justify-between font-mono text-xs"><span>{run?.status ?? "LOADING"}</span><span>{run ? `${run.percent}% / ${run.completed} of ${run.totalTests}` : "--"}</span></div><div className="run-progress"><motion.div initial={{ width: 0 }} animate={{ width: `${run?.percent ?? 0}%` }} transition={{ duration: reducedMotion ? 0 : .35 }} /></div></div></section>
+    {error && <p role="alert" className="mb-5 border-l-2 border-[var(--color-fail-clay)] bg-[var(--color-fail-clay)]/5 px-4 py-3 text-sm text-[var(--color-fail-clay)]">{error}</p>}
+    {run && <KpiGrid metrics={[{ label: "Completed", value: `${run.completed}/${run.totalTests}`, detail: run.status }, { label: "Passed", value: String(run.passed), detail: "Assertions satisfied", tone: "pass" }, { label: "Failed", value: String(run.failed), detail: "Needs review", tone: run.failed ? "warn" : "default" }, { label: "Critical", value: String(run.criticalFailed), detail: run.criticalFailed ? "Blocking findings" : "No critical findings", tone: run.criticalFailed ? "fail" : "pass" }]} />}
+    {!error && !run && runId && <div className="workspace-empty workspace-panel"><LoaderCircle className="animate-spin text-[var(--color-seal-indigo)]" /><strong>Loading persisted run state...</strong></div>}
+    {!runId && <div className="workspace-empty workspace-panel"><strong>A run identifier is required to open this console.</strong><Link href="/dashboard" className="action-button action-button--quiet">Back to dashboard</Link></div>}
+    {run && <div className="run-layout"><section className="workspace-panel run-results"><div className="workspace-panel__title"><span className="eyebrow">TEST STREAM / {run.completed} RECORDED</span><h2 className="workspace-heading mt-2">Execution results</h2></div>{data?.testResults.length ? data.testResults.map((result) => { const state = resultState(result); return <article key={result.id} className={`run-result ${state === "CRITICAL" ? "border-l-2 border-l-[var(--color-fail-clay)] bg-[var(--color-fail-clay)]/5" : ""}`}><span className={state === "PASS" ? "text-[var(--color-pass-moss)]" : state === "CRITICAL" ? "text-[var(--color-fail-clay)]" : "text-[var(--color-evidence-amber)]"}>{stateIcon(state)}</span><div className="run-result__main"><strong className="mono">{result.testId}</strong><p className="body-md">{result.agentResponse || "No response recorded."}</p><span className="mono table-muted">JUDGED BY / {result.judgedBy} / {new Date(result.runAt).toLocaleTimeString("en-IN")}</span></div><span className={`run-result__status ${state === "PASS" ? "text-[var(--color-pass-moss)]" : state === "CRITICAL" ? "text-[var(--color-fail-clay)]" : "text-[var(--color-evidence-amber)]"}`}>{state}</span></article>; }) : <div className="workspace-empty"><strong>No test results persisted yet.</strong><span>The worker has not written a result for this run.</span></div>}</section><aside className="dossier-side"><section className="workspace-panel workspace-panel--dark text-white"><div className="workspace-panel__title border-white/15"><span className="eyebrow text-[var(--color-paper-cream)]">RUNNER EVIDENCE</span></div><pre className="max-h-[360px] overflow-auto p-5 font-mono text-xs leading-relaxed text-white/75">{data?.testResults.length ? data.testResults.map((item) => `[${item.result.toUpperCase()}] ${item.testId}\n${item.agentResponse || "No response"}`).join("\n\n") : "Waiting for Lambda output..."}</pre></section>{complete && <section className="workspace-panel p-5"><span className="eyebrow">EXECUTION COMPLETE</span><p className="body-md mt-3">Evidence has been recorded for this run.</p>{data.status?.publicId && <Link href={`/agents/${run.agentId}/report/${run.id}`} className="action-button action-button--primary mt-5">View report <ArrowRight size={15} /></Link>}</section>}</aside></div>}
+  </div></AppShell>;
 }
