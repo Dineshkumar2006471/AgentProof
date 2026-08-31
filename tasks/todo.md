@@ -105,16 +105,17 @@
 - [x] Document the open-beta access model, limits, and launch gate in the README and `.env.example`.
 - [ ] Enable beta limits in the deployed Amplify environment and confirm the expected `429` responses.
 - [ ] Add a stable public HTTPS endpoint pack and test the full flow with at least two cohort accounts.
-- [ ] Review CloudWatch queue, worker, OpenAI, and Cognito alarms before cohort onboarding.
+- [x] Review CloudWatch queue, worker, OpenAI, and Cognito alarms before cohort onboarding; configured alarms are currently `OK`.
 
 ## Public Beta Deployment Execution
 
 - [x] Add GitHub Actions checks for typecheck, tests, lint, build, infrastructure synthesis, and diff whitespace.
 - [x] Configure Amplify build instructions to use Node.js 22.
 - [x] Formalize `OPENAI_SECRET_ARN` for production SSR secret retrieval.
-- [ ] Reauthenticate the configured AWS CLI profile and verify the target account.
-- [ ] Confirm or deploy the `AgentProof-production` CDK stack and seed the OpenAI secret.
-- [ ] Protect `main` with the GitHub Actions quality check and merge the release branch.
+- [x] Reauthenticate the configured AWS CLI profile and verify the target account `899640267626` in `ap-south-1`.
+- [x] Confirm the `AgentProof-production` CDK stack is `UPDATE_COMPLETE` and confirm the production OpenAI secret has an `AWSCURRENT` version.
+- [x] Merge the release branch into `main`; GitHub Actions passed on merge commit `a099924`.
+- [ ] Protect `main` with the GitHub Actions `Quality and build` check; branch-protection configuration still requires repository settings access.
 - [ ] Connect `main` to Amplify Hosting and configure production environment variables.
 - [ ] Obtain and verify the generated Amplify HTTPS URL while the local server is stopped.
 - [ ] Complete production auth, verification, report, quota, monitoring, and rollback smoke tests.
@@ -229,5 +230,7 @@
 ### Public Beta Deployment Review
 
 - Repository-controlled CI/CD work is implemented; no AWS credentials are stored in GitHub Actions.
-- Amplify remains unconnected because the local AWS session is expired and the app must be connected through the AWS account/console.
+- GitHub PRs #1 and #2 are merged; `main` has a successful `Quality and build` run on merge commit `a099924`.
+- Production AWS stack, OpenAI secret metadata, worker, queue, and configured CloudWatch alarms are confirmed healthy in `ap-south-1`.
+- Amplify remains unconnected because `aws amplify list-apps` returns no apps; repository connection and environment configuration remain the next external deployment step.
 - The local server on port `3002` is not a production host and must not be treated as the always-on beta URL.
