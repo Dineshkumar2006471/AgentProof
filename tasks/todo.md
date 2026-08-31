@@ -260,7 +260,7 @@
 - [x] Refresh the `agentproof-dev` AWS SSO session and fast-forward the feature branch with `origin/main`.
 - [x] Discover that Dodo variables were app-level only and that Amplify rejects the reserved `AWS_REGION` prefix.
 - [x] Add runtime region fallback and prepare branch-level Dodo configuration synchronization.
-- [ ] Run the release gate, commit, push, merge the PR, and monitor the resulting Amplify deployment.
+- [x] Run the release gate, commit, push, merge PR #8, and monitor Amplify job 9.
 
 ## Live Amplify Deployment Audit
 
@@ -298,8 +298,8 @@
 - Next production build passed and includes `/icon.png`, `/api/billing/checkout`, and `/api/webhooks/dodo`.
 - Development and production CDK synthesis passed.
 - `git diff --check` passed.
-- Dodo test catalog contains Builder, Agency, and One Run products; Amplify stores their public product IDs with checkout disabled.
-- Dodo API and webhook signing keys remain required Amplify secrets before enabling checkout.
+- Dodo test catalog contains Builder, Agency, and One Run products; Amplify stores their public product IDs and test-mode configuration on the `main` branch.
+- Dodo API and webhook signing keys are present at branch scope without recording their values in the repository or logs.
 
 ## Checkout And Interaction Audit
 
@@ -307,7 +307,7 @@
 - [x] Route landing-page paid plan CTAs through plan-specific checkout review screens.
 - [x] Replace the landing sample-report placeholder link with a working, clearly labeled demo report route.
 - [x] Replace the dormant pipeline certificate button with a working demo-report link.
-- [ ] Enable Dodo checkout only after Amplify has the test API key, webhook key, and approved test-user IDs.
+- [x] Confirm Amplify has the test API key, webhook key, and approved test-user IDs without exposing their values.
 
 ### Checkout And Interaction Review
 
@@ -315,7 +315,16 @@
 - The screen remains intentionally gated until Dodo test credentials and approved test accounts are configured; it does not pretend that payment is live.
 - Landing sample-report links now resolve to `/verify/demo`, while live reports continue to use the owner-generated public IDs.
 - Final release-candidate audit passed in production mode: public routes, protected redirects, invalid-auth response, demo report, `/icon.png`, and `/favicon.ico` were verified locally.
-- Amplify job 7 for the previous merge completed successfully; this checkout and interaction correction is the final source change awaiting the next `main` deployment.
+- Amplify job 9 for merge commit `5848464` completed successfully after the final source change was merged to `main`.
+
+## Fresh Beta Deployment Review
+
+- GitHub Actions run 13 passed for PR #8.
+- Production CDK synthesis, typecheck, Vitest, ESLint, Next production build, and `git diff --check` passed.
+- `https://agent-proof.dev` and `https://www.agent-proof.dev` returned `200`; `/favicon.ico` and `/icon.png` returned `200`.
+- Protected pages returned `307` without a session; `/api/auth/me` returned `401`; unsigned Dodo webhook requests returned `401`.
+- The public landing response contained no `localhost` or `127.0.0.1` references.
+- A real authenticated Dodo checkout and payment webhook still require the owner to sign in with an approved test user and complete the provider-side test transaction.
 
 ## Mobile Workspace And Dodo Planning Pass
 
@@ -323,7 +332,7 @@
 - [x] Replace the drawer close X with a left-arrow control positioned on the drawer edge.
 - [x] Reduce mobile checkout heading and KPI value sizes without changing typography tokens or colors.
 - [x] Add the separate Dodo beta rollout and operator setup plan.
-- [ ] Rebuild Amplify only after owner review of the local UI changes.
+- [x] Rebuild Amplify after owner review of the local UI changes.
 
 ### Mobile Workspace And Dodo Planning Review
 
