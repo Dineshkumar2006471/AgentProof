@@ -32,3 +32,4 @@
 - Separate repository automation from account provisioning: CI can be implemented and verified without secrets, while AWS SSO, Amplify connection, branch protection, and production environment setup require explicit account access.
 - AWS SSO is a local deployment credential, not the beta user's login session; Cognito cookies and refresh tokens must be tested against the deployed host independently of the laptop's SSO lifetime.
 - Keep launch work focused on the core beta gate; defer domain-provider research and custom-domain setup until the Amplify-generated application URL passes production authentication and verification smoke tests.
+- Amplify app/branch environment variables are not automatically visible to Next.js SSR request handlers; write only the required non-secret configuration plus secret ARN pointers into `.env.production` during the build, while retrieving secret values at runtime through the IAM role.

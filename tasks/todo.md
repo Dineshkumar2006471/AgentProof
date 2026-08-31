@@ -237,14 +237,19 @@
 
 ## Live Amplify Deployment Audit
 
-- [ ] Confirm the deployed app, `main` branch, and latest build status.
-- [ ] Compare Amplify environment variables with the production CDK outputs.
-- [ ] Attach the production SSR compute role and correct production resource identifiers.
-- [ ] Rebuild the `main` branch and verify public pages and authentication behavior.
-- [ ] Run post-deploy checks for Cognito, DynamoDB, SQS, OpenAI secret access, reports, and local URL leakage.
+- [x] Confirm the deployed app, `main` branch, and latest build status.
+- [x] Compare Amplify environment variables with the production CDK outputs.
+- [x] Attach the production SSR compute role and correct production resource identifiers.
+- [x] Rebuild the `main` branch and verify public pages and authentication behavior.
+- [x] Run post-deploy checks for Cognito, DynamoDB, SQS, OpenAI secret access, reports, and local URL leakage.
 
 ### Live Audit Notes
 
 - Initial live inspection found the Amplify build succeeded, but the app-level environment variables omitted `AWS_REGION` and `NEXT_PUBLIC_APP_URL`.
 - The deployed app was pointed at the development Cognito pool/client and development verification queue despite using production DynamoDB/S3 resources.
 - Amplify had no `computeRoleArn`, so the deployed SSR runtime was not attached to the CDK-managed production role.
+- The first environment correction was stored at the Amplify app level, but the SSR runtime still did not receive it; the `main` branch variables were then set explicitly.
+- AWS Amplify requires selected variables to be written into `.env.production` during the Next.js build for SSR server routes to read them at request time.
+- Amplify jobs 3 and 4 passed; job 4 deployed merge commit `744fddb` with the SSR build fix.
+- Live sign-in with a deliberately invalid account now returns `401 Authentication failed`, while malformed input returns `422 Required`; the previous `500 Internal server error` is resolved.
+- Remaining launch work is real-user signup/confirmation and end-to-end verification against stable public agent endpoints.
