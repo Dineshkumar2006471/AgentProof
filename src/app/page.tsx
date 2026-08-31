@@ -62,7 +62,7 @@ export default function Home() {
                 Verify an Agent
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/verify/demo-public-id" className="bg-white border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-sm hover:shadow-md hover:border-[var(--color-accent-violet)]/30 transition-all flex items-center justify-center gap-2">
+              <Link href="/verify/demo" className="bg-white border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-sm hover:shadow-md hover:border-[var(--color-accent-violet)]/30 transition-all flex items-center justify-center gap-2">
                 View Sample Report
                 <FileText className="w-4 h-4" />
               </Link>
@@ -145,7 +145,7 @@ export default function Home() {
                 <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> PUBLIC VERIFICATION REPORTS</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> REGRESSION SUITE</li>
               </ul>
-              <Link href="/pricing" className="w-full bg-[var(--color-ink-graphite)] text-white font-data-label text-sm font-bold py-3 rounded shadow-sm hover:bg-black transition-colors text-center block">Upgrade to Builder</Link>
+              <Link href="/pricing/checkout?plan=builder" className="w-full bg-[var(--color-ink-graphite)] text-white font-data-label text-sm font-bold py-3 rounded shadow-sm hover:bg-black transition-colors text-center block">Upgrade to Builder</Link>
             </div>
 
             {/* Agency Tier */}
@@ -159,7 +159,7 @@ export default function Home() {
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> CLIENT PORTALS</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> SCHEDULED RE-VERIFICATION</li>
               </ul>
-              <a href="mailto:sales@agentproof.dev" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Contact Sales</a>
+              <Link href="/pricing/checkout?plan=agency" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Start Agency</Link>
             </div>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function Home() {
           <div className="flex flex-wrap justify-center gap-8">
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#platform">PLATFORM</Link>
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">EVIDENCE</Link>
-            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo-public-id">VERIFICATION</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo">VERIFICATION</Link>
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/pricing">PRICING</Link>
           </div>
           <div className="font-data-label text-xs text-[var(--color-on-surface-variant)] text-center md:text-right">

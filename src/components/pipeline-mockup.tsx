@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { FileText, FileCode, TestTube, Activity, BadgeCheck, ArrowRight, Play, CheckCircle2, ShieldAlert } from "lucide-react";
 
 export function PipelineMockup() {
@@ -175,9 +176,9 @@ export function PipelineMockup() {
                     <BadgeCheck className="w-16 h-16 text-[#27c93f] mx-auto mb-6 relative z-10" />
                     <h3 className="font-display-lg text-3xl font-bold text-white mb-2 relative z-10">Production Ready</h3>
                     <div className="font-mono text-sm text-[#27c93f] font-bold tracking-widest mb-6 relative z-10">VERIFICATION SCORE: A+</div>
-                    <button className="w-full bg-white text-black font-data-label text-sm font-bold px-6 py-3 rounded-md hover:bg-gray-200 transition-colors relative z-10">
+                    <Link href="/verify/demo" className="w-full bg-white text-black font-data-label text-sm font-bold px-6 py-3 rounded-md hover:bg-gray-200 transition-colors relative z-10 text-center">
                       View Public Certificate
-                    </button>
+                    </Link>
                   </div>
                 </div>
               )}

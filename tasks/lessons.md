@@ -36,3 +36,4 @@
 - Keep pricing display, billing API responses, and payment product mapping in one shared definition so a beta price change cannot drift across surfaces.
 - Treat a missing favicon as an independent live-asset failure; verify generated App Router icon routes directly instead of attributing every browser 404 to authentication.
 - Keep payment-provider SDKs out of the verification worker bundle; billing belongs at the SSR/API boundary and webhook fulfillment should use the existing transactional DynamoDB path.
+- Every conversion CTA must lead to an intentional state: preserve selected plan context, provide a structured review or clear gate, and never leave a placeholder link or static action in a visible product flow.

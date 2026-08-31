@@ -273,3 +273,19 @@
 - `git diff --check` passed.
 - Dodo test catalog contains Builder, Agency, and One Run products; Amplify stores their public product IDs with checkout disabled.
 - Dodo API and webhook signing keys remain required Amplify secrets before enabling checkout.
+
+## Checkout And Interaction Audit
+
+- [x] Add a structured authenticated checkout review screen that matches the internal billing workspace.
+- [x] Route landing-page paid plan CTAs through plan-specific checkout review screens.
+- [x] Replace the landing sample-report placeholder link with a working, clearly labeled demo report route.
+- [x] Replace the dormant pipeline certificate button with a working demo-report link.
+- [ ] Enable Dodo checkout only after Amplify has the test API key, webhook key, and approved test-user IDs.
+
+### Checkout And Interaction Review
+
+- Paid plan selection now preserves the selected plan through authentication and opens a structured order-review screen before hosted checkout.
+- The screen remains intentionally gated until Dodo test credentials and approved test accounts are configured; it does not pretend that payment is live.
+- Landing sample-report links now resolve to `/verify/demo`, while live reports continue to use the owner-generated public IDs.
+- Final release-candidate audit passed in production mode: public routes, protected redirects, invalid-auth response, demo report, `/icon.png`, and `/favicon.ico` were verified locally.
+- Amplify job 7 for the previous merge completed successfully; this checkout and interaction correction is the final source change awaiting the next `main` deployment.
