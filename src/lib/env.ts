@@ -15,8 +15,14 @@ const serverEnvSchema = z.object({
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_SECRET_ARN: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().min(1).default("gpt-4.1-mini"),
-  DODO_API_KEY: z.string().min(1).optional(),
-  DODO_WEBHOOK_SECRET: z.string().min(1).optional(),
+  DODO_PAYMENTS_API_KEY: z.string().min(1).optional(),
+  DODO_PAYMENTS_WEBHOOK_KEY: z.string().min(1).optional(),
+  DODO_PAYMENTS_ENVIRONMENT: z.enum(["test_mode", "live_mode"]).default("test_mode"),
+  DODO_CHECKOUT_ENABLED: z.enum(["true", "false"]).default("false"),
+  DODO_TEST_USER_IDS: z.string().optional(),
+  DODO_BUILDER_PRODUCT_ID: z.string().min(1).optional(),
+  DODO_AGENCY_PRODUCT_ID: z.string().min(1).optional(),
+  DODO_ONE_RUN_PRODUCT_ID: z.string().min(1).optional(),
   SARVAM_API_KEY: z.string().min(1).optional()
 });
 
@@ -36,8 +42,14 @@ export const env = serverEnvSchema.parse({
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_SECRET_ARN: process.env.OPENAI_SECRET_ARN,
   OPENAI_MODEL: process.env.OPENAI_MODEL,
-  DODO_API_KEY: process.env.DODO_API_KEY,
-  DODO_WEBHOOK_SECRET: process.env.DODO_WEBHOOK_SECRET,
+  DODO_PAYMENTS_API_KEY: process.env.DODO_PAYMENTS_API_KEY,
+  DODO_PAYMENTS_WEBHOOK_KEY: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
+  DODO_PAYMENTS_ENVIRONMENT: process.env.DODO_PAYMENTS_ENVIRONMENT,
+  DODO_CHECKOUT_ENABLED: process.env.DODO_CHECKOUT_ENABLED,
+  DODO_TEST_USER_IDS: process.env.DODO_TEST_USER_IDS,
+  DODO_BUILDER_PRODUCT_ID: process.env.DODO_BUILDER_PRODUCT_ID,
+  DODO_AGENCY_PRODUCT_ID: process.env.DODO_AGENCY_PRODUCT_ID,
+  DODO_ONE_RUN_PRODUCT_ID: process.env.DODO_ONE_RUN_PRODUCT_ID,
   SARVAM_API_KEY: process.env.SARVAM_API_KEY
 });
 

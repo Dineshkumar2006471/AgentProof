@@ -19,6 +19,7 @@ import type {
   VerificationTest
 } from "@/lib/domain";
 import { createEndpointSecret } from "@/lib/aws/secrets";
+import type { PricingPlanId } from "@/lib/pricing";
 
 let documentClient: DynamoDBDocumentClient | undefined;
 
@@ -331,4 +332,120 @@ export async function getPublicReport(publicId: string) {
     Limit: 1
   }));
   return (result.Items?.[0] ?? null) as VerificationStatusRecord | null;
+}
+
+type DodoWebhookEvent = {
+  type: string;
+  data?: unknown;
+};
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function planFromProductId(productId: string | undefined): Exclude<PricingPlanId, "free"> | undefined {
+  if (!productId) return undefined;
+  const productPlans = [
+    [process.env.DODO_BUILDER_PRODUCT_ID, "builder"],
+    [process.env.DODO_AGENCY_PRODUCT_ID, "agency"],
+    [process.env.DODO_ONE_RUN_PRODUCT_ID, "pay_per_verification"]
+  ] as const;
+  return productPlans.find(([configuredProductId]) => configuredProductId === productId)?.[1];
+}
+
+function eventDetails(event: DodoWebhookEvent) {
+  const data = objectValue(event.data);
+  const metadata = objectValue(data.metadata);
+  const customer = objectValue(data.customer);
+  const productCart = Array.isArray(data.product_cart) ? data.product_cart : [];
+  const firstProduct = objectValue(productCart[0]);
+  const productId = stringValue(data.product_id) ?? stringValue(firstProduct.product_id);
+  const metadataPlan = stringValue(metadata.plan);
+  const plan = metadataPlan === "builder" || metadataPlan === "agency" || metadataPlan === "pay_per_verification"
+    ? metadataPlan
+    : planFromProductId(productId);
+
+  return {
+    data,
+    ownerId: stringValue(metadata.agentproofUserId),
+    plan,
+    customerId: stringValue(customer.customer_id) ?? stringValue(data.customer_id),
+    subscriptionId: stringValue(data.subscription_id),
+    paymentId: stringValue(data.payment_id),
+    status: stringValue(data.status)
+  };
+}
+
+export async function applyDodoWebhook(webhookId: string, event: DodoWebhookEvent) {
+  const details = eventDetails(event);
+  const ownerId = details.ownerId;
+  const timestamp = now();
+  const webhookItem = {
+    PK: ownerId ? `USER#${ownerId}` : "DODO#UNMATCHED",
+    SK: `WEBHOOK#${webhookId}`,
+    entityType: "DodoWebhook",
+    webhookId,
+    eventType: event.type,
+    ownerId,
+    receivedAt: timestamp,
+    paymentId: details.paymentId,
+    subscriptionId: details.subscriptionId
+  };
+
+  const subscriptionEvents = new Set(["subscription.active", "subscription.renewed", "subscription.updated", "subscription.plan_changed"]);
+  const inactiveEvents = new Set(["subscription.cancelled", "subscription.expired", "subscription.failed", "subscription.on_hold"]);
+  const isOneRun = event.type === "payment.succeeded" && details.plan === "pay_per_verification";
+  const billingStatus = subscriptionEvents.has(event.type)
+    ? "active"
+    : inactiveEvents.has(event.type)
+      ? event.type.replace("subscription.", "")
+      : event.type === "payment.succeeded" ? "paid" : event.type;
+
+  const transactItems: Array<Record<string, unknown>> = [{
+    Put: {
+      TableName: tableName(),
+      Item: webhookItem,
+      ConditionExpression: "attribute_not_exists(PK)"
+    }
+  }];
+
+  if (ownerId) {
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${ownerId}`, SK: "BILLING#ACCOUNT" },
+        UpdateExpression: "SET #entityType = :entityType, #updatedAt = :updatedAt, #status = :status, #plan = :plan, #customerId = if_not_exists(#customerId, :customerId), #subscriptionId = if_not_exists(#subscriptionId, :subscriptionId) ADD #oneRunCredits :oneRunCredits",
+        ExpressionAttributeNames: {
+          "#entityType": "entityType",
+          "#updatedAt": "updatedAt",
+          "#status": "billingStatus",
+          "#plan": "plan",
+          "#customerId": "dodoCustomerId",
+          "#subscriptionId": "dodoSubscriptionId",
+          "#oneRunCredits": "oneRunCredits"
+        },
+        ExpressionAttributeValues: {
+          ":entityType": "BillingAccount",
+          ":updatedAt": timestamp,
+          ":status": billingStatus,
+          ":plan": details.plan ?? "free",
+          ":customerId": details.customerId ?? "",
+          ":subscriptionId": details.subscriptionId ?? "",
+          ":oneRunCredits": isOneRun ? 1 : 0
+        }
+      }
+    });
+  }
+
+  try {
+    await getDynamoDb().send(new TransactWriteCommand({ TransactItems: transactItems }));
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === "TransactionCanceledException") return false;
+    throw error;
+  }
 }

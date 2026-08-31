@@ -33,3 +33,6 @@
 - AWS SSO is a local deployment credential, not the beta user's login session; Cognito cookies and refresh tokens must be tested against the deployed host independently of the laptop's SSO lifetime.
 - Keep launch work focused on the core beta gate; defer domain-provider research and custom-domain setup until the Amplify-generated application URL passes production authentication and verification smoke tests.
 - Amplify app/branch environment variables are not automatically visible to Next.js SSR request handlers; write only the required non-secret configuration plus secret ARN pointers into `.env.production` during the build, while retrieving secret values at runtime through the IAM role.
+- Keep pricing display, billing API responses, and payment product mapping in one shared definition so a beta price change cannot drift across surfaces.
+- Treat a missing favicon as an independent live-asset failure; verify generated App Router icon routes directly instead of attributing every browser 404 to authentication.
+- Keep payment-provider SDKs out of the verification worker bundle; billing belongs at the SSR/API boundary and webhook fulfillment should use the existing transactional DynamoDB path.

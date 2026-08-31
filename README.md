@@ -225,12 +225,14 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | `NEXT_PUBLIC_COGNITO_USER_POOL_ID` | Browser Cognito user-pool identifier. |
 | `NEXT_PUBLIC_COGNITO_CLIENT_ID` | Browser Cognito app-client identifier. |
 | `COGNITO_USER_POOL_ID` / `COGNITO_CLIENT_ID` | Server-side Cognito identifiers. |
-| `OPENAI_API_KEY` | Test-generation and semantic-judge credential. |
+| `OPENAI_API_KEY` | Optional local-only test-generation credential. Production uses Secrets Manager. |
 | `OPENAI_SECRET_ARN` | Optional Secrets Manager ARN used by the SSR app instead of a direct API key. |
 | `OPENAI_MODEL` | Model used by the worker and test generator. |
-| `DODO_API_KEY` | Server-side billing credential. |
-| `DODO_WEBHOOK_SECRET` | Signature secret for billing webhooks. |
-| `DODO_FREE_PRICE_ID` / `DODO_BUILDER_PRICE_ID` / `DODO_AGENCY_PRICE_ID` | Dodo plan identifiers. |
+| `DODO_PAYMENTS_API_KEY` | Server-side Dodo test-mode billing credential. |
+| `DODO_PAYMENTS_WEBHOOK_KEY` | Server-side Dodo webhook signature key. |
+| `DODO_PAYMENTS_ENVIRONMENT` | Dodo environment; keep `test_mode` during beta validation. |
+| `DODO_CHECKOUT_ENABLED` / `DODO_TEST_USER_IDS` | Server-side gate for approved billing test accounts. |
+| `DODO_BUILDER_PRODUCT_ID` / `DODO_AGENCY_PRODUCT_ID` / `DODO_ONE_RUN_PRODUCT_ID` | Dodo product identifiers for the shared beta plans. |
 | `SARVAM_API_KEY` | Optional speech/transcription integration credential. |
 
 ## Quality Checks
@@ -261,10 +263,11 @@ Infrastructure is defined in `infra/` using AWS CDK. Deploy separate development
 4. Seed the OpenAI value into the production Secrets Manager secret output by the stack.
 5. Copy production stack outputs into the Amplify environment variables, including `OPENAI_SECRET_ARN`.
 6. Connect `Dineshkumar2006471/AgentProof` branch `main` to Amplify and wait for the production build.
-7. Set `NEXT_PUBLIC_APP_URL` to the generated Amplify HTTPS URL.
+7. Set `NEXT_PUBLIC_APP_URL` to the generated Amplify HTTPS URL, then to `https://agent-proof.dev` after custom-domain validation.
 8. Configure any applicable Cognito callback/logout URLs and rerun authentication smoke tests.
-9. Configure Dodo webhooks only after the HTTPS URL is stable.
-10. Run the end-to-end acceptance checklist below.
+9. Add `agent-proof.dev` in Amplify Domain Management and copy its exact DNS records into the registrar DNS panel.
+10. Configure Dodo test webhooks only after the custom HTTPS URL is stable.
+11. Run the end-to-end acceptance checklist below.
 
 ```bash
 cd infra
@@ -275,7 +278,11 @@ npx cdk deploy -c environment=dev
 
 A successful infrastructure deployment does not prove that verification works. Application, worker, endpoint reachability, Cognito callbacks, queue permissions, and report access must be tested together.
 
-Amplify provides the always-on public application URL. The local `3002` server is only a development process and can be stopped without affecting the deployed application.
+Amplify provides the always-on public application URL. The local `3002` server is only a development process and can be stopped without affecting the deployed application. The canonical beta URL is `https://agent-proof.dev`; retain the Amplify hostname as the rollback URL.
+
+### Dodo Test Billing
+
+Create the Builder, Agency, and One-run products in Dodo test mode using the shared beta prices of `₹199 / month`, `₹399 / month`, and `₹49`. Configure the webhook endpoint as `https://agent-proof.dev/api/webhooks/dodo` only after the custom domain is available. Checkout remains disabled for the cohort until approved Cognito test-user IDs are configured.
 
 ## First Verification Run
 

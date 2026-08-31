@@ -5,6 +5,7 @@ import Image from "next/image";
 import { HeroGradient } from "@/components/hero-gradient";
 import { SketchyPipelineTerminal } from "@/components/sketchy-pipeline-terminal";
 import { InteractiveCapabilities } from "@/components/interactive-capabilities";
+import { pricingPlans } from "@/lib/pricing";
 import { useState } from "react";
 import {
   Menu,
@@ -12,10 +13,13 @@ import {
   FileText
 } from "lucide-react";
 
+const builderPrice = pricingPlans.find((plan) => plan.id === "builder")?.price.replace(" / mo", "") ?? "₹199";
+const agencyPrice = pricingPlans.find((plan) => plan.id === "agency")?.price.replace(" / mo", "") ?? "₹399";
+
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className="overflow-x-clip bg-[var(--color-surface-bright)] min-h-screen font-body-md text-[var(--color-on-surface)] selection:bg-[var(--color-seal-indigo)] selection:text-white">
+    <div className="landing-page overflow-x-clip bg-[var(--color-surface-bright)] min-h-screen font-body-md text-[var(--color-on-surface)] selection:bg-[var(--color-seal-indigo)] selection:text-white">
       {/* 1. Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-[var(--color-surface-bright)]/80 backdrop-blur-md border-b border-[var(--color-outline-variant)]">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-4">
@@ -73,7 +77,7 @@ export default function Home() {
       </header>
 
       {/* 3. The Trust Ticker */}
-      <div id="evidence" className="ticker-wrap border-y border-[var(--color-ink-graphite)] bg-[var(--color-ink-graphite)] py-4 shadow-sm relative z-20">
+      <div id="evidence" className="landing-secondary ticker-wrap border-y border-[var(--color-ink-graphite)] bg-[var(--color-ink-graphite)] py-4 shadow-sm relative z-20">
         <div className="ticker font-data-label text-sm text-[var(--color-outline-variant)] uppercase tracking-widest font-bold flex">
           {/* Double content for seamless looping */}
           <div className="flex shrink-0">
@@ -94,12 +98,12 @@ export default function Home() {
       </div>
 
       {/* 4. Core Capabilities (Interactive Tabbed UI) */}
-      <section className="py-32 px-6 bg-[var(--color-paper-cream)] border-b border-[var(--color-outline-variant)]" id="platform">
+      <section className="landing-secondary py-32 px-6 bg-[var(--color-paper-cream)] border-b border-[var(--color-outline-variant)]" id="platform">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">The Proof Engine</h2>
+            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">THE PROOF ENGINE</h2>
             <p className="font-mono text-xl text-[var(--color-on-surface-variant)] max-w-2xl mx-auto">
-              Not just an LLM judging another LLM. We rely on a deterministic-first judgment hierarchy.
+              NOT JUST AN LLM JUDGING ANOTHER LLM. WE RELY ON A DETERMINISTIC-FIRST JUDGMENT HIERARCHY.
             </p>
           </div>
 
@@ -108,52 +112,52 @@ export default function Home() {
       </section>
 
       {/* 5. Pricing */}
-      <section className="py-32 px-6 bg-[var(--color-surface-bright)]" id="pricing">
+      <section className="landing-secondary py-32 px-6 bg-[var(--color-surface-bright)]" id="pricing">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">Pay for verified deployments.</h2>
-            <p className="font-mono text-xl text-[var(--color-on-surface-variant)]">Simple, predictable pricing for agencies of all sizes.</p>
+            <h2 className="font-plex-mono tracking-tighter font-bold text-3xl md:text-4xl text-[var(--color-ink-graphite)] mb-4">PAY FOR VERIFIED DEPLOYMENTS</h2>
+            <p className="font-mono text-xl text-[var(--color-on-surface-variant)]">SIMPLE, PREDICTABLE PRICING FOR BUILDERS AND AGENCIES.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Free Tier */}
-            <div className="bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
+            <div className="landing-plan-card bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
               <h3 className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] mb-4">FREE</h3>
               <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹0</div>
-              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">forever</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">FOREVER</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 1 Agent</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 25 Tests per run</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Basic Reliability Score</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 1 AGENT</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 25 TESTS PER RUN</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> BASIC RELIABILITY SCORE</li>
               </ul>
               <Link href="/auth/sign-up" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Get Started</Link>
             </div>
 
             {/* Builder Tier (Highlighted) */}
-            <div className="bg-white p-10 rounded-2xl shadow-xl border-2 border-[var(--color-ink-graphite)] relative transform md:-translate-y-4">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-ink-graphite)] text-white font-data-label text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Recommended</div>
+            <div className="landing-plan-card bg-white p-10 rounded-2xl shadow-xl border-2 border-[var(--color-ink-graphite)] relative transform md:-translate-y-4">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-ink-graphite)] text-white font-data-label text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">RECOMMENDED</div>
               <h3 className="font-data-label text-sm font-bold text-[var(--color-ink-graphite)] mb-4">BUILDER</h3>
-              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹999</div>
-              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">per month</div>
+              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">{builderPrice}</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">PER MONTH</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Multiple Agents</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Unlimited Tests</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Public Verification Reports</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> Regression Suite</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> MULTIPLE AGENTS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 200 TESTS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> PUBLIC VERIFICATION REPORTS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> REGRESSION SUITE</li>
               </ul>
               <Link href="/pricing" className="w-full bg-[var(--color-ink-graphite)] text-white font-data-label text-sm font-bold py-3 rounded shadow-sm hover:bg-black transition-colors text-center block">Upgrade to Builder</Link>
             </div>
 
             {/* Agency Tier */}
-            <div className="bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
+            <div className="landing-plan-card bg-white p-10 rounded-2xl shadow-sm border border-[var(--color-outline-variant)]">
               <h3 className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] mb-4">AGENCY</h3>
-              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">₹4,999</div>
-              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">per month</div>
+              <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">{agencyPrice}</div>
+              <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">PER MONTH</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Everything in Builder</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> White-label Reports</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Client Portals</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> Scheduled Re-verification</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> EVERYTHING IN BUILDER</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> WHITE-LABEL REPORTS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> CLIENT PORTALS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> SCHEDULED RE-VERIFICATION</li>
               </ul>
               <a href="mailto:sales@agentproof.dev" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Contact Sales</a>
             </div>
@@ -162,19 +166,19 @@ export default function Home() {
       </section>
 
       {/* 6. Footer */}
-      <footer className="bg-[var(--color-paper-cream)] border-t border-[var(--color-outline-variant)] py-12 px-6">
+      <footer className="landing-secondary bg-[var(--color-paper-cream)] border-t border-[var(--color-outline-variant)] py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
             <Image src="/logo-agentproof.png" alt="AgentProof" width={140} height={34} style={{ mixBlendMode: "multiply" }} />
           </div>
           <div className="flex flex-wrap justify-center gap-8">
-            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#platform">Platform</Link>
-            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">Evidence</Link>
-            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo-public-id">Verification</Link>
-            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/pricing">Pricing</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#platform">PLATFORM</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">EVIDENCE</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo-public-id">VERIFICATION</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/pricing">PRICING</Link>
           </div>
           <div className="font-data-label text-xs text-[var(--color-on-surface-variant)] text-center md:text-right">
-            © 2026 AgentProof.<br/>Forensic Authority in AI Verification.
+            © 2026 AGENTPROOF.<br/>FORENSIC AUTHORITY IN AI VERIFICATION.
           </div>
         </div>
       </footer>
