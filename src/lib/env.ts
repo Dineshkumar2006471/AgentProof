@@ -62,3 +62,7 @@ export function requireEnv<T extends keyof typeof env>(name: T): NonNullable<(ty
 
   return value as NonNullable<(typeof env)[T]>;
 }
+
+export function awsRegion() {
+  return env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "ap-south-1";
+}

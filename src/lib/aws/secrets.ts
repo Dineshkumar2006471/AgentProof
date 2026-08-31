@@ -3,12 +3,12 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient
 } from "@aws-sdk/client-secrets-manager";
-import { requireEnv } from "@/lib/env";
+import { awsRegion, requireEnv } from "@/lib/env";
 
 let client: SecretsManagerClient | undefined;
 
 function getClient() {
-  client ??= new SecretsManagerClient({ region: requireEnv("AWS_REGION") });
+  client ??= new SecretsManagerClient({ region: awsRegion() });
   return client;
 }
 

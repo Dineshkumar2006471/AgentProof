@@ -127,7 +127,7 @@ export default function Home() {
               <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">FOREVER</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 1 AGENT</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 25 TESTS PER RUN</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 5 TESTS PER RUN</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> BASIC RELIABILITY SCORE</li>
               </ul>
               <Link href="/auth/sign-up" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Get Started</Link>
@@ -141,7 +141,7 @@ export default function Home() {
               <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">PER MONTH</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
                 <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> MULTIPLE AGENTS</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 200 TESTS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 25 TESTS PER MONTH</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> PUBLIC VERIFICATION REPORTS</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> REGRESSION SUITE</li>
               </ul>

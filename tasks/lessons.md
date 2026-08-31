@@ -37,3 +37,7 @@
 - Treat a missing favicon as an independent live-asset failure; verify generated App Router icon routes directly instead of attributing every browser 404 to authentication.
 - Keep payment-provider SDKs out of the verification worker bundle; billing belongs at the SSR/API boundary and webhook fulfillment should use the existing transactional DynamoDB path.
 - Every conversion CTA must lead to an intentional state: preserve selected plan context, provide a structured review or clear gate, and never leave a placeholder link or static action in a visible product flow.
+- Treat mobile shell controls as product navigation: keep the brand unobstructed, place drawer dismissal inside the drawer, and use a directional close affordance instead of replacing the header with an ambiguous icon.
+- Keep localhost Cognito authentication independent of the laptop's AWS SSO cache by using the public app-client auth endpoint; AWS credentials remain necessary for local data-plane calls and deployment only.
+- Keep commercial quotas conservative and shared across every pricing surface; never use an unlimited plan or large placeholder allowance in a small beta without an explicit capacity decision.
+- Amplify reserves user variables beginning with `AWS`; use the runtime region when supplied and a single-region application fallback instead of attempting to configure `AWS_REGION` as a branch variable.

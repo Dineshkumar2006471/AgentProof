@@ -7,7 +7,7 @@ import {
   LogOut,
   Menu,
   Settings2,
-  X
+  ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,11 +65,10 @@ export function WorkspaceNav() {
 
   return (
     <>
-      <button type="button" className="workspace-mobile-toggle" aria-label={open ? "Close workspace navigation" : "Open workspace navigation"} aria-expanded={open} onClick={() => setOpen((current) => !current)}>
-        {open ? <X size={19} /> : <Menu size={19} />}
-      </button>
+      {!open && <button type="button" className="workspace-mobile-toggle" aria-label="Open workspace navigation" aria-expanded={false} onClick={() => setOpen(true)}><Menu size={19} /></button>}
       {open && <button type="button" aria-label="Close workspace navigation" className="workspace-nav-overlay" onClick={() => setOpen(false)} />}
       <aside className={`workspace-sidebar ${open ? "is-open" : ""}`}>
+        <button type="button" className="workspace-sidebar__close" aria-label="Close workspace navigation" onClick={() => setOpen(false)}><ArrowLeft size={18} /></button>
         <Link href="/" aria-label="AgentProof home" className="workspace-sidebar__brand" onClick={() => setOpen(false)}>
           <LogoLockup compact />
         </Link>

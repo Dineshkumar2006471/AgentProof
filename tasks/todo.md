@@ -235,6 +235,33 @@
 - Amplify remains unconnected because `aws amplify list-apps` returns no apps; repository connection and environment configuration remain the next external deployment step.
 - The local server on port `3002` is not a production host and must not be treated as the always-on beta URL.
 
+## Local Cognito Authentication Repair
+
+- [x] Reproduce the localhost response with a deliberately invalid account: Cognito returns structured `401 Authentication failed.`
+- [x] Verify the local `agentproof-dev` SSO profile and development pool configuration.
+- [x] Remove the unnecessary AWS SDK credential dependency from Cognito auth API calls.
+- [x] Preserve HTTP-only session cookies, JWT verification, refresh, sign-out, and existing route behavior.
+- [x] Confirm localhost auth reaches Cognito while the AWS SSO cache is expired.
+
+### Review
+
+- Root cause: the local auth transport used the AWS SDK, so it depended on the laptop's expiring SSO cache. A Cognito `401` remains an account, password, pool, or confirmation problem and is intentionally not converted into a success or infrastructure error.
+- Local development uses the development Cognito pool. A user created only through the deployed production URL must be created and confirmed separately in the local development pool, or the local environment must be deliberately configured as a complete production-like environment.
+- Typecheck, Vitest, ESLint, `git diff --check`, and a live localhost invalid-login request passed after the repair.
+
+## Pricing And Account Menu Correction
+
+- [x] Reduce shared beta quotas to 5 free tests per run, 25 Builder tests per month, and 100 Agency tests per month.
+- [x] Replace the generic profile-menu workspace label with the signed-in user's verified full name.
+- [x] Add regression coverage for the conservative quota definitions.
+
+## Fresh Beta Deployment
+
+- [x] Refresh the `agentproof-dev` AWS SSO session and fast-forward the feature branch with `origin/main`.
+- [x] Discover that Dodo variables were app-level only and that Amplify rejects the reserved `AWS_REGION` prefix.
+- [x] Add runtime region fallback and prepare branch-level Dodo configuration synchronization.
+- [ ] Run the release gate, commit, push, merge the PR, and monitor the resulting Amplify deployment.
+
 ## Live Amplify Deployment Audit
 
 - [x] Confirm the deployed app, `main` branch, and latest build status.
@@ -289,3 +316,17 @@
 - Landing sample-report links now resolve to `/verify/demo`, while live reports continue to use the owner-generated public IDs.
 - Final release-candidate audit passed in production mode: public routes, protected redirects, invalid-auth response, demo report, `/icon.png`, and `/favicon.ico` were verified locally.
 - Amplify job 7 for the previous merge completed successfully; this checkout and interaction correction is the final source change awaiting the next `main` deployment.
+
+## Mobile Workspace And Dodo Planning Pass
+
+- [x] Remove the AP shortcut tile from the mobile workspace top bar.
+- [x] Replace the drawer close X with a left-arrow control positioned on the drawer edge.
+- [x] Reduce mobile checkout heading and KPI value sizes without changing typography tokens or colors.
+- [x] Add the separate Dodo beta rollout and operator setup plan.
+- [ ] Rebuild Amplify only after owner review of the local UI changes.
+
+### Mobile Workspace And Dodo Planning Review
+
+- Local `npm run typecheck`, `npm test -- --run` (12 tests), `npx eslint .`, `npm run build`, and `git diff --check` pass.
+- Local route checks confirm pricing and demo-report pages load, while protected checkout still redirects unauthenticated users as expected.
+- The local preview is available at `http://127.0.0.1:3002`; no commit, push, or redeploy was performed for this pass.

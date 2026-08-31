@@ -1,10 +1,10 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { requireEnv } from "@/lib/env";
+import { awsRegion, requireEnv } from "@/lib/env";
 
 let client: S3Client | undefined;
 
 function getClient() {
-  client ??= new S3Client({ region: requireEnv("AWS_REGION") });
+  client ??= new S3Client({ region: awsRegion() });
   return client;
 }
 

@@ -5,13 +5,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+type ProfileIdentity = {
+  name?: string;
+  username?: string;
+  email?: string;
+};
+
 export function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [identity, setIdentity] = useState<ProfileIdentity | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { user?: ProfileIdentity } | null) => {
+        if (mounted && payload?.user) setIdentity(payload.user);
+      })
+      .catch(() => undefined);
+
     function closeOnOutsideClick(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) setOpen(false);
     }
@@ -23,10 +39,13 @@ export function ProfileMenu() {
     document.addEventListener("mousedown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
     return () => {
+      mounted = false;
       document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
+
+  const accountName = identity?.name?.trim() || identity?.email?.split("@")[0]?.trim() || identity?.username?.trim() || "Account";
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -55,7 +74,7 @@ export function ProfileMenu() {
         <div role="menu" className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-52 border border-[var(--color-ink-graphite)] bg-[var(--color-paper-cream)] p-2 shadow-[4px_4px_0_var(--color-ink-graphite)]">
           <div className="border-b border-[var(--color-outline-variant)] px-3 py-2">
             <span className="eyebrow">ACCOUNT</span>
-            <p className="mono mt-1 text-[var(--color-on-surface-variant)]">Signed-in workspace</p>
+            <p className="mono mt-1 truncate text-[var(--color-on-surface-variant)]" title={accountName}>{accountName}</p>
           </div>
           <Link role="menuitem" href="/profile" onClick={() => setOpen(false)} className="mt-2 block px-3 py-2 font-data-label text-xs uppercase text-[var(--color-ink-graphite)] hover:bg-[var(--color-surface-container)] hover:text-[var(--color-seal-indigo)]">
             Profile

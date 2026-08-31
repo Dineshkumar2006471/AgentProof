@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ProfileMenu } from "@/components/profile-menu";
 import { WorkspaceNav } from "@/components/workspace-nav";
 
@@ -15,7 +14,6 @@ export function AppShell({ children, title = "Workspace", section = "AGENTPROOF"
       <div className="workspace-main">
         <header className="workspace-topbar">
           <div className="workspace-topbar__context">
-            <Link href="/" className="workspace-topbar__mobile-brand" aria-label="AgentProof home">AP</Link>
             <div><span className="eyebrow">{section}</span><h1>{title}</h1></div>
           </div>
           <div className="workspace-topbar__actions">
