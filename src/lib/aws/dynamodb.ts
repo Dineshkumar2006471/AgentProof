@@ -7,7 +7,7 @@ import {
   TransactWriteCommand,
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
-import { requireEnv } from "@/lib/env";
+import { awsRegion, requireEnv } from "@/lib/env";
 import type {
   Agent,
   AgentContract,
@@ -26,7 +26,7 @@ let documentClient: DynamoDBDocumentClient | undefined;
 export function getDynamoDb() {
   if (!documentClient) {
     documentClient = DynamoDBDocumentClient.from(
-      new DynamoDBClient({ region: requireEnv("AWS_REGION") })
+      new DynamoDBClient({ region: awsRegion() })
     );
   }
   return documentClient;

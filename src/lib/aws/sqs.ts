@@ -1,10 +1,10 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
-import { requireEnv } from "@/lib/env";
+import { awsRegion, requireEnv } from "@/lib/env";
 
 let client: SQSClient | undefined;
 
 export function getSqs() {
-  client ??= new SQSClient({ region: requireEnv("AWS_REGION") });
+  client ??= new SQSClient({ region: awsRegion() });
   return client;
 }
 

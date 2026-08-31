@@ -1,4 +1,4 @@
-import { env, requireEnv } from "@/lib/env";
+import { awsRegion, env, requireEnv } from "@/lib/env";
 import OpenAI from "openai";
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 
@@ -8,7 +8,7 @@ async function resolveApiKey() {
   if (env.OPENAI_API_KEY) return env.OPENAI_API_KEY;
   const secretArn = env.OPENAI_SECRET_ARN;
   if (!secretArn) return requireEnv("OPENAI_API_KEY");
-  const secret = await new SecretsManagerClient({ region: requireEnv("AWS_REGION") }).send(
+  const secret = await new SecretsManagerClient({ region: awsRegion() }).send(
     new GetSecretValueCommand({ SecretId: secretArn })
   );
   const value = secret.SecretString?.trim();

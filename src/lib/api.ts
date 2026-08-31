@@ -55,6 +55,9 @@ export function handleApiError(error: unknown) {
     if (["CredentialsProviderError", "ExpiredTokenException", "UnrecognizedClientException", "InvalidClientTokenId"].includes(errorName)) {
       return jsonError("AWS authentication is unavailable. Re-authenticate the development SSO session.", 503);
     }
+    if (errorName === "CognitoServiceError") {
+      return jsonError("Cognito authentication is temporarily unavailable. Try again shortly.", 503);
+    }
     if (["NotAuthorizedException", "UserNotFoundException", "AccessDeniedException"].includes(errorName)) {
       return jsonError("Authentication failed.", 401);
     }
