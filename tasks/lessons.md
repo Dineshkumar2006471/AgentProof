@@ -30,3 +30,5 @@
 - Never render Cognito `sub` values as a username or profile label; verified ID-token name/email claims are the user-facing identity, while the subject remains an internal ownership key.
 - When a user asks for one concise profile descriptor, remove surrounding headings and secondary identity lines rather than retaining redundant workspace metadata.
 - Separate repository automation from account provisioning: CI can be implemented and verified without secrets, while AWS SSO, Amplify connection, branch protection, and production environment setup require explicit account access.
+- AWS SSO is a local deployment credential, not the beta user's login session; Cognito cookies and refresh tokens must be tested against the deployed host independently of the laptop's SSO lifetime.
+- Keep launch work focused on the core beta gate; defer domain-provider research and custom-domain setup until the Amplify-generated application URL passes production authentication and verification smoke tests.
