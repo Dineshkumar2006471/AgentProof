@@ -253,3 +253,23 @@
 - Amplify jobs 3 and 4 passed; job 4 deployed merge commit `744fddb` with the SSR build fix.
 - Live sign-in with a deliberately invalid account now returns `401 Authentication failed`, while malformed input returns `422 Required`; the previous `500 Internal server error` is resolved.
 - Remaining launch work is real-user signup/confirmation and end-to-end verification against stable public agent endpoints.
+
+## Domain, Pricing, Favicon, And Billing Implementation
+
+- [x] Add shared beta pricing constants and update landing, pricing, and billing plan responses.
+- [x] Add AgentProof favicon metadata and remove the missing icon request.
+- [x] Uppercase non-hero landing content and add scoped hover/reduced-motion effects.
+- [x] Implement gated Dodo test checkout and signed idempotent webhook handling.
+- [x] Set and verify the custom canonical URL configuration where account access permits.
+- [x] Run automated tests, build, lint, and live route checks.
+
+### Review
+
+- Typecheck passed.
+- Vitest passed: 6 files and 12 tests.
+- ESLint passed with one existing `@next/next/no-page-custom-font` warning in `src/app/layout.tsx`.
+- Next production build passed and includes `/icon.png`, `/api/billing/checkout`, and `/api/webhooks/dodo`.
+- Development and production CDK synthesis passed.
+- `git diff --check` passed.
+- Dodo test catalog contains Builder, Agency, and One Run products; Amplify stores their public product IDs with checkout disabled.
+- Dodo API and webhook signing keys remain required Amplify secrets before enabling checkout.

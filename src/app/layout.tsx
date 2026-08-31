@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "AgentProof — Forensic Authority in AI Verification",
   description:
     "Convert agent promises into executable tests, run them against the real endpoint, and issue a report a client can understand.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png"
+  }
 };
 
 export default function RootLayout({
