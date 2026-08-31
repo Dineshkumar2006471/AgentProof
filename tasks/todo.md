@@ -234,3 +234,17 @@
 - Production AWS stack, OpenAI secret metadata, worker, queue, and configured CloudWatch alarms are confirmed healthy in `ap-south-1`.
 - Amplify remains unconnected because `aws amplify list-apps` returns no apps; repository connection and environment configuration remain the next external deployment step.
 - The local server on port `3002` is not a production host and must not be treated as the always-on beta URL.
+
+## Live Amplify Deployment Audit
+
+- [ ] Confirm the deployed app, `main` branch, and latest build status.
+- [ ] Compare Amplify environment variables with the production CDK outputs.
+- [ ] Attach the production SSR compute role and correct production resource identifiers.
+- [ ] Rebuild the `main` branch and verify public pages and authentication behavior.
+- [ ] Run post-deploy checks for Cognito, DynamoDB, SQS, OpenAI secret access, reports, and local URL leakage.
+
+### Live Audit Notes
+
+- Initial live inspection found the Amplify build succeeded, but the app-level environment variables omitted `AWS_REGION` and `NEXT_PUBLIC_APP_URL`.
+- The deployed app was pointed at the development Cognito pool/client and development verification queue despite using production DynamoDB/S3 resources.
+- Amplify had no `computeRoleArn`, so the deployed SSR runtime was not attached to the CDK-managed production role.

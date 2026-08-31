@@ -7,6 +7,9 @@ frontend:
         - npm ci
     build:
       commands:
+        # Next.js SSR does not expose Amplify build variables to server routes by default.
+        # Persist only the required configuration and the Secrets Manager ARN pointer.
+        - env | grep -E '^(NEXT_PUBLIC_APP_URL|AGENTPROOF_ENVIRONMENT|AGENTPROOF_BETA_MODE|AGENTPROOF_BETA_MAX_AGENTS_PER_USER|AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY|AGENTPROOF_DYNAMODB_TABLE|AGENTPROOF_REPORTS_BUCKET|AGENTPROOF_VERIFICATION_QUEUE_URL|COGNITO_USER_POOL_ID|COGNITO_CLIENT_ID|NEXT_PUBLIC_COGNITO_USER_POOL_ID|NEXT_PUBLIC_COGNITO_CLIENT_ID|OPENAI_SECRET_ARN|OPENAI_MODEL)=' >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
