@@ -326,6 +326,20 @@
 - The public landing response contained no `localhost` or `127.0.0.1` references.
 - A real authenticated Dodo checkout and payment webhook still require the owner to sign in with an approved test user and complete the provider-side test transaction.
 
+## Mobile Checkout And Favicon Polish
+
+- [x] Reduce mobile checkout summary typography without changing the typography tokens.
+- [x] Uppercase the checkout summary labels and values for a consistent workspace hierarchy.
+- [x] Replace the dark favicon artwork with a brighter transparent AgentProof mark.
+- [x] Run validation, commit through a pull request, and verify the deployed assets.
+
+### Mobile Checkout And Favicon Review
+
+- Checkout KPI labels, values, quotas, reports, and supporting details are uppercase; mobile values use compact fixed sizing and safe wrapping.
+- The App Router icon and conventional favicon fallback use the brighter transparent AgentProof mark.
+- Typecheck, 14 tests, ESLint, production build, and `git diff --check` passed locally.
+- Final deployment verification will be recorded after the protected pull request and Amplify build complete.
+
 ## Mobile Workspace And Dodo Planning Pass
 
 - [x] Remove the AP shortcut tile from the mobile workspace top bar.

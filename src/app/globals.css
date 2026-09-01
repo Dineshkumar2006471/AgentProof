@@ -453,6 +453,10 @@ body {
   .metric-card__detail { margin-top: 6px; font-size: 10px; line-height: 1.3; }
   .checkout-page .metric-card__value { font-size: 20px; }
   .checkout-page .metric-card__detail { font-size: 9px; }
+  .checkout-page .metric-card { min-width: 0; }
+  .checkout-page .metric-card__value { font-size: 18px; line-height: 1.15; letter-spacing: 0; overflow-wrap: anywhere; word-break: break-word; }
+  .checkout-page .metric-card__detail { max-width: 100%; overflow-wrap: anywhere; text-transform: uppercase; }
+  .checkout-page .metric-card__label { text-transform: uppercase; }
   .checkout-summary__rows > div { gap: 12px; padding: 14px 0; }
   .checkout-summary__rows dd { max-width: 62%; overflow-wrap: anywhere; }
   .checkout-account__note { font-size: 10px; }

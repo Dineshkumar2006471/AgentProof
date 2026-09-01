@@ -41,3 +41,4 @@
 - Keep localhost Cognito authentication independent of the laptop's AWS SSO cache by using the public app-client auth endpoint; AWS credentials remain necessary for local data-plane calls and deployment only.
 - Keep commercial quotas conservative and shared across every pricing surface; never use an unlimited plan or large placeholder allowance in a small beta without an explicit capacity decision.
 - Amplify reserves user variables beginning with `AWS`; use the runtime region when supplied and a single-region application fallback instead of attempting to configure `AWS_REGION` as a branch variable.
+- Keep mobile KPI values compact and uppercase when they contain quotas or plan descriptions; responsive cards need explicit wrapping rules so pricing context never overflows.
