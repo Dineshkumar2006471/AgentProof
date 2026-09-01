@@ -32,6 +32,29 @@ function displayTime(value: string) {
   });
 }
 
+function isFinding(item: EvidenceRecord) {
+  return item.severity !== "info";
+}
+
+function EvidenceEntry({ item, index }: { item: EvidenceRecord; index: number }) {
+  const isVerified = !isFinding(item);
+  return (
+    <article className="evidence-row">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap justify-between gap-3">
+          <span className="mono">E-{String(index + 1).padStart(2, "0")} / {isVerified ? "VERIFIED" : item.severity.toUpperCase()}</span>
+          <StatusPill status={isVerified ? "VERIFIED" : item.severity === "critical" ? "BLOCKED" : "CONDITIONAL"} />
+        </div>
+        <h3 className="mt-3 font-mono text-sm font-bold">{item.reproductionInput}</h3>
+        <p className="body-md mt-2"><strong>Expected:</strong> {item.expectedBehavior}</p>
+        <p className="body-md mt-1"><strong>Actual:</strong> {item.actualBehavior || "No response recorded."}</p>
+        {!isVerified && <div className="evidence-detail mt-4"><span>JUDGMENT / {item.whyItFailed?.trim() && item.whyItFailed.trim() !== "/" ? item.whyItFailed : "No detailed judgment was recorded."}</span></div>}
+        {Array.isArray(item.toolCalls) && item.toolCalls.length > 0 && <details className="mt-4"><summary className="mono cursor-pointer text-xs text-[var(--color-seal-indigo)]">TOOL EVIDENCE</summary><code className="mt-3 block">{JSON.stringify(item.toolCalls, null, 2)}</code></details>}
+      </div>
+    </article>
+  );
+}
+
 export default async function PrivateReportPage({ params }: { params: Promise<{ id: string; run: string }> }) {
   const { id, run: runId } = await params;
   const user = await requirePageUser(`/agents/${id}/report/${runId}`);
@@ -43,12 +66,14 @@ export default async function PrivateReportPage({ params }: { params: Promise<{ 
   ]);
   if (!agent || !run || !status) notFound();
   const evidence = records.filter((record) => record.entityType === "Evidence") as unknown as EvidenceRecord[];
+  const findings = evidence.filter(isFinding);
+  const verifiedEvidence = evidence.filter((item) => !isFinding(item));
 
   return (
     <AppShell title="Verification report" section="PRIVATE EVIDENCE">
       <div className="workspace-page">
         <PageHeader
-          eyebrow={`PRIVATE EVIDENCE / ${status.publicId}`}
+          eyebrow="PRIVATE EVIDENCE"
           title="Verification report"
           description={`Builder-facing evidence for ${agent.name} version ${status.agentVersion}.`}
           actions={
@@ -88,42 +113,27 @@ export default async function PrivateReportPage({ params }: { params: Promise<{ 
             { label: "Last verified", value: displayDate(status.lastVerified), detail: `${displayTime(status.lastVerified)} / Most recent execution` },
             { label: "Valid until", value: displayDate(status.validUntil), detail: "Attestation window" },
             { label: "Test scenarios", value: String(status.totalTests), detail: `${status.passed} passed` },
-            { label: "Checksum", value: `${status.hash.slice(0, 12)}...`, detail: "Integrity reference" }
+            { label: "Report status", value: status.status, detail: "Integrity record issued" }
           ]} />
         </div>
 
         <div className="dossier-layout">
           <section className="workspace-panel workspace-panel--table">
             <div className="workspace-panel__title">
-              <span className="eyebrow">FULL PRIVATE EVIDENCE</span>
-              <h2 className="workspace-heading mt-2">What the runner observed</h2>
+              <span className="eyebrow">PRIVATE FINDINGS</span>
+              <h2 className="workspace-heading mt-2">What needs review</h2>
             </div>
-            {evidence.length ? (
+            {findings.length ? (
               <div>
-                {evidence.map((item, index) => (
-                  <article key={item.id} className="evidence-row">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap justify-between gap-3">
-                        <span className="mono">E-{String(index + 1).padStart(2, "0")} / {item.severity.toUpperCase()}</span>
-                        <StatusPill status={item.severity === "critical" ? "BLOCKED" : item.severity === "info" ? "VERIFIED" : "CONDITIONAL"} />
-                      </div>
-                      <h3 className="mt-3 font-mono text-sm font-bold">{item.reproductionInput}</h3>
-                      <p className="body-md mt-2"><strong>Expected:</strong> {item.expectedBehavior}</p>
-                      <p className="body-md mt-1"><strong>Actual:</strong> {item.actualBehavior || "No response recorded."}</p>
-                      <div className="evidence-detail mt-4">
-                        <span>JUDGMENT / {item.whyItFailed || "Assertion satisfied"}</span>
-                        {item.toolCalls && <code>{JSON.stringify(item.toolCalls, null, 2)}</code>}
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                {findings.map((item, index) => <EvidenceEntry key={item.id} item={item} index={index} />)}
               </div>
             ) : (
               <div className="workspace-empty">
-                <strong>Evidence is still being written.</strong>
-                <span>Refresh this report when the worker has completed its write.</span>
+                <strong>No findings require review.</strong>
+                <span>All persisted assertions met their expected behavior.</span>
               </div>
             )}
+            {verifiedEvidence.length > 0 && <details className="border-t border-[var(--color-outline-variant)] px-5 py-4"><summary className="mono cursor-pointer text-xs text-[var(--color-seal-indigo)]">VERIFIED EVIDENCE / {verifiedEvidence.length} ASSERTIONS</summary><div className="mt-4 border-t border-[var(--color-outline-variant)]">{verifiedEvidence.map((item, index) => <EvidenceEntry key={item.id} item={item} index={findings.length + index} />)}</div></details>}
           </section>
 
           <aside className="dossier-side">
@@ -133,7 +143,6 @@ export default async function PrivateReportPage({ params }: { params: Promise<{ 
                 <h2 className="workspace-heading mt-2">Execution record</h2>
               </div>
               <dl className="settings-rows">
-                <div><dt className="eyebrow">RUN ID</dt><dd className="mono">{run.id}</dd></div>
                 <div><dt className="eyebrow">TEST SUITE</dt><dd className="mono">{run.testSuiteVersion}</dd></div>
                 <div><dt className="eyebrow">STARTED</dt><dd className="mono">{new Date(run.startedAt).toLocaleString("en-IN")}</dd></div>
                 <div><dt className="eyebrow">RESULTS</dt><dd className="mono">{run.passed} passed / {run.failed} failed</dd></div>

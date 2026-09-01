@@ -9,7 +9,14 @@ function displayDate(value: string) {
   return new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
 }
 
+function isActionableFinding(finding: PublicReport["evidenceSummary"][number]) {
+  const summary = finding.whyItFailed.trim();
+  return finding.severity !== "info" && summary.length > 0 && summary !== "/" && summary !== "Assertion satisfied.";
+}
+
 export function PublicReportView({ report, demo = false }: { report: PublicReport; demo?: boolean }) {
+  const findings = report.evidenceSummary.filter(isActionableFinding);
+
   return (
     <main className="public-report-shell font-mono text-[var(--color-ink-graphite)]">
       <div className="public-report-shell__inner">
@@ -19,7 +26,7 @@ export function PublicReportView({ report, demo = false }: { report: PublicRepor
           </Link>
           <div className="text-right">
             <span className="eyebrow">{demo ? "SAMPLE VERIFICATION" : "PUBLIC VERIFICATION"}</span>
-            <span className="mono mt-1 block break-all">REPORT / {report.publicId}</span>
+            <span className="mono mt-1 block text-[var(--color-on-surface-variant)]">INDEPENDENT VERIFICATION RECORD</span>
           </div>
         </header>
 
@@ -59,18 +66,18 @@ export function PublicReportView({ report, demo = false }: { report: PublicRepor
               </ul>
             </div>
             <div>
-              <h2 className="eyebrow">REPORT INTEGRITY</h2>
+              <h2 className="eyebrow">REPORT STATUS</h2>
               <dl className="mt-5 grid gap-4 text-sm">
                 <div><dt className="table-muted">Last verified</dt><dd className="mt-1 font-bold">{displayDate(report.lastVerified)}</dd></div>
-                <div><dt className="table-muted">Checksum</dt><dd className="mt-1 break-all font-bold">{report.hash}</dd></div>
+                <div><dt className="table-muted">Integrity</dt><dd className="mt-1 font-bold">RECORD ISSUED BY AGENTPROOF</dd></div>
               </dl>
             </div>
           </div>
 
-          {report.evidenceSummary.length > 0 && <div className="border-t border-[var(--color-outline-variant)] p-6 md:p-8">
+          {findings.length > 0 && <div className="border-t border-[var(--color-outline-variant)] p-6 md:p-8">
             <h2 className="eyebrow">REPORTED FINDINGS</h2>
             <div className="mt-5 divide-y divide-[var(--color-outline-variant)] border-y border-[var(--color-outline-variant)]">
-              {report.evidenceSummary.map((finding, index) => <div key={`${finding.severity}-${index}`} className="flex gap-3 py-4 text-sm"><CircleAlert size={15} className="mt-0.5 shrink-0 text-[var(--color-evidence-amber)]" /><span>{finding.whyItFailed || "Assertion satisfied."}</span></div>)}
+              {findings.map((finding, index) => <div key={`${finding.severity}-${index}`} className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 py-4 text-sm"><CircleAlert size={15} className="mt-0.5 shrink-0 text-[var(--color-evidence-amber)]" /><div><span className="eyebrow text-[10px] text-[var(--color-evidence-amber)]">{finding.severity} finding</span><p className="mt-2">{finding.whyItFailed}</p></div></div>)}
             </div>
           </div>}
         </section>

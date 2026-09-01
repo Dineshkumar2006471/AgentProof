@@ -174,6 +174,9 @@ async function processRun(runId: string) {
       judgment = { result: "fail", severity: "major", whyItFailed: error instanceof Error ? error.message : "Execution failed." };
     }
 
+    const judgmentSummary = judgment.result === "pass"
+      ? "Assertion satisfied."
+      : judgment.whyItFailed.trim() || "The agent response did not satisfy the expected behavior.";
     results.push({ test, result: judgment.result });
     if (judgment.result === "critical_fail") critical += 1;
     let rawPayloadS3Key: string | undefined;
@@ -207,12 +210,12 @@ async function processRun(runId: string) {
       toolCalls: execution.toolCalls,
       expectedState: {},
       actualState: execution.actualState,
-      whyItFailed: judgment.whyItFailed,
+      whyItFailed: judgmentSummary,
       severity: judgment.severity,
       reproductionInput: test.inputMessage,
       createdAt: started
     });
-    evidenceSummary.push({ whyItFailed: judgment.whyItFailed, severity: judgment.severity });
+    if (judgment.result !== "pass") evidenceSummary.push({ whyItFailed: judgmentSummary, severity: judgment.severity });
     await updateRun({ id: runId, passed: results.filter((item) => item.result === "pass").length, failed: results.filter((item) => item.result !== "pass").length, criticalFailed: critical });
   }
 

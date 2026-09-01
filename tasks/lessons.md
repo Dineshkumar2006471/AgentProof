@@ -45,3 +45,4 @@
 - Honor the requested direct-to-main workflow when repository permissions allow it; if branch protection rejects direct pushes, use the required pull request instead of bypassing repository safeguards.
 - Keep browser password rules and Cognito password policy identical; a stricter provider policy hidden behind a generic error turns a valid-looking signup form into a dead end.
 - Separate production-facing execution labels from implementation identifiers: show test ordinals and version context by default, while preserving raw run/test IDs in an explicitly technical evidence surface.
+- Public reports must summarize only actionable failures; never render passing judgment placeholders as findings or make report hashes and opaque IDs primary user-facing content.

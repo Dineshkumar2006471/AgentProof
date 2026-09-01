@@ -380,3 +380,18 @@
 - The primary result stream uses readable sequential labels while the runner-evidence surface retains the raw test IDs for technical investigation.
 - Desktop results and evidence now share a 560px console height; both streams scroll independently and mobile retains a bounded results scroll area.
 - Typecheck and 18 Vitest tests passed. ESLint completed without errors, the production build compiled successfully, and `git diff --check` passed.
+
+## Report Evidence Refinement
+
+- [x] Exclude passed assertions from public reported findings and reject placeholder judgment text.
+- [x] Remove raw public report IDs and checksums from default report presentation.
+- [x] Group private evidence into actionable findings and collapsed verified evidence.
+- [x] Keep raw identifiers available through private export rather than the primary layout.
+- [x] Verify report behavior and release checks before deployment.
+
+### Report Evidence Refinement Review
+
+- The worker now stores `Assertion satisfied.` for passing evidence and includes only non-passing judgments in new public report summaries.
+- Public reports filter legacy empty or passing entries, omit opaque report IDs and hashes, and show only meaningful findings.
+- Private reports lead with actionable findings; verified evidence is retained in a collapsed section, and the JSON export remains the full technical source of truth.
+- Typecheck and 18 Vitest tests passed. ESLint completed without reported errors, the production build compiled successfully, and `git diff --check` passed.
