@@ -366,3 +366,17 @@
 - Production CloudFormation updated the existing `AgentProof-production` user pool in place at `2026-09-01T18:00:02Z`.
 - Vitest passed 18 tests, typecheck passed, production CDK synthesis passed, and `git diff --check` passed.
 - ESLint completed with the pre-existing custom-font warning in `src/app/layout.tsx` and no errors.
+
+## Verification Console Refinement
+
+- [x] Replace raw run and test identifiers in the primary verification-console hierarchy with readable operational labels.
+- [x] Keep technical identifiers available only in the runner evidence stream.
+- [x] Constrain desktop results and evidence columns to a shared console height with independent scrolling.
+- [x] Verify the console at desktop and mobile breakpoints, then run the release checks.
+
+### Verification Console Refinement Review
+
+- The run header now shows version and test-suite context instead of a raw agent UUID.
+- The primary result stream uses readable sequential labels while the runner-evidence surface retains the raw test IDs for technical investigation.
+- Desktop results and evidence now share a 560px console height; both streams scroll independently and mobile retains a bounded results scroll area.
+- Typecheck and 18 Vitest tests passed. ESLint completed without errors, the production build compiled successfully, and `git diff --check` passed.

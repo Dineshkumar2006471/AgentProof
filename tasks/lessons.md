@@ -44,3 +44,4 @@
 - Keep mobile KPI values compact and uppercase when they contain quotas or plan descriptions; responsive cards need explicit wrapping rules so pricing context never overflows.
 - Honor the requested direct-to-main workflow when repository permissions allow it; if branch protection rejects direct pushes, use the required pull request instead of bypassing repository safeguards.
 - Keep browser password rules and Cognito password policy identical; a stricter provider policy hidden behind a generic error turns a valid-looking signup form into a dead end.
+- Separate production-facing execution labels from implementation identifiers: show test ordinals and version context by default, while preserving raw run/test IDs in an explicitly technical evidence surface.

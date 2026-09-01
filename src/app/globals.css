@@ -377,7 +377,11 @@ body {
 .run-header__meta { color: rgba(255,255,255,.7); font: 400 11px/1.5 var(--font-mono); }
 .run-progress { height: 7px; overflow: hidden; margin-top: 12px; background: rgba(255,255,255,.15); }
 .run-progress > div { height: 100%; background: var(--color-pass-moss); transition: width 300ms ease; }
-.run-results { overflow: hidden; }
+.run-results { display: flex; height: 560px; flex-direction: column; overflow: hidden; }
+.run-results__list { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.run-side { height: 560px; grid-template-rows: minmax(0, 1fr) auto; }
+.run-evidence { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
+.run-evidence pre { min-height: 0; flex: 1; overflow: auto; padding: 20px; font: 400 12px/1.55 var(--font-mono); color: rgba(255,255,255,.75); }
 .run-result { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; align-items: start; border-top: 1px solid var(--color-outline-variant); padding: 16px 20px; }
 .run-result__main { min-width: 0; }
 .run-result__main p { margin-top: 7px; overflow-wrap: anywhere; }
@@ -476,4 +480,7 @@ body {
   .workflow-test-row { grid-template-columns: 1fr; gap: 8px; }
   .workflow-panel__actions { align-items: stretch; flex-wrap: wrap; }
   .workflow-panel__actions .action-button { flex: 1; }
+  .run-results, .run-side { height: auto; }
+  .run-results__list { max-height: 560px; }
+  .run-evidence { min-height: 360px; }
 }
