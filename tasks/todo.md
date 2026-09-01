@@ -353,3 +353,16 @@
 - Local `npm run typecheck`, `npm test -- --run` (12 tests), `npx eslint .`, `npm run build`, and `git diff --check` pass.
 - Local route checks confirm pricing and demo-report pages load, while protected checkout still redirects unauthenticated users as expected.
 - The local preview is available at `http://127.0.0.1:3002`; no commit, push, or redeploy was performed for this pass.
+
+## Simple Password Policy
+
+- [x] Align Cognito, application validation, and form feedback on an eight-character password minimum without complexity rules.
+- [x] Replace generic signup errors with clear account and password guidance.
+- [x] Deploy the production Cognito policy update without replacing the user pool or invalidating existing accounts.
+- [ ] Confirm lowercase-only signup works on the live domain with an email inbox you control after Amplify deploys the application change.
+
+### Simple Password Policy Review
+
+- Production CloudFormation updated the existing `AgentProof-production` user pool in place at `2026-09-01T18:00:02Z`.
+- Vitest passed 18 tests, typecheck passed, production CDK synthesis passed, and `git diff --check` passed.
+- ESLint completed with the pre-existing custom-font warning in `src/app/layout.tsx` and no errors.

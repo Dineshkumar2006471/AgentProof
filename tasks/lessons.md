@@ -43,3 +43,4 @@
 - Amplify reserves user variables beginning with `AWS`; use the runtime region when supplied and a single-region application fallback instead of attempting to configure `AWS_REGION` as a branch variable.
 - Keep mobile KPI values compact and uppercase when they contain quotas or plan descriptions; responsive cards need explicit wrapping rules so pricing context never overflows.
 - Honor the requested direct-to-main workflow when repository permissions allow it; if branch protection rejects direct pushes, use the required pull request instead of bypassing repository safeguards.
+- Keep browser password rules and Cognito password policy identical; a stricter provider policy hidden behind a generic error turns a valid-looking signup form into a dead end.

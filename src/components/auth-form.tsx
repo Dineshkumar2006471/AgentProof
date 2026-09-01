@@ -30,7 +30,7 @@ function safeNextPath() {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 }
 
-function Field({ id, label, type = "text", placeholder, value, required = true, onChange, inputMode }: {
+function Field({ id, label, type = "text", placeholder, value, required = true, onChange, inputMode, minLength, hint }: {
   id: string;
   label: string;
   type?: string;
@@ -39,11 +39,14 @@ function Field({ id, label, type = "text", placeholder, value, required = true, 
   required?: boolean;
   onChange: (value: string) => void;
   inputMode?: "numeric";
+  minLength?: number;
+  hint?: string;
 }) {
   return (
     <div>
       <label className="block text-xs font-bold text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-2" htmlFor={id}>{label}</label>
-      <input type={type} id={id} inputMode={inputMode} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="w-full bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-seal-indigo)] focus:ring-1 focus:ring-[var(--color-seal-indigo)] transition-colors" placeholder={placeholder} />
+      <input type={type} id={id} inputMode={inputMode} minLength={minLength} aria-describedby={hint ? `${id}-hint` : undefined} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="w-full bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-seal-indigo)] focus:ring-1 focus:ring-[var(--color-seal-indigo)] transition-colors" placeholder={placeholder} />
+      {hint && <p id={`${id}-hint`} className="mt-2 text-xs text-[var(--color-on-surface-variant)]">{hint}</p>}
     </div>
   );
 }
@@ -108,9 +111,9 @@ export function AuthForm({ mode }: AuthFormProps) {
           <Field id="email" label="Email Address" type="email" placeholder="name@agency.com" value={email} onChange={setEmail} />
           {isConfirmation && <Field id="code" label="Confirmation Code" inputMode="numeric" placeholder="123456" value={code} onChange={setCode} />}
           {currentMode === "sign-in" && <div><div className="flex justify-between items-center mb-2"><label className="block text-xs font-bold text-[var(--color-on-surface-variant)] uppercase tracking-widest" htmlFor="password">Password</label><Link href="/auth/forgot-password" className="text-xs text-[var(--color-seal-indigo)] hover:underline">Forgot password?</Link></div><input type="password" id="password" required value={password} onChange={(event) => setPassword(event.target.value)} className="w-full bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] rounded-md px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-seal-indigo)] focus:ring-1 focus:ring-[var(--color-seal-indigo)] transition-colors" placeholder="••••••••" /></div>}
-          {currentMode === "sign-up" && !isConfirmation && <Field id="password" label="Password" type="password" placeholder="••••••••" value={password} onChange={setPassword} />}
+          {currentMode === "sign-up" && !isConfirmation && <Field id="password" label="Password" type="password" placeholder="••••••••" minLength={8} hint="Use at least 8 characters." value={password} onChange={setPassword} />}
           {currentMode === "forgot-password" && <p className="text-sm text-[var(--color-on-surface-variant)]">We will send a six-digit code to your email address.</p>}
-          {currentMode === "reset-password" && <><Field id="code" label="Reset Code" inputMode="numeric" placeholder="123456" value={code} onChange={setCode} /><Field id="password" label="New Password" type="password" placeholder="••••••••" value={password} onChange={setPassword} /></>}
+          {currentMode === "reset-password" && <><Field id="code" label="Reset Code" inputMode="numeric" placeholder="123456" value={code} onChange={setCode} /><Field id="password" label="New Password" type="password" placeholder="••••••••" minLength={8} hint="Use at least 8 characters." value={password} onChange={setPassword} /></>}
           <button type="submit" disabled={submitting} className="w-full bg-[var(--color-seal-indigo)] text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md hover:bg-[#2A354C] disabled:opacity-60 disabled:cursor-wait transition-colors shadow-sm mt-4">{submitLabel}</button>
         </form>
         <div className="mt-8 text-center text-sm text-[var(--color-on-surface-variant)]">

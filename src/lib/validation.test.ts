@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAgentSchema } from "@/lib/validation";
+import { createAgentSchema, resetPasswordSchema, signUpSchema } from "@/lib/validation";
 
 const baseAgent = {
   name: "Support Agent",
@@ -29,5 +29,34 @@ describe("createAgentSchema", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0]?.path).toEqual(["endpointAuthToken"]);
+  });
+});
+
+describe("account password validation", () => {
+  it("accepts an eight-character password without complexity requirements", () => {
+    const result = signUpSchema.safeParse({
+      name: "Taylor Example",
+      email: "taylor@example.com",
+      password: "eightchr"
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects passwords shorter than eight characters for sign-up and reset", () => {
+    const signUp = signUpSchema.safeParse({
+      name: "Taylor Example",
+      email: "taylor@example.com",
+      password: "short"
+    });
+    const reset = resetPasswordSchema.safeParse({
+      email: "taylor@example.com",
+      code: "123456",
+      password: "short"
+    });
+
+    expect(signUp.success).toBe(false);
+    expect(reset.success).toBe(false);
+    if (!signUp.success) expect(signUp.error.issues[0]?.message).toBe("Use at least 8 characters.");
   });
 });

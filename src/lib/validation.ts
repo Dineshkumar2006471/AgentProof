@@ -6,6 +6,10 @@ export const failureRuleSchema = z.object({
   severity: z.enum(["info", "minor", "major", "critical"])
 });
 
+export const accountPasswordSchema = z.string()
+  .min(8, "Use at least 8 characters.")
+  .max(128, "Use no more than 128 characters.");
+
 export const createAgentSchema = z.object({
   name: z.string().min(2),
   endpointUrl: z.string().url(),
@@ -47,7 +51,7 @@ export const checkoutSchema = z.object({
 export const signUpSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(254),
-  password: z.string().min(12).max(128)
+  password: accountPasswordSchema
 });
 
 export const confirmSignUpSchema = z.object({
@@ -67,5 +71,5 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z.object({
   email: z.string().trim().email(),
   code: z.string().trim().length(6),
-  password: z.string().min(12).max(128)
+  password: accountPasswordSchema
 });

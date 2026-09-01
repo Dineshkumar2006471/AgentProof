@@ -67,8 +67,17 @@ export function handleApiError(error: unknown) {
     if (errorName === "PasswordResetRequiredException") {
       return jsonError("Reset your password before signing in.", 422);
     }
-    if (["UsernameExistsException", "CodeMismatchException", "InvalidPasswordException", "InvalidParameterException"].includes(errorName)) {
-      return jsonError("The authentication request could not be completed.", 422);
+    if (errorName === "UsernameExistsException") {
+      return jsonError("An account already exists for this email. Sign in or reset your password.", 409);
+    }
+    if (errorName === "InvalidPasswordException") {
+      return jsonError("Use at least 8 characters.", 422);
+    }
+    if (errorName === "CodeMismatchException") {
+      return jsonError("The code is invalid or expired. Request a new code and try again.", 422);
+    }
+    if (errorName === "InvalidParameterException") {
+      return jsonError("Check your account details and try again.", 422);
     }
     if (["LimitExceededException", "TooManyRequestsException"].includes(errorName)) {
       return jsonError("Too many authentication attempts. Try again later.", 429);

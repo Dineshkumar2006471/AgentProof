@@ -94,11 +94,11 @@ export class AgentProofStack extends Stack {
       autoVerify: { email: true },
       standardAttributes: { email: { required: true, mutable: false } },
       passwordPolicy: {
-        minLength: 12,
-        requireLowercase: true,
-        requireUppercase: true,
-        requireDigits: true,
-        requireSymbols: true
+        minLength: 8,
+        requireLowercase: false,
+        requireUppercase: false,
+        requireDigits: false,
+        requireSymbols: false
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       userVerification: {

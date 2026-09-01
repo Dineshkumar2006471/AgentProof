@@ -183,6 +183,8 @@ Agent-Proof/
 - An OpenAI API key for test generation and semantic judgment
 - A Cognito user pool and app client for authenticated environments
 
+Public beta passwords require at least 8 characters. They do not require an uppercase letter, lowercase letter, number, or symbol.
+
 For local UI work, the deterministic fixture agent is sufficient. A complete AWS verification run requires a publicly reachable HTTPS endpoint because the worker blocks private and localhost addresses by default.
 
 ## Local Development
