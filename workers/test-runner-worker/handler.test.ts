@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VerificationTest } from "../../src/lib/domain";
-import { scoreFor, statusFor, validateEndpoint } from "./handler";
+import { buildEndpointAuthHeaders, scoreFor, statusFor, validateEndpoint } from "./handler";
 
 function test(type: VerificationTest["type"], result: "pass" | "fail" | "critical_fail") {
   return { test: { type } as VerificationTest, result };
@@ -28,5 +28,12 @@ describe("verification worker policies", () => {
     ]);
     expect(score.overallScore).toBeLessThan(100);
     expect(score.policyAdherence).toBe(0);
+  });
+
+  it("builds only the configured endpoint authentication header", () => {
+    expect(buildEndpointAuthHeaders("none", "unused")).toEqual({});
+    expect(buildEndpointAuthHeaders("bearer", "token")).toEqual({ authorization: "Bearer token" });
+    expect(buildEndpointAuthHeaders("api_key", "key", "api-key")).toEqual({ "api-key": "key" });
+    expect(buildEndpointAuthHeaders("basic", JSON.stringify({ username: "demo", password: "secret" }))).toEqual({ authorization: "Basic ZGVtbzpzZWNyZXQ=" });
   });
 });

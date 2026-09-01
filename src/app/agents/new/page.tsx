@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, FileCode2, LoaderCircle, Save } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StepRail } from "@/components/proof-ui";
+import type { EndpointAuthType } from "@/lib/endpoint-auth";
 
 type ContractDraft = Record<string, unknown> & { id?: string; version?: string };
 type GeneratedTest = Record<string, unknown> & { id?: string; type?: string; inputMessage?: string; expectedBehavior?: string };
@@ -14,8 +15,10 @@ type WizardState = {
   name: string;
   version: string;
   endpointUrl: string;
-  endpointAuthType: "none" | "bearer";
+  endpointAuthType: EndpointAuthType;
   endpointAuthToken: string;
+  endpointAuthUsername: string;
+  endpointAuthHeaderName: string;
   description: string;
   mustNeverDo: string;
   successCriteria: string;
@@ -27,6 +30,8 @@ const initialState: WizardState = {
   endpointUrl: "",
   endpointAuthType: "none",
   endpointAuthToken: "",
+  endpointAuthUsername: "",
+  endpointAuthHeaderName: "x-api-key",
   description: "",
   mustNeverDo: "",
   successCriteria: ""
@@ -65,7 +70,8 @@ export default function NewAgent() {
     }
     if (!formData.endpointUrl.startsWith("https://")) return setError("The agent endpoint must use HTTPS.");
     if (formData.description.trim().length < 20) return setError("Describe the agent in at least 20 characters.");
-    if (formData.endpointAuthType === "bearer" && !formData.endpointAuthToken) return setError("Enter the bearer token for this endpoint.");
+    if ((formData.endpointAuthType === "bearer" || formData.endpointAuthType === "api_key") && !formData.endpointAuthToken) return setError(formData.endpointAuthType === "bearer" ? "Enter the bearer token for this endpoint." : "Enter the API key for this endpoint.");
+    if (formData.endpointAuthType === "basic" && (!formData.endpointAuthUsername || !formData.endpointAuthToken)) return setError("Enter the Basic authentication username and password for this endpoint.");
 
     setBusy(true);
     try {
@@ -147,8 +153,10 @@ export default function NewAgent() {
                   <label className="field-label">Agent name<input className="field-input" value={formData.name} onChange={(e) => updateField("name", e.target.value)} placeholder="e.g. Dental Clinic Scheduler" /></label>
                   <label className="field-label">Version identifier<input className="field-input" value={formData.version} onChange={(e) => updateField("version", e.target.value)} placeholder="1.0.0" /></label>
                   <label className="field-label md:col-span-2">Live endpoint / POST /run<input className="field-input" value={formData.endpointUrl} onChange={(e) => updateField("endpointUrl", e.target.value)} placeholder="https://your-agent-url.com/run" /></label>
-                  <label className="field-label">Endpoint authentication<select className="field-input" value={formData.endpointAuthType} onChange={(e) => updateField("endpointAuthType", e.target.value as WizardState["endpointAuthType"])}><option value="none">No authentication</option><option value="bearer">Bearer token</option></select></label>
+                  <label className="field-label">Endpoint authentication<select className="field-input" value={formData.endpointAuthType} onChange={(e) => updateField("endpointAuthType", e.target.value as WizardState["endpointAuthType"])}><option value="none">No authentication</option><option value="bearer">Bearer token</option><option value="api_key">API key</option><option value="basic">Basic authentication</option></select></label>
                   {formData.endpointAuthType === "bearer" && <label className="field-label">Bearer token<input type="password" className="field-input" value={formData.endpointAuthToken} onChange={(e) => updateField("endpointAuthToken", e.target.value)} placeholder="Stored securely" /></label>}
+                  {formData.endpointAuthType === "api_key" && <div className="grid gap-6 md:col-span-2 md:grid-cols-2"><label className="field-label">API key<input type="password" className="field-input" value={formData.endpointAuthToken} onChange={(e) => updateField("endpointAuthToken", e.target.value)} placeholder="Stored securely" /></label><label className="field-label">API key header<input className="field-input" value={formData.endpointAuthHeaderName} onChange={(e) => updateField("endpointAuthHeaderName", e.target.value)} placeholder="x-api-key" /></label></div>}
+                  {formData.endpointAuthType === "basic" && <div className="grid gap-6 md:col-span-2 md:grid-cols-2"><label className="field-label">Basic username<input className="field-input" value={formData.endpointAuthUsername} onChange={(e) => updateField("endpointAuthUsername", e.target.value)} autoComplete="username" /></label><label className="field-label">Basic password<input type="password" className="field-input" value={formData.endpointAuthToken} onChange={(e) => updateField("endpointAuthToken", e.target.value)} autoComplete="current-password" placeholder="Stored securely" /></label></div>}
                   <label className="field-label md:col-span-2">What can your agent do?<textarea rows={4} className="field-input" value={formData.description} onChange={(e) => updateField("description", e.target.value)} placeholder="e.g. book appointments, answer FAQs, reschedule..." /></label>
                   <label className="field-label">Must never do<textarea rows={3} className="field-input" value={formData.mustNeverDo} onChange={(e) => updateField("mustNeverDo", e.target.value)} placeholder="e.g. diagnose a patient" /></label>
                   <label className="field-label">Success criteria<textarea rows={3} className="field-input" value={formData.successCriteria} onChange={(e) => updateField("successCriteria", e.target.value)} placeholder="e.g. confirm only after availability is checked" /></label>

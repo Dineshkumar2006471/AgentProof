@@ -33,7 +33,9 @@ export async function POST(request: Request) {
       endpointUrl: input.endpointUrl,
       version: input.version,
       endpointAuthType: input.endpointAuthType,
-      endpointAuthToken: input.endpointAuthToken
+      endpointAuthToken: input.endpointAuthToken,
+      endpointAuthUsername: input.endpointAuthUsername,
+      endpointAuthHeaderName: input.endpointAuthHeaderName
     });
     return jsonOk({ agent }, { status: 201 });
   } catch (error) {

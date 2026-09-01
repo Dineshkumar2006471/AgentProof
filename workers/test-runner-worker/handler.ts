@@ -16,6 +16,7 @@ import {
 import { judgeSemantics } from "../../src/lib/openai/semantic-judge";
 import { getSecretString } from "../../src/lib/aws/secrets";
 import { putRawResponse } from "../../src/lib/aws/s3";
+import type { EndpointAuthType } from "../../src/lib/endpoint-auth";
 
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -74,12 +75,26 @@ type AgentResponse = {
   metadata?: { state?: Record<string, unknown>; [key: string]: unknown };
 };
 
-async function executeTest(endpointUrl: string, test: VerificationTest, endpointSecretArn?: string) {
+export function buildEndpointAuthHeaders(authType: EndpointAuthType | undefined, secret: string | undefined, headerName?: string) {
+  if (!secret || !authType || authType === "none") return {};
+  if (authType === "bearer") return { authorization: `Bearer ${secret}` };
+  if (authType === "api_key") return { [headerName || "x-api-key"]: secret };
+  try {
+    const credentials = JSON.parse(secret) as { username?: string; password?: string };
+    if (!credentials.username || !credentials.password) throw new Error("Basic authentication credentials are malformed.");
+    return { authorization: `Basic ${Buffer.from(`${credentials.username}:${credentials.password}`).toString("base64")}` };
+  } catch (error) {
+    throw error instanceof Error ? error : new Error("Basic authentication credentials are malformed.");
+  }
+}
+
+async function executeTest(endpointUrl: string, test: VerificationTest, endpointAuthType?: EndpointAuthType, endpointSecretArn?: string, endpointAuthHeaderName?: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
-    if (endpointSecretArn) headers.authorization = `Bearer ${await getSecretString(endpointSecretArn)}`;
+    const endpointSecret = endpointSecretArn ? await getSecretString(endpointSecretArn) : undefined;
+    Object.assign(headers, buildEndpointAuthHeaders(endpointAuthType, endpointSecret, endpointAuthHeaderName));
     const response = await fetch(validateEndpoint(endpointUrl), {
       method: "POST",
       headers,
@@ -162,7 +177,7 @@ async function processRun(runId: string) {
     let judgment: { result: TestResult; severity: Evidence["severity"]; whyItFailed: string };
     let judgedBy: TestRun["judgedBy"] = "deterministic";
     try {
-      execution = await executeTest(agent.endpointUrl, test, agent.endpointSecretArn);
+      execution = await executeTest(agent.endpointUrl, test, agent.endpointAuthType, agent.endpointSecretArn, agent.endpointAuthHeaderName);
       const deterministic = deterministicCheck(test, execution);
       if (deterministic) judgment = deterministic;
       else {

@@ -10,12 +10,15 @@ export type RegionalCoverageStatus = "not_requested" | "pending" | "generated" |
 
 export type JudgmentMethod = "deterministic" | "tool_call" | "llm";
 
+import type { EndpointAuthType } from "@/lib/endpoint-auth";
+
 export type Agent = {
   id: string;
   ownerId: string;
   name: string;
   endpointUrl: string;
-  endpointAuthType?: "none" | "bearer";
+  endpointAuthType?: EndpointAuthType;
+  endpointAuthHeaderName?: string;
   endpointSecretArn?: string;
   currentVersion: string;
   createdAt: string;

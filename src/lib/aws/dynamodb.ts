@@ -19,6 +19,7 @@ import type {
   VerificationTest
 } from "@/lib/domain";
 import { createEndpointSecret } from "@/lib/aws/secrets";
+import type { EndpointAuthType } from "@/lib/endpoint-auth";
 import type { PricingPlanId } from "@/lib/pricing";
 
 let documentClient: DynamoDBDocumentClient | undefined;
@@ -40,16 +41,22 @@ export async function createAgent(input: {
   name: string;
   endpointUrl: string;
   version: string;
-  endpointAuthType?: "none" | "bearer";
+  endpointAuthType?: EndpointAuthType;
   endpointAuthToken?: string;
+  endpointAuthUsername?: string;
+  endpointAuthHeaderName?: string;
 }) {
   const id = `agent_${crypto.randomUUID()}`;
   const createdAt = now();
   const endpointAuthType = input.endpointAuthType ?? "none";
   let endpointSecretArn: string | undefined;
-  if (endpointAuthType === "bearer") {
-    if (!input.endpointAuthToken) throw new Error("A bearer token is required for authenticated endpoints.");
-    endpointSecretArn = await createEndpointSecret(id, input.endpointAuthToken);
+  if (endpointAuthType !== "none") {
+    if (!input.endpointAuthToken) throw new Error("An endpoint credential is required for authenticated endpoints.");
+    if (endpointAuthType === "basic" && !input.endpointAuthUsername) throw new Error("A Basic authentication username is required.");
+    const endpointSecret = endpointAuthType === "basic"
+      ? JSON.stringify({ username: input.endpointAuthUsername, password: input.endpointAuthToken })
+      : input.endpointAuthToken;
+    endpointSecretArn = await createEndpointSecret(id, endpointSecret);
   }
   const item: Agent & Record<string, unknown> = {
     PK: `AGENT#${id}`,
@@ -60,6 +67,7 @@ export async function createAgent(input: {
     name: input.name,
     endpointUrl: input.endpointUrl,
     endpointAuthType,
+    ...(endpointAuthType === "api_key" && input.endpointAuthHeaderName ? { endpointAuthHeaderName: input.endpointAuthHeaderName } : {}),
     ...(endpointSecretArn ? { endpointSecretArn } : {}),
     currentVersion: input.version,
     createdAt,

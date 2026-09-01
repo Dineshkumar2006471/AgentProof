@@ -395,3 +395,17 @@
 - Public reports filter legacy empty or passing entries, omit opaque report IDs and hashes, and show only meaningful findings.
 - Private reports lead with actionable findings; verified evidence is retained in a collapsed section, and the JSON export remains the full technical source of truth.
 - Typecheck and 18 Vitest tests passed. ESLint completed without reported errors, the production build compiled successfully, and `git diff --check` passed.
+
+## Endpoint Authentication Expansion
+
+- [x] Add supported endpoint authentication modes: none, bearer token, API key, and Basic authentication.
+- [x] Validate and store each credential safely in Secrets Manager without browser exposure.
+- [x] Send the matching request header from the verification worker.
+- [x] Update creation and dossier UI labels, tests, and release verification.
+
+### Endpoint Authentication Expansion Review
+
+- The creation form, API validation, DynamoDB agent metadata, Secrets Manager storage, and worker use one supported endpoint-authentication definition.
+- API-key endpoints use `x-api-key` by default and support a validated custom header name. Basic credentials are serialized only into the endpoint secret and converted to a Basic authorization header only within the worker.
+- Existing no-auth and bearer-token agents remain compatible.
+- Typecheck and 21 Vitest tests passed. Targeted ESLint completed without reported errors, the production build completed, and `git diff --check` passed.

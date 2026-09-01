@@ -30,6 +30,35 @@ describe("createAgentSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0]?.path).toEqual(["endpointAuthToken"]);
   });
+
+  it("accepts API key and Basic authentication credentials", () => {
+    const apiKey = createAgentSchema.safeParse({
+      ...baseAgent,
+      endpointAuthType: "api_key",
+      endpointAuthToken: "example-key",
+      endpointAuthHeaderName: "x-api-key"
+    });
+    const basic = createAgentSchema.safeParse({
+      ...baseAgent,
+      endpointAuthType: "basic",
+      endpointAuthUsername: "agentproof",
+      endpointAuthToken: "secret"
+    });
+
+    expect(apiKey.success).toBe(true);
+    expect(basic.success).toBe(true);
+  });
+
+  it("rejects incomplete Basic authentication credentials", () => {
+    const result = createAgentSchema.safeParse({
+      ...baseAgent,
+      endpointAuthType: "basic",
+      endpointAuthUsername: "agentproof",
+      endpointAuthToken: ""
+    });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("account password validation", () => {

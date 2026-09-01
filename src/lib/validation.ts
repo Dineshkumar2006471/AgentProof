@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { endpointAuthTypes } from "@/lib/endpoint-auth";
 
 export const failureRuleSchema = z.object({
   rule: z.string().min(1),
@@ -17,14 +18,26 @@ export const createAgentSchema = z.object({
   description: z.string().min(20),
   mustNeverDo: z.string().optional(),
   successCriteria: z.string().optional(),
-  endpointAuthType: z.enum(["none", "bearer"]).default("none"),
+  endpointAuthType: z.enum(endpointAuthTypes).default("none"),
+  endpointAuthUsername: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().min(1).max(512).optional()
+  ),
+  endpointAuthHeaderName: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().regex(/^[a-zA-Z0-9-]+$/, "Use letters, numbers, and hyphens only.").max(80).optional()
+  ),
   endpointAuthToken: z.preprocess(
     (value) => value === "" ? undefined : value,
     z.string().min(1).max(4096).optional()
   )
 }).superRefine((value, context) => {
-  if (value.endpointAuthType === "bearer" && !value.endpointAuthToken) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthToken"], message: "A bearer token is required." });
+  if ((value.endpointAuthType === "bearer" || value.endpointAuthType === "api_key") && !value.endpointAuthToken) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthToken"], message: value.endpointAuthType === "bearer" ? "A bearer token is required." : "An API key is required." });
+  }
+  if (value.endpointAuthType === "basic") {
+    if (!value.endpointAuthUsername) context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthUsername"], message: "A Basic authentication username is required." });
+    if (!value.endpointAuthToken) context.addIssue({ code: z.ZodIssueCode.custom, path: ["endpointAuthToken"], message: "A Basic authentication password is required." });
   }
 });
 
