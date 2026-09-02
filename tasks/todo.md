@@ -450,3 +450,19 @@
 - PostHog is disabled unless `NEXT_PUBLIC_POSTHOG_KEY` is configured at build time. When enabled, page tracking omits query strings and product events carry only workflow state, plan, test count, endpoint-authentication mode, demo state, or report status.
 - The browser integration disables automatic capture, automatic pageviews, page-leave capture, and session recording. Account linkage uses the opaque Cognito subject with no person properties and resets on both workspace sign-out controls.
 - `npm run typecheck`, `npm test -- --run` (8 files, 22 tests), and `git diff --check` passed. The production build reached compilation and focused ESLint emitted no diagnostics, but their child processes stalled in this Windows/OneDrive workspace and were stopped; GitHub Actions remains the authoritative full build/lint gate. Windows line-ending warnings are informational only.
+
+## Final Release Candidate Audit
+
+- [x] Retrieve and reproduce the exact GitHub Actions failure before changing CI or production code.
+- [x] Audit the browser, authentication, application API, DynamoDB ownership boundaries, verification queue/worker, reports, billing, and PostHog configuration path.
+- [x] Fix only validated release-blocking defects and add focused regression coverage.
+- [x] Run the available local release gate and verify the custom domain's public/protected route behavior.
+- [ ] Push one release-candidate commit to `main` only after the audit checks pass and monitor the corresponding GitHub Actions run.
+
+### Review
+
+- GitHub Actions run `33622609032` failed only in `Build application`: Next.js reported an implicit `any` return for the recursive worker helper `isPrivateAddress`. The preceding install, typecheck, test, and lint stages passed. The prior `2de1c4c` run passed all CI stages.
+- The worker helper now has an explicit boolean return type and the local typecheck project includes `workers/**/*.ts`, so the same release-blocking worker type error is caught before a push.
+- Outbound verification requests now pin the HTTPS connection to the public address obtained during validation, preserve TLS hostname validation, and do not follow redirects. This prevents an endpoint hostname from rebinding to a private AWS address after initial DNS validation.
+- Live smoke checks on `https://agent-proof.dev` returned `200` for landing, icon, favicon, and demo report; anonymous `/api/auth/me` returned `401`; `/dashboard` redirected with `307` to sign-in. `npm run typecheck`, 22 Vitest tests, `npm audit --omit=dev --audit-level=high`, both CDK synth targets, and `git diff --check` passed. Focused ESLint again stalled locally with no diagnostics; GitHub Actions is the authoritative Linux lint/build gate.
+- The local AWS SSO token expired before Amplify branch configuration could be read; no secret values were requested or printed. A repository-standard security scan could not advance because this session has no delegated worker runtime, so it remains incomplete rather than being represented as a clean independent security report.

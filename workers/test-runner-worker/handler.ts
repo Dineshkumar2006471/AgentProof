@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { lookup } from "node:dns/promises";
+import { request as httpRequest, type RequestOptions } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
 import type { SQSEvent, SQSBatchResponse } from "aws-lambda";
 import type { Evidence, TestResult, TestRun, VerificationTest } from "../../src/lib/domain";
@@ -31,7 +33,7 @@ function normalizedAddress(address: string) {
   return address.replace(/^\[|\]$/g, "").toLowerCase();
 }
 
-function isPrivateAddress(address: string) {
+function isPrivateAddress(address: string): boolean {
   const value = normalizedAddress(address);
   const version = isIP(value);
   if (version === 4) {
@@ -60,7 +62,13 @@ function isBlockedHostname(hostname: string) {
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
 }
 
-export async function validateEndpoint(endpointUrl: string) {
+type ResolvedEndpoint = {
+  url: URL;
+  address: string;
+  family: 4 | 6;
+};
+
+async function resolvePublicEndpoint(endpointUrl: string): Promise<ResolvedEndpoint> {
   const url = new URL(endpointUrl);
   const localFixture = process.env.AGENTPROOF_ALLOW_LOCAL_ENDPOINTS === "true" && ["localhost", "127.0.0.1"].includes(url.hostname);
   if ((url.protocol !== "https:" && !localFixture) || (isBlockedHostname(url.hostname) && !localFixture)) {
@@ -70,14 +78,19 @@ export async function validateEndpoint(endpointUrl: string) {
   const hostname = normalizedAddress(url.hostname);
   if (isIP(hostname)) {
     if (isPrivateAddress(hostname) && !localFixture) throw new Error("Agent endpoint must not resolve to a private network address.");
-    return url.toString();
+    return { url, address: hostname, family: isIP(hostname) as 4 | 6 };
   }
 
   const addresses = await lookup(hostname, { all: true, verbatim: true });
   if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address))) {
     throw new Error("Agent endpoint must resolve only to public network addresses.");
   }
-  return url.toString();
+  const address = addresses[0];
+  return { url, address: address.address, family: address.family as 4 | 6 };
+}
+
+export async function validateEndpoint(endpointUrl: string) {
+  return (await resolvePublicEndpoint(endpointUrl)).url.toString();
 }
 
 function boundedValue(value: unknown, maxChars: number) {
@@ -101,34 +114,43 @@ function boundedState(value: Record<string, unknown>) {
     : {};
 }
 
-function concat(chunks: Uint8Array[], total: number) {
-  const result = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return result;
-}
-
-async function readLimited(response: Response) {
-  const length = Number(response.headers.get("content-length") ?? 0);
-  if (length > MAX_RESPONSE_BYTES) throw new Error("Agent response exceeded the 1 MB limit.");
-  const reader = response.body?.getReader();
-  if (!reader) return response.text();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  while (true) {
-    const next = await reader.read();
-    if (next.done) break;
-    total += next.value.byteLength;
-    if (total > MAX_RESPONSE_BYTES) {
-      await reader.cancel();
-      throw new Error("Agent response exceeded the 1 MB limit.");
-    }
-    chunks.push(next.value);
-  }
-  return new TextDecoder().decode(concat(chunks, total));
+async function postToResolvedEndpoint(endpoint: ResolvedEndpoint, body: string, headers: Record<string, string>, signal: AbortSignal) {
+  return new Promise<{ status: number; body: string }>((resolve, reject) => {
+    const options: RequestOptions = {
+      protocol: endpoint.url.protocol,
+      hostname: endpoint.url.hostname,
+      port: endpoint.url.port || undefined,
+      path: `${endpoint.url.pathname}${endpoint.url.search}`,
+      method: "POST",
+      headers: { ...headers, "content-length": Buffer.byteLength(body).toString() },
+      signal,
+      lookup: (_hostname, _options, callback) => callback(null, endpoint.address, endpoint.family)
+    };
+    if (endpoint.url.protocol === "https:") options.servername = endpoint.url.hostname;
+    const send = endpoint.url.protocol === "https:" ? httpsRequest : httpRequest;
+    const request = send(options, (response) => {
+      const declaredLength = Number(response.headers["content-length"] ?? 0);
+      if (declaredLength > MAX_RESPONSE_BYTES) {
+        response.destroy();
+        reject(new Error("Agent response exceeded the 1 MB limit."));
+        return;
+      }
+      const chunks: Buffer[] = [];
+      let total = 0;
+      response.on("data", (chunk: Buffer) => {
+        total += chunk.length;
+        if (total > MAX_RESPONSE_BYTES) {
+          response.destroy(new Error("Agent response exceeded the 1 MB limit."));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      response.once("error", reject);
+      response.once("end", () => resolve({ status: response.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf8") }));
+    });
+    request.once("error", reject);
+    request.end(body);
+  });
 }
 
 type AgentResponse = {
@@ -157,18 +179,13 @@ async function executeTest(endpointUrl: string, test: VerificationTest, endpoint
     const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
     const endpointSecret = endpointSecretArn ? await getSecretString(endpointSecretArn) : undefined;
     Object.assign(headers, buildEndpointAuthHeaders(endpointAuthType, endpointSecret, endpointAuthHeaderName));
-    const response = await fetch(await validateEndpoint(endpointUrl), {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }),
-      signal: controller.signal,
-      redirect: "error"
-    });
-    const raw = await readLimited(response);
+    const endpoint = await resolvePublicEndpoint(endpointUrl);
+    const response = await postToResolvedEndpoint(endpoint, JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }), headers, controller.signal);
+    const raw = response.body;
     let payload: AgentResponse = {};
     try { payload = JSON.parse(raw) as AgentResponse; } catch { /* raw response remains evidence */ }
     return {
-      ok: response.ok,
+      ok: response.status >= 200 && response.status < 300,
       response: payload.response ?? raw,
       rawResponse: raw,
       toolCalls: boundedToolCalls(Array.isArray(payload.tool_calls) ? payload.tool_calls : []),
