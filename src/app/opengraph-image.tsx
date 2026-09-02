@@ -8,8 +8,7 @@ export const size = {
 export const contentType = "image/png";
 export const runtime = "nodejs";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://agent-proof.dev";
-const logoUrl = new URL("/icon.png", siteUrl).toString();
+const logoUrl = "https://agent-proof.dev/icon.png";
 
 export default function OpenGraphImage() {
   return new ImageResponse(

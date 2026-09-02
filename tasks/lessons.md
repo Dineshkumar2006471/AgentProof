@@ -52,3 +52,4 @@
 - The worker is bundled during Next.js production builds but was excluded from the local typecheck project; include worker sources explicitly so deployment-only TypeScript failures do not reach CI. DNS validation must also pin the subsequent outbound connection, otherwise a controlled hostname can rebind after validation.
 - Treat a published plan limit as a server-side entitlement, not marketing copy: keep prices, agent capacity, monthly test/run reservations, one-time limits, checkout summaries, and documentation derived from one source.
 - Use a dedicated 1200x630 social card for Open Graph metadata; a square favicon is only appropriate for browser chrome, not feed previews.
+- Static social-image routes must use canonical public asset URLs rather than development app URLs, because CI can intentionally set the app URL to localhost while prerendering.
