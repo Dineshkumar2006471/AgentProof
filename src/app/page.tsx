@@ -55,6 +55,7 @@ export default function Home() {
             <Link className="font-data-label text-sm text-[var(--color-seal-indigo)] font-bold transition-colors" href="#platform">Platform</Link>
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">Evidence</Link>
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#pricing">Pricing</Link>
+            <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/docs">Docs</Link>
           </div>
           <Link href="/auth/sign-in" className="hidden md:flex bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
             Get started
@@ -63,7 +64,7 @@ export default function Home() {
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-in">Get started</Link></div></div>}
+        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/docs">Docs</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-in">Get started</Link></div></div>}
       </nav>
 
       {/* 2. Hero Section */}
@@ -73,7 +74,7 @@ export default function Home() {
           <div className="landing-hero-copy min-w-0 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-[var(--color-seal-indigo)] font-data-label text-xs font-bold mb-8 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-[var(--color-pass-moss)] animate-pulse"></span>
-              AgentProof is now available in beta
+              AgentProof public beta is open
             </div>
             <h1 className="landing-hero-title font-mono font-bold text-4xl md:text-5xl lg:text-[54px] text-[var(--color-ink-graphite)] mb-6 leading-none tracking-tighter uppercase">
               <span className="block whitespace-nowrap">YOU CLAIM IT WORKS</span>
@@ -216,6 +217,9 @@ export default function Home() {
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#evidence">EVIDENCE</Link>
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/verify/demo">VERIFICATION</Link>
             <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/pricing">PRICING</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/docs">DOCS</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/privacy">PRIVACY</Link>
+            <Link className="font-data-label text-sm font-bold text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/support">SUPPORT</Link>
           </div>
           <div className="font-data-label text-xs text-[var(--color-on-surface-variant)] text-center md:text-right">
             © 2026 AGENTPROOF.<br/>FORENSIC AUTHORITY IN AI VERIFICATION.

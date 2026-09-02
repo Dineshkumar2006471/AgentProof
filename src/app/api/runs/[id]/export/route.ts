@@ -1,13 +1,15 @@
 import { getRunForOwner, getRunRecords } from "@/lib/aws/dynamodb";
 import { requireUser } from "@/lib/auth/require-user";
 import { handleApiError } from "@/lib/api";
+import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 
 type ExportContext = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, context: ExportContext) {
+export async function GET(request: Request, context: ExportContext) {
   try {
     const { id } = await context.params;
     const user = await requireUser();
+    await enforceRateLimit(request, rateLimits.export, user.sub);
     const run = await getRunForOwner(id, user.sub);
     if (!run) return Response.json({ error: "Run not found." }, { status: 404 });
     const records = await getRunRecords(id);

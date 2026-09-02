@@ -15,7 +15,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
   if (!plan || plan.id === "free") redirect("/pricing");
 
   const user = await requirePageUser(`/pricing/checkout?plan=${plan.id}`);
-  const checkoutAllowed = dodoCheckoutEnabled(user.sub);
+  const checkoutAllowed = dodoCheckoutEnabled();
   const displayName = user.name ?? user.username ?? "Authenticated account";
   const email = user.email ?? user.username ?? "Verified account email";
   const capacityValue = plan.id === "pay_per_verification"
@@ -26,15 +26,15 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
     : `${plan.monthlyTestLimit} TESTS / ${plan.monthlyRunLimit} RUNS MONTHLY`;
   const checkoutAction = checkoutAllowed
     ? <CheckoutButton plan={plan.id} label={`CONTINUE TO ${plan.name.toUpperCase()}`} featured />
-    : <div className="checkout-gate"><span className="eyebrow">TEST CHECKOUT GATED</span><p>Free beta access remains active. Paid checkout is available only to approved billing test accounts.</p><Link href="/pricing" className="mono text-[var(--color-seal-indigo)]">Return to plans</Link></div>;
+    : <div className="checkout-gate"><span className="eyebrow">PAYMENTS NOT YET AVAILABLE</span><p>Free public-beta access remains available. Paid checkout will open after live billing is enabled.</p><Link href="/pricing" className="mono text-[var(--color-seal-indigo)]">Return to plans</Link></div>;
 
   return <AppShell title="Checkout" section="BILLING"><div className="workspace-page checkout-page">
-    <PageHeader eyebrow="BILLING / TEST MODE" title={`CONFIRM ${plan.name.toUpperCase()} ACCESS`} description="Review the selected verification capacity before opening the secure hosted checkout." actions={<ActionButton href="/pricing" variant="quiet" icon={<ArrowLeft size={15} />}>Back to plans</ActionButton>} />
+    <PageHeader eyebrow="BILLING" title={`CONFIRM ${plan.name.toUpperCase()} ACCESS`} description="Review the selected verification capacity before opening the secure hosted checkout." actions={<ActionButton href="/pricing" variant="quiet" icon={<ArrowLeft size={15} />}>Back to plans</ActionButton>} />
     <KpiGrid metrics={[{ label: "SELECTED PLAN", value: plan.name.toUpperCase(), detail: plan.recurring ? "MONTHLY SUBSCRIPTION" : "ONE-TIME PURCHASE" }, { label: "PRICE", value: plan.price.replace(" / mo", ""), detail: plan.recurring ? "BILLED MONTHLY" : "CHARGED ONCE", tone: "pass" }, { label: "CAPACITY", value: capacityValue, detail: capacityDetail }, { label: "REPORTS", value: plan.reports.toUpperCase(), detail: "AVAILABLE AFTER VERIFIED PAYMENT" }]} />
     {checkoutAllowed && <div className="checkout-mobile-action">{checkoutAction}</div>}
     <div className="checkout-layout">
       <section className="workspace-panel checkout-summary" aria-labelledby="checkout-summary-title">
-        <div className="workspace-panel__header"><span className="eyebrow">ORDER REVIEW</span><h2 id="checkout-summary-title" className="workspace-panel__title mt-2">{plan.name} verification capacity</h2><p className="workspace-panel__body">This selection is mapped to the AgentProof {plan.name} product in Dodo test mode.</p></div>
+        <div className="workspace-panel__header"><span className="eyebrow">ORDER REVIEW</span><h2 id="checkout-summary-title" className="workspace-panel__title mt-2">{plan.name} verification capacity</h2><p className="workspace-panel__body">Payment access is granted only after Dodo confirms the transaction through a signed webhook.</p></div>
         <dl className="checkout-summary__rows">
           <div><dt>PLAN</dt><dd>{plan.name}</dd></div>
           <div><dt>PRICE</dt><dd>{plan.price}{plan.recurring && <small> / MONTH</small>}</dd></div>

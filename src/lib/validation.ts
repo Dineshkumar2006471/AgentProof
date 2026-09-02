@@ -64,7 +64,9 @@ export const checkoutSchema = z.object({
 export const signUpSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(254),
-  password: accountPasswordSchema
+  password: accountPasswordSchema,
+  acceptedPolicies: z.literal(true, { errorMap: () => ({ message: "Accept the Terms and Privacy Policy to create an account." }) }),
+  captchaToken: z.string().min(1).max(2048).optional()
 });
 
 export const confirmSignUpSchema = z.object({
@@ -78,7 +80,8 @@ export const signInSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().trim().email()
+  email: z.string().trim().email(),
+  captchaToken: z.string().min(1).max(2048).optional()
 });
 
 export const resetPasswordSchema = z.object({

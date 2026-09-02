@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as cloudwatchActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
@@ -9,6 +10,8 @@ import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as eventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
@@ -32,6 +35,7 @@ export class AgentProofStack extends Stack {
       pointInTimeRecoverySpecification: {
         pointInTimeRecoveryEnabled: true
       },
+      timeToLiveAttribute: "expiresAt",
       removalPolicy: RemovalPolicy.RETAIN
     });
 
@@ -158,27 +162,45 @@ export class AgentProofStack extends Stack {
       reportBatchItemFailures: true
     }));
 
-    new cloudwatch.Alarm(this, "WorkerErrorsAlarm", {
+    const alertTopic = new sns.Topic(this, "OperationsAlerts", {
+      topicName: `agentproof-operations-${suffix}`,
+      displayName: "AgentProof operations alerts"
+    });
+    alertTopic.addSubscription(new subscriptions.EmailSubscription(this.node.tryGetContext("alarmEmail") ?? "support@agent-proof.dev"));
+
+    const workerErrorsAlarm = new cloudwatch.Alarm(this, "WorkerErrorsAlarm", {
       alarmName: `agentproof-worker-errors-${suffix}`,
       metric: worker.metricErrors({ period: Duration.minutes(5), statistic: "Sum" }),
       threshold: 1,
       evaluationPeriods: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
     });
-    new cloudwatch.Alarm(this, "DeadLetterAlarm", {
+    const deadLetterAlarm = new cloudwatch.Alarm(this, "DeadLetterAlarm", {
       alarmName: `agentproof-verification-dlq-${suffix}`,
       metric: deadLetterQueue.metricApproximateNumberOfMessagesVisible({ period: Duration.minutes(5), statistic: "Maximum" }),
       threshold: 1,
       evaluationPeriods: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
     });
-    new cloudwatch.Alarm(this, "QueueAgeAlarm", {
+    const queueAgeAlarm = new cloudwatch.Alarm(this, "QueueAgeAlarm", {
       alarmName: `agentproof-verification-queue-age-${suffix}`,
       metric: verificationQueue.metricApproximateAgeOfOldestMessage({ period: Duration.minutes(5), statistic: "Maximum" }),
       threshold: 300,
       evaluationPeriods: 2,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
     });
+    [workerErrorsAlarm, deadLetterAlarm, queueAgeAlarm].forEach((alarm) => alarm.addAlarmAction(new cloudwatchActions.SnsAction(alertTopic)));
+    const operationsDashboard = new cloudwatch.Dashboard(this, "OperationsDashboard", {
+      dashboardName: `agentproof-operations-${suffix}`
+    });
+    operationsDashboard.addWidgets(new cloudwatch.GraphWidget({
+      title: "Verification worker health",
+      left: [worker.metricErrors({ statistic: "Sum", period: Duration.minutes(5) }), worker.metricInvocations({ statistic: "Sum", period: Duration.minutes(5) })],
+      right: [worker.metricDuration({ statistic: "p95", period: Duration.minutes(5) })]
+    }), new cloudwatch.GraphWidget({
+      title: "Verification queue health",
+      left: [verificationQueue.metricApproximateAgeOfOldestMessage({ statistic: "Maximum", period: Duration.minutes(5) }), deadLetterQueue.metricApproximateNumberOfMessagesVisible({ statistic: "Maximum", period: Duration.minutes(5) })]
+    }));
 
     const amplifyComputeRole = new iam.Role(this, "AmplifySsrComputeRole", {
       roleName: `agentproof-amplify-ssr-${suffix}`,
@@ -186,6 +208,10 @@ export class AgentProofStack extends Stack {
       description: "Least-privilege runtime role for AgentProof Amplify SSR routes"
     });
     table.grantReadWriteData(amplifyComputeRole);
+    amplifyComputeRole.addToPolicy(new iam.PolicyStatement({
+      actions: ["cognito-idp:ListUsers"],
+      resources: [userPool.userPoolArn]
+    }));
     reportsBucket.grantReadWrite(amplifyComputeRole);
     verificationQueue.grantSendMessages(amplifyComputeRole);
     amplifyComputeRole.addToPolicy(new iam.PolicyStatement({
@@ -205,5 +231,7 @@ export class AgentProofStack extends Stack {
     new cdk.CfnOutput(this, "VerificationQueueUrl", { value: verificationQueue.queueUrl, exportName: `AgentProof-${suffix}-QueueUrl` });
     new cdk.CfnOutput(this, "OpenAiSecretArn", { value: openAiSecret.ref, exportName: `AgentProof-${suffix}-OpenAiSecretArn` });
     new cdk.CfnOutput(this, "AmplifySsrComputeRoleArn", { value: amplifyComputeRole.roleArn, exportName: `AgentProof-${suffix}-AmplifyRoleArn` });
+    new cdk.CfnOutput(this, "OperationsAlertsTopicArn", { value: alertTopic.topicArn, exportName: `AgentProof-${suffix}-OperationsAlertsTopicArn` });
+    new cdk.CfnOutput(this, "OperationsDashboardName", { value: operationsDashboard.dashboardName, exportName: `AgentProof-${suffix}-OperationsDashboardName` });
   }
 }

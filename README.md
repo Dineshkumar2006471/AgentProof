@@ -13,11 +13,11 @@ This repository contains the Next.js web application, authenticated workspace, v
 5. **Store** raw evidence, test results, score, and verification status.
 6. **Share** a public report that does not expose private account data.
 
-## Beta Access Model
+## Public Beta Access Model
 
-AgentProof launches as an open beta for the target cohort. Anyone in the cohort can create an account through the public sign-up screen; there is no email allowlist or invite-only gate. Email confirmation remains required before sign-in.
+AgentProof is an open public beta, not an invite-only cohort tool. Anyone can create an account through the public sign-up screen, confirm their email, and use the Free plan. The product runs on production AWS infrastructure while usage limits, monitoring, support, and payments are validated with real users.
 
-The beta is open with operational guardrails: each account can register a configurable number of agents, and each agent has a configurable daily verification-run limit. These limits protect the shared AWS queue and OpenAI budget while allowing real users to test the complete product flow. The beta defaults are five agents per account and ten runs per agent per 24 hours; set `AGENTPROOF_BETA_MODE=true` in the deployed environment to enforce them.
+Plan entitlements and a daily verification guardrail protect the shared queue and AI budget. They are permanent service safeguards, not a hidden invite gate.
 
 ## How Verification Works
 
@@ -217,11 +217,13 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Canonical application URL used in links and reports. |
-| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Optional PostHog browser project key and ingestion host. Analytics remains disabled when the key is empty. |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` / `NEXT_PUBLIC_POSTHOG_PROJECT_URL` | Optional PostHog project configuration. Analytics remains disabled when the key is empty. |
 | `AWS_REGION` | AWS region for application services. |
-| `AGENTPROOF_BETA_MODE` | Enables open-beta usage limits when set to `true`. |
+| `AGENTPROOF_ENVIRONMENT` | Environment name. Set to `production` only on the deployed production branch. |
 | Plan entitlements | The server enforces the published plan capacity: Free supports one agent, 15 tests, and two verification runs per month; Builder supports three agents, 100 tests, and 10 runs; Agency supports 10 agents, 500 tests, and 50 runs. One-time purchases provide one verification run with up to 25 tests. Billing state is derived from verified Dodo webhook records, not browser redirects. |
-| `AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY` | Maximum verification runs per agent in a rolling 24-hour window; defaults to `10`. |
+| `AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT` | Maximum verification runs for one agent in a rolling 24-hour window; defaults to `10`. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `AGENTPROOF_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile keys required for public sign-up and reset flows in production. |
+| `AGENTPROOF_FOUNDER_USER_IDS` | Comma-separated Cognito subject IDs permitted to access `/founder`. |
 | `AGENTPROOF_DYNAMODB_TABLE` | DynamoDB table name. |
 | `AGENTPROOF_REPORTS_BUCKET` | S3 bucket for report artifacts. |
 | `AGENTPROOF_VERIFICATION_QUEUE_URL` | SQS queue consumed by the worker. |
@@ -231,11 +233,11 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | `OPENAI_API_KEY` | Optional local-only test-generation credential. Production uses Secrets Manager. |
 | `OPENAI_SECRET_ARN` | Optional Secrets Manager ARN used by the SSR app instead of a direct API key. |
 | `OPENAI_MODEL` | Model used by the worker and test generator. |
-| `DODO_PAYMENTS_API_KEY` | Server-side Dodo test-mode billing credential. |
+| `DODO_PAYMENTS_API_KEY` | Server-side Dodo live billing credential. |
 | `DODO_PAYMENTS_WEBHOOK_KEY` | Server-side Dodo webhook signature key. |
-| `DODO_PAYMENTS_ENVIRONMENT` | Dodo environment; keep `test_mode` during beta validation. |
-| `DODO_CHECKOUT_ENABLED` / `DODO_TEST_USER_IDS` | Server-side gate for approved billing test accounts. |
-| `DODO_BUILDER_PRODUCT_ID` / `DODO_AGENCY_PRODUCT_ID` / `DODO_ONE_RUN_PRODUCT_ID` | Dodo product identifiers for the shared beta plans. |
+| `DODO_PAYMENTS_ENVIRONMENT` | `live_mode` for public paid checkout. |
+| `DODO_CHECKOUT_ENABLED` | Enables checkout only after every live Dodo variable is configured. |
+| `DODO_BUILDER_PRODUCT_ID` / `DODO_AGENCY_PRODUCT_ID` / `DODO_ONE_RUN_PRODUCT_ID` | Dodo live product identifiers for the shared plans. |
 | `SARVAM_API_KEY` | Optional speech/transcription integration credential. |
 
 ## Quality Checks
@@ -254,7 +256,7 @@ Also check the browser at `1280x720`, `1440x900`, and `390x844`. Confirm redirec
 
 GitHub Actions runs the same application and infrastructure checks on pull requests and pushes to `main` through `.github/workflows/ci.yml`. The workflow uses Node.js 22, installs from the lockfile, and does not require AWS credentials or production secrets.
 
-## Beta Operations And Analytics
+## Public Beta Operations And Analytics
 
 AgentProof currently has separate operator surfaces for distinct responsibilities:
 
@@ -263,7 +265,7 @@ AgentProof currently has separate operator surfaces for distinct responsibilitie
 - **Payments:** The Dodo dashboard is the source of truth for checkout, payments, subscriptions, and webhook deliveries. AgentProof grants paid access only after a signed webhook persists the billing state.
 - **Application traffic and errors:** Amplify Hosting and CloudWatch provide request volume, latency, error metrics, access logs, and SSR runtime logs. SQS, Lambda, and dead-letter-queue metrics monitor verification execution.
 
-There is not yet an in-product founder analytics dashboard. Build that as a separate, protected admin feature after the beta has enough real usage to define meaningful metrics. It must aggregate data, limit administrator access, and be covered by a privacy policy; do not expose individual customer prompts, endpoint secrets, or evidence by default.
+The protected `/founder` dashboard shows aggregate registered-user, agent, run, subscription, payment, and recurring-revenue metrics. It is accessible only to Cognito subjects in `AGENTPROOF_FOUNDER_USER_IDS`; it never exposes customer prompts, endpoint secrets, emails, or evidence.
 
 ### PostHog Product Analytics
 
@@ -277,7 +279,9 @@ Protect `main` in repository settings and require the `Quality and build` check 
 
 ### Search Visibility
 
-The application serves `https://agent-proof.dev/robots.txt` and `https://agent-proof.dev/sitemap.xml`. The sitemap intentionally includes only the AgentProof home page, Pricing page, and Sample Verification Report. Customer public reports are shareable by their direct URL but use `noindex` metadata so customer-controlled findings do not appear in search results.
+The application serves `https://agent-proof.dev/robots.txt` and `https://agent-proof.dev/sitemap.xml`. The sitemap includes AgentProof-owned marketing pages, documentation, and the controlled case study. Customer public reports are shareable by direct URL but use `noindex` metadata so customer-controlled findings do not appear in search results.
+
+`/docs` covers AI agent verification, executable contracts, deterministic testing, adversarial contract testing, production hallucination prevention, and public verification reports. Publish only measured case-study results. Do not use bought links, fake reviews, hidden content, fabricated ratings, or misleading structured data.
 
 After the Amplify deployment succeeds, verify a Google Search Console **Domain property** for `agent-proof.dev` through DNS, submit `https://agent-proof.dev/sitemap.xml`, and use URL Inspection to request indexing for the home page. Crawling permission and sitemap submission improve discovery but do not guarantee a search position.
 
@@ -306,11 +310,11 @@ npx cdk deploy -c environment=dev
 
 A successful infrastructure deployment does not prove that verification works. Application, worker, endpoint reachability, Cognito callbacks, queue permissions, and report access must be tested together.
 
-Amplify provides the always-on public application URL. The local `3002` server is only a development process and can be stopped without affecting the deployed application. The canonical beta URL is `https://agent-proof.dev`; retain the Amplify hostname as the rollback URL.
+Amplify provides the always-on public application URL. The local `3002` server is only a development process and can be stopped without affecting the deployed application. The canonical public-beta URL is `https://agent-proof.dev`; retain the Amplify hostname as the rollback URL.
 
-### Dodo Test Billing
+### Dodo Live Billing
 
-Create the Builder, Agency, and One-run products in Dodo test mode using the shared beta prices of `₹199 / month`, `₹499 / month`, and `₹49`. Configure the webhook endpoint as `https://agent-proof.dev/api/webhooks/dodo` only after the custom domain is available. Checkout remains disabled for the cohort until approved Cognito test-user IDs are configured.
+Complete Dodo live-account verification, tax/invoice settings, and live Builder, Agency, and One-run products at `₹199 / month`, `₹499 / month`, and `₹49`. Configure the webhook endpoint as `https://agent-proof.dev/api/webhooks/dodo`. Set `DODO_PAYMENTS_ENVIRONMENT=live_mode` and enable checkout only after a controlled live payment, cancellation, and duplicate-webhook test pass.
 
 ## First Verification Run
 
@@ -324,29 +328,27 @@ Create the Builder, Agency, and One-run products in Dodo test mode using the sha
 8. Open the private report, copy its public link, and verify it signed out.
 9. Confirm the public report contains evidence but no endpoint credential, token, or private account data.
 
-## Open-Beta Test Matrix
+## Public-Beta Qualification Matrix
 
-Test at least four real agents or controlled bots before public launch. Use different failure modes, not four copies of the same happy path.
+Test at least two reliable real agents and one intentionally flawed controlled agent before broad public promotion. Use different failure modes, not copies of the same happy path.
 
 | Test target | What to verify |
 | --- | --- |
 | Support agent | Correct answers, refusal of unsupported claims, and stable JSON shape. |
-| Booking or scheduling agent | Confirmation only after availability is checked; no fabricated booking. |
-| Lead-qualification agent | Required fields are collected and sensitive inputs are handled safely. |
-| Sales or recommendation agent | Recommendations follow constraints and do not invent availability. |
+| Booking, lead, sales, or recommendation agent | Confirmation only after verified state; no fabricated availability, pricing, or commitments. |
 | Intentionally flawed agent | Known violations produce explainable `FAIL` or `BLOCKED` evidence. |
 
-For each target, record endpoint version, contract, expected result, observed result, run ID, report URL, and defects. The intentionally flawed target is strongly recommended even when only four agents are available.
+For each target, record endpoint version, contract, expected result, observed result, run ID, report URL, and defects. The intentionally flawed target is mandatory for qualification.
 
-## Open-Beta Launch Gate
+## Public-Beta Launch Gate
 
 - Public sign-up, email confirmation, sign-in, expiry, profile, and sign-out work in the deployed environment.
-- Beta limits are enabled and a limit response is clear without exposing internal details.
+- Plan quotas, daily guardrails, and application rate limits return clear `429` responses without exposing internal details.
 - A real HTTPS endpoint completes registration through public report.
-- At least four materially different agents have been tested.
+- Two reliable agents and one intentionally flawed agent have been tested.
 - At least one intentional failure produces expected, explainable evidence.
 - Secrets are stored in environment management or Secrets Manager.
-- Cognito callback URLs, Dodo webhook signatures, and public-report access are verified.
+- Cognito callback URLs, CAPTCHA, Dodo webhook signatures, and public-report access are verified before paid checkout is enabled.
 - Queue and worker failures are visible in logs and alarms.
 - A rollback path is exercised or documented.
 - This README, `.env.example`, and the operator checklist match deployment.

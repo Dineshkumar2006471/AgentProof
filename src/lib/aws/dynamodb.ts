@@ -4,6 +4,7 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand as DocumentQueryCommand,
+  ScanCommand,
   TransactWriteCommand,
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
@@ -100,6 +101,79 @@ export async function getBillingAccount(ownerId: string) {
     Key: { PK: `USER#${ownerId}`, SK: "BILLING#ACCOUNT" }
   }));
   return (result.Item ?? null) as BillingAccount | null;
+}
+
+export async function recordPolicyAcceptance(ownerId: string, input: { version: string; acceptedAt: string }) {
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: {
+      PK: `USER#${ownerId}`,
+      SK: "POLICY#TERMS",
+      entityType: "PolicyAcceptance",
+      policyVersion: input.version,
+      acceptedAt: input.acceptedAt
+    }
+  }));
+}
+
+export async function consumeRateLimit(input: { scope: string; subject: string; limit: number; windowSeconds: number }) {
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const windowStart = Math.floor(nowSeconds / input.windowSeconds) * input.windowSeconds;
+  try {
+    await getDynamoDb().send(new UpdateCommand({
+      TableName: tableName(),
+      Key: { PK: `RATE#${input.scope}#${input.subject}`, SK: `WINDOW#${windowStart}` },
+      UpdateExpression: "SET #count = if_not_exists(#count, :zero) + :one, #expiresAt = :expiresAt, #entityType = :entityType",
+      ConditionExpression: "attribute_not_exists(#count) OR #count < :limit",
+      ExpressionAttributeNames: { "#count": "count", "#expiresAt": "expiresAt", "#entityType": "entityType" },
+      ExpressionAttributeValues: { ":zero": 0, ":one": 1, ":limit": input.limit, ":expiresAt": windowStart + input.windowSeconds * 2, ":entityType": "RateLimit" }
+    }));
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConditionalCheckFailedException") return false;
+    throw error;
+  }
+}
+
+export type FounderMetrics = {
+  agents: number;
+  verificationRuns: number;
+  completedRuns: number;
+  activeBuilderSubscriptions: number;
+  activeAgencySubscriptions: number;
+  oneTimePurchases: number;
+  failedPayments: number;
+};
+
+export async function getFounderMetrics(): Promise<FounderMetrics> {
+  const metrics: FounderMetrics = { agents: 0, verificationRuns: 0, completedRuns: 0, activeBuilderSubscriptions: 0, activeAgencySubscriptions: 0, oneTimePurchases: 0, failedPayments: 0 };
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const result = await getDynamoDb().send(new ScanCommand({
+      TableName: tableName(),
+      ProjectionExpression: "#entityType, #status, #plan, #billingStatus, #eventType",
+      ExpressionAttributeNames: { "#entityType": "entityType", "#status": "status", "#plan": "plan", "#billingStatus": "billingStatus", "#eventType": "eventType" },
+      ExclusiveStartKey: exclusiveStartKey
+    }));
+    for (const item of result.Items ?? []) {
+      const entityType = item.entityType;
+      if (entityType === "Agent") metrics.agents += 1;
+      if (entityType === "VerificationRun") {
+        metrics.verificationRuns += 1;
+        if (item.status === "COMPLETED") metrics.completedRuns += 1;
+      }
+      if (entityType === "BillingAccount" && item.billingStatus === "active") {
+        if (item.plan === "builder") metrics.activeBuilderSubscriptions += 1;
+        if (item.plan === "agency") metrics.activeAgencySubscriptions += 1;
+      }
+      if (entityType === "DodoWebhook") {
+        if (item.eventType === "payment.succeeded" && item.plan === "pay_per_verification") metrics.oneTimePurchases += 1;
+        if (item.eventType === "payment.failed") metrics.failedPayments += 1;
+      }
+    }
+    exclusiveStartKey = result.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+  return metrics;
 }
 
 export async function getAgent(id: string) {
@@ -526,7 +600,8 @@ export async function applyDodoWebhook(webhookId: string, event: DodoWebhookEven
     ownerId,
     receivedAt: timestamp,
     paymentId: details.paymentId,
-    subscriptionId: details.subscriptionId
+    subscriptionId: details.subscriptionId,
+    plan: details.plan
   };
 
   const subscriptionEvents = new Set(["subscription.active", "subscription.renewed", "subscription.updated", "subscription.plan_changed"]);

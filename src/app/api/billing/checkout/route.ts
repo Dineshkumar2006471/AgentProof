@@ -3,15 +3,17 @@ import { ApiError, handleApiError, jsonOk } from "@/lib/api";
 import { requireUser } from "@/lib/auth/require-user";
 import { appUrl } from "@/lib/auth/session";
 import { dodoCheckoutEnabled, dodoProductId, getDodoClient, dodoUpstreamError } from "@/lib/dodo";
+import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 import type { PricingPlanId } from "@/lib/pricing";
 
 export async function POST(request: Request) {
   try {
     const input = checkoutSchema.parse(await request.json());
     const user = await requireUser();
-    if (!dodoCheckoutEnabled(user.sub)) {
-      throw new ApiError(403, "Payment checkout is limited to approved beta test accounts.");
+    if (!dodoCheckoutEnabled()) {
+      throw new ApiError(503, "Payment checkout is not available yet.");
     }
+    await enforceRateLimit(request, rateLimits.checkout, user.sub);
 
     const plan = input.plan as Exclude<PricingPlanId, "free">;
     const email = user.email ?? user.username;

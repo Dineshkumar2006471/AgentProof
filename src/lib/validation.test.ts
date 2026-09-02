@@ -66,7 +66,8 @@ describe("account password validation", () => {
     const result = signUpSchema.safeParse({
       name: "Taylor Example",
       email: "taylor@example.com",
-      password: "eightchr"
+      password: "eightchr",
+      acceptedPolicies: true
     });
 
     expect(result.success).toBe(true);
@@ -76,7 +77,8 @@ describe("account password validation", () => {
     const signUp = signUpSchema.safeParse({
       name: "Taylor Example",
       email: "taylor@example.com",
-      password: "short"
+      password: "short",
+      acceptedPolicies: true
     });
     const reset = resetPasswordSchema.safeParse({
       email: "taylor@example.com",
@@ -87,5 +89,11 @@ describe("account password validation", () => {
     expect(signUp.success).toBe(false);
     expect(reset.success).toBe(false);
     if (!signUp.success) expect(signUp.error.issues[0]?.message).toBe("Use at least 8 characters.");
+  });
+
+  it("requires policy acceptance for new accounts", () => {
+    const result = signUpSchema.safeParse({ name: "Taylor Example", email: "taylor@example.com", password: "eightchr", acceptedPolicies: false });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0]?.message).toBe("Accept the Terms and Privacy Policy to create an account.");
   });
 });

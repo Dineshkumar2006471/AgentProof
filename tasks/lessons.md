@@ -53,3 +53,4 @@
 - Treat a published plan limit as a server-side entitlement, not marketing copy: keep prices, agent capacity, monthly test/run reservations, one-time limits, checkout summaries, and documentation derived from one source.
 - Use a dedicated 1200x630 social card for Open Graph metadata; a square favicon is only appropriate for browser chrome, not feed previews.
 - Static social-image routes must use canonical public asset URLs rather than development app URLs, because CI can intentionally set the app URL to localhost while prerendering.
+- Treat launch stage and engineering maturity separately: a public beta can use production-grade infrastructure and nationwide signup while paid checkout, support operations, and incident response are still being validated. Do not relabel it general availability until those gates have real production evidence.

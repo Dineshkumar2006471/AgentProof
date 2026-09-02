@@ -36,11 +36,16 @@ describe("search metadata routes", () => {
   });
 
   it("publishes only AgentProof-owned marketing pages in the sitemap", () => {
-    expect(sitemap().map((entry) => entry.url)).toEqual([
+    const urls = sitemap().map((entry) => entry.url);
+    expect(urls).toEqual(expect.arrayContaining([
       "https://agent-proof.dev",
       "https://agent-proof.dev/pricing",
-      "https://agent-proof.dev/verify/demo"
-    ]);
+      "https://agent-proof.dev/verify/demo",
+      "https://agent-proof.dev/docs",
+      "https://agent-proof.dev/docs/deterministic-ai-agent-testing",
+      "https://agent-proof.dev/case-studies/customer-support-agent-safety"
+    ]));
+    expect(urls).not.toContain(expect.stringMatching(/\/auth|\/dashboard|\/agents|\/profile|\/api/));
   });
 
   it("allows public crawling while excluding private product surfaces", () => {

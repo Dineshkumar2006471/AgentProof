@@ -22,9 +22,7 @@ jobs:
     env:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       AGENTPROOF_ENVIRONMENT: ci
-      AGENTPROOF_BETA_MODE: "false"
-      AGENTPROOF_BETA_MAX_AGENTS_PER_USER: "5"
-      AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: "10"
+      AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT: "10"
 
     steps:
       - name: Check out repository

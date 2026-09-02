@@ -2,10 +2,13 @@ import { z } from "zod";
 
 const serverEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_POSTHOG_PROJECT_URL: z.string().url().optional(),
   AWS_REGION: z.string().min(1).optional(),
   AGENTPROOF_ENVIRONMENT: z.string().min(1).default("development"),
-  AGENTPROOF_BETA_MODE: z.enum(["true", "false"]).default("false"),
-  AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: z.coerce.number().int().positive().default(10),
+  AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT: z.coerce.number().int().positive().default(10),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+  AGENTPROOF_TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  AGENTPROOF_FOUNDER_USER_IDS: z.string().optional(),
   AGENTPROOF_DYNAMODB_TABLE: z.string().min(1).optional(),
   AGENTPROOF_REPORTS_BUCKET: z.string().min(1).optional(),
   AGENTPROOF_VERIFICATION_QUEUE_URL: z.string().min(1).optional(),
@@ -18,7 +21,6 @@ const serverEnvSchema = z.object({
   DODO_PAYMENTS_WEBHOOK_KEY: z.string().min(1).optional(),
   DODO_PAYMENTS_ENVIRONMENT: z.enum(["test_mode", "live_mode"]).default("test_mode"),
   DODO_CHECKOUT_ENABLED: z.enum(["true", "false"]).default("false"),
-  DODO_TEST_USER_IDS: z.string().optional(),
   DODO_BUILDER_PRODUCT_ID: z.string().min(1).optional(),
   DODO_AGENCY_PRODUCT_ID: z.string().min(1).optional(),
   DODO_ONE_RUN_PRODUCT_ID: z.string().min(1).optional(),
@@ -27,10 +29,13 @@ const serverEnvSchema = z.object({
 
 export const env = serverEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_POSTHOG_PROJECT_URL: process.env.NEXT_PUBLIC_POSTHOG_PROJECT_URL,
   AWS_REGION: process.env.AWS_REGION,
   AGENTPROOF_ENVIRONMENT: process.env.AGENTPROOF_ENVIRONMENT,
-  AGENTPROOF_BETA_MODE: process.env.AGENTPROOF_BETA_MODE,
-  AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY: process.env.AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY,
+  AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT: process.env.AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT,
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+  AGENTPROOF_TURNSTILE_SECRET_KEY: process.env.AGENTPROOF_TURNSTILE_SECRET_KEY,
+  AGENTPROOF_FOUNDER_USER_IDS: process.env.AGENTPROOF_FOUNDER_USER_IDS,
   AGENTPROOF_DYNAMODB_TABLE: process.env.AGENTPROOF_DYNAMODB_TABLE,
   AGENTPROOF_REPORTS_BUCKET: process.env.AGENTPROOF_REPORTS_BUCKET,
   AGENTPROOF_VERIFICATION_QUEUE_URL:
@@ -44,7 +49,6 @@ export const env = serverEnvSchema.parse({
   DODO_PAYMENTS_WEBHOOK_KEY: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
   DODO_PAYMENTS_ENVIRONMENT: process.env.DODO_PAYMENTS_ENVIRONMENT,
   DODO_CHECKOUT_ENABLED: process.env.DODO_CHECKOUT_ENABLED,
-  DODO_TEST_USER_IDS: process.env.DODO_TEST_USER_IDS,
   DODO_BUILDER_PRODUCT_ID: process.env.DODO_BUILDER_PRODUCT_ID,
   DODO_AGENCY_PRODUCT_ID: process.env.DODO_AGENCY_PRODUCT_ID,
   DODO_ONE_RUN_PRODUCT_ID: process.env.DODO_ONE_RUN_PRODUCT_ID,

@@ -9,13 +9,10 @@ const productEnvByPlan: Record<Exclude<PricingPlanId, "free">, keyof typeof env>
   pay_per_verification: "DODO_ONE_RUN_PRODUCT_ID"
 };
 
-export function dodoCheckoutEnabled(userId: string) {
-  if (env.DODO_CHECKOUT_ENABLED !== "true") return false;
-  const allowedUsers = (env.DODO_TEST_USER_IDS ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  return allowedUsers.includes(userId);
+export function dodoCheckoutEnabled() {
+  return env.DODO_CHECKOUT_ENABLED === "true" &&
+    env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" &&
+    Boolean(env.DODO_PAYMENTS_API_KEY && env.DODO_PAYMENTS_WEBHOOK_KEY && env.DODO_BUILDER_PRODUCT_ID && env.DODO_AGENCY_PRODUCT_ID && env.DODO_ONE_RUN_PRODUCT_ID);
 }
 
 export function dodoProductId(plan: Exclude<PricingPlanId, "free">) {

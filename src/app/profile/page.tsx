@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   const planId = resolveEntitledPlan(billingAccount);
   const plan = getPricingPlan(planId)!;
   const { maxAgents } = entitlementForPlan(planId);
-  const billingState = planId === "free" ? "FREE BETA" : billingAccount?.billingStatus === "active" ? "ACTIVE" : "PENDING";
+  const billingState = planId === "free" ? "FREE" : billingAccount?.billingStatus === "active" ? "ACTIVE" : "PENDING";
 
   return (
     <AppShell title="PROFILE SETTINGS" section="ACCOUNT"><div className="workspace-page profile-page">

@@ -3,6 +3,7 @@ import { ConflictError, handleApiError, jsonOk, UpstreamServiceError } from "@/l
 import { createContractVersion, getAgentForOwner } from "@/lib/aws/dynamodb";
 import { requireUser } from "@/lib/auth/require-user";
 import { ContractProviderError, draftContract } from "@/lib/openai/contract-engine";
+import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 
 type ContractDraftContext = {
   params: Promise<{ id: string }>;
@@ -13,6 +14,7 @@ export async function POST(request: Request, context: ContractDraftContext) {
     const { id } = await context.params;
     const input = createAgentSchema.parse(await request.json());
     const user = await requireUser();
+    await enforceRateLimit(request, rateLimits.aiGeneration, user.sub);
     const agent = await getAgentForOwner(id, user.sub);
     if (!agent) return jsonOk({ error: "Agent not found." }, { status: 404 });
     let draft;

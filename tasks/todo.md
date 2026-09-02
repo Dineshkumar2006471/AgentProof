@@ -1,5 +1,23 @@
 # AgentProof Level 1 Build Tracker
 
+## Public Beta With Production Safeguards
+
+- [x] Replace cohort-only product wording and configuration with a public-beta launch model and production-ready safeguards.
+- [x] Polish accessible authentication controls, production policy acceptance, and optional Turnstile verification.
+- [x] Enable production-ready public checkout logic while keeping it disabled until live Dodo configuration is complete.
+- [x] Add legal/support pages, founder-only aggregate analytics, rate-limit primitives, and alert delivery infrastructure.
+- [x] Build an indexable documentation hub, evidence-based case study, and verified-report badge surface.
+- [ ] Complete automated verification, production synthesis, live configuration checklist, and deployment review.
+
+### Review
+
+- The public product now uses a public-beta model: public sign-up and production AWS infrastructure remain available, while permanent plan quotas, rate limits, monitoring, and incident safeguards protect the service.
+- Authentication has reusable accessible password controls, simple 8-character validation, policy acceptance recording, rate limits, and optional production Turnstile validation. Turnstile intentionally stays inactive until its two keys are configured in Amplify.
+- Paid checkout is deliberately unavailable until Dodo live credentials, product IDs, and signed-webhook configuration are completed. It cannot grant entitlements from a browser return URL.
+- Founder metrics expose aggregate operational data only to configured Cognito subjects. Legal pages are publishable drafts and require founder review before paid public checkout.
+- The public docs hub, controlled case study, accurate structured metadata, and verified-report badge are included in the sitemap. Customer-controlled report pages remain shareable but noindex.
+- Vitest passed with 30 tests and `npm audit --omit=dev --audit-level=high` found no high-severity production vulnerabilities. The Windows/OneDrive process runner continues to terminate TypeScript/CDK child commands after bundling without a final status; the previous standalone typecheck passed, and GitHub Actions is the authoritative full lint/build/synthesis gate after push.
+
 ## Current Build Plan
 
 - [x] Read PRD and design documents.

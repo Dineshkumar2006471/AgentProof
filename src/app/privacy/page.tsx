@@ -1,0 +1,8 @@
+import type { Metadata } from "next";
+import { LegalPage } from "@/components/legal-page";
+
+export const metadata: Metadata = { title: "Privacy Policy", description: "How AgentProof handles account, verification, billing, and analytics data.", alternates: { canonical: "/privacy" } };
+
+export default function PrivacyPage() {
+  return <LegalPage title="Privacy Policy" updatedAt="02 September 2026"><section><h2>Information we process</h2><p>AgentProof processes the name and email supplied through Cognito, agent configuration, bounded verification evidence, plan entitlements, and payment-provider identifiers needed to operate the service.</p></section><section><h2>Service providers</h2><p>Amazon Web Services hosts application infrastructure, Amazon Cognito manages authentication, Dodo Payments processes purchases, and PostHog may receive privacy-minimal product events when analytics is enabled. AgentProof does not send passwords, endpoint credentials, prompts, raw evidence, names, or email addresses to PostHog.</p></section><section><h2>Verification data</h2><p>Endpoint credentials are stored separately in AWS Secrets Manager. Private reports remain owner-protected. Public reports intentionally exclude credentials, account data, and full raw evidence.</p></section><section><h2>Retention and requests</h2><p>Report artifacts are retained for up to 365 days unless a shorter lifecycle applies. Contact support for data-access, correction, or deletion requests. We may retain limited records where required for security, fraud prevention, tax, or legal obligations.</p></section><section><h2>Contact</h2><p>For privacy requests, contact support@agent-proof.dev.</p></section></LegalPage>;
+}

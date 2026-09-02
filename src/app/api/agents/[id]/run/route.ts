@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { countRunsInWindow } from "@/lib/beta";
 import { env } from "@/lib/env";
 import { entitlementForPlan, resolveEntitledPlan } from "@/lib/pricing";
+import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 
 type RunRouteContext = {
   params: Promise<{ id: string }>;
@@ -16,6 +17,7 @@ export async function POST(request: Request, context: RunRouteContext) {
     const { id } = await context.params;
     const input = startRunSchema.parse(await request.json().catch(() => ({})));
     const user = await requireUser();
+    await enforceRateLimit(request, rateLimits.verificationStart, user.sub);
     const agent = await getAgentForOwner(id, user.sub);
     if (!agent) return jsonOk({ error: "Agent not found." }, { status: 404 });
     const contract = input.contractId ? await getContractById(id, input.contractId) : await getLatestContract(id);
@@ -31,16 +33,14 @@ export async function POST(request: Request, context: RunRouteContext) {
     if (entitlement.monthlyTestLimit !== undefined && tests.length > entitlement.monthlyTestLimit) {
       throw new ApiError(422, `This test matrix has ${tests.length} tests, which exceeds the ${entitlement.monthlyTestLimit}-test monthly allowance for the current plan.`);
     }
-    if (env.AGENTPROOF_BETA_MODE === "true") {
-      const recentRunCount = countRunsInWindow(
-        await listRunsByAgent(id, env.AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY + 1)
+    const recentRunCount = countRunsInWindow(
+      await listRunsByAgent(id, env.AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT + 1)
+    );
+    if (recentRunCount >= env.AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT) {
+      throw new ApiError(
+        429,
+        `Daily verification limit reached. This agent can run up to ${env.AGENTPROOF_DAILY_RUN_LIMIT_PER_AGENT} verifications per 24 hours.`
       );
-      if (recentRunCount >= env.AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY) {
-        throw new ApiError(
-          429,
-          `Open beta limit reached. This agent can run up to ${env.AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY} verifications per 24 hours.`
-        );
-      }
     }
     const startedAt = new Date().toISOString();
     const reservation = {

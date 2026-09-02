@@ -6,6 +6,8 @@ import { VerificationStamp } from "@/components/verification-stamp";
 import { getAgentForOwner, getLatestContract, getVerificationStatus, listRunsByAgent } from "@/lib/aws/dynamodb";
 import { requirePageUser } from "@/lib/auth/require-page-user";
 import { endpointAuthLabel } from "@/lib/endpoint-auth";
+import { env } from "@/lib/env";
+import { isEligibleForBadge } from "@/lib/report-badge";
 
 function displayDate(value: string) {
   return new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
@@ -24,6 +26,10 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
   const statuses = await Promise.all(runs.map((run) => getVerificationStatus(run.id)));
   const latest = statuses[0];
   const reportHref = latest?.publicId ? `/verify/${latest.publicId}` : undefined;
+  const badgeEligible = isEligibleForBadge(latest);
+  const badgeEmbed = badgeEligible && latest?.publicId
+    ? `<a href="${env.NEXT_PUBLIC_APP_URL}/verify/${latest.publicId}"><img src="${env.NEXT_PUBLIC_APP_URL}/api/badges/${latest.publicId}.svg" alt="AgentProof Verified" /></a>`
+    : undefined;
   const score = latest?.overallScore;
 
   return (
@@ -55,7 +61,7 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
           </div>
           <aside className="dossier-side">
             <section className="workspace-panel workspace-panel--dark p-6 text-white"><span className="eyebrow text-[var(--color-paper-cream)]">CURRENT ATTESTATION</span><div className="mt-5 flex justify-center">{latest ? <VerificationStamp status={latest.status} size={132} /> : <span className="mono py-12 text-white/70">NOT YET VERIFIED</span>}</div><strong className="mt-5 block text-center font-mono text-sm">{agent.name}</strong><span className="mt-2 block text-center mono text-white/65">v{agent.currentVersion} / operational contract</span></section>
-            <section id="evidence" className="workspace-panel"><div className="workspace-panel__title"><span className="eyebrow">EVIDENCE ACCESS</span><h2 className="workspace-heading mt-2">Published proof</h2></div><div className="workspace-panel__body">{reportHref && latest ? <><p className="body-md">Share a plain-language verification report with buyers and users.</p><code className="embed-code">&lt;AgentProofBadge reportId=&quot;{latest.publicId}&quot; /&gt;</code><ActionButton variant="quiet" href={reportHref} icon={null}>Inspect report</ActionButton></> : <p className="body-md">A public report will appear after the first completed verification run.</p>}</div></section>
+            <section id="evidence" className="workspace-panel"><div className="workspace-panel__title"><span className="eyebrow">EVIDENCE ACCESS</span><h2 className="workspace-heading mt-2">Published proof</h2></div><div className="workspace-panel__body">{reportHref && latest ? <><p className="body-md">Share a plain-language verification report with buyers and users.</p>{badgeEmbed ? <><span className="eyebrow mt-5 block">VERIFIED BADGE EMBED</span><code className="embed-code">{badgeEmbed}</code></> : <p className="mt-5 text-sm text-[var(--color-on-surface-variant)]">A badge is available only while this report is VERIFIED and within its validity window.</p>}<ActionButton variant="quiet" href={reportHref} icon={null}>Inspect report</ActionButton></> : <p className="body-md">A public report will appear after the first completed verification run.</p>}</div></section>
           </aside>
         </div>
       </div>
