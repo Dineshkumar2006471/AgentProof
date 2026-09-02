@@ -3,9 +3,34 @@ import "./globals.css";
 import { PostHogProvider } from "@/components/posthog-provider";
 
 export const metadata: Metadata = {
-  title: "AgentProof — Forensic Authority in AI Verification",
+  metadataBase: new URL("https://agent-proof.dev"),
+  title: {
+    default: "AgentProof | AI Agent Verification and Testing",
+    template: "%s | AgentProof"
+  },
   description:
-    "Convert agent promises into executable tests, run them against the real endpoint, and issue a report a client can understand.",
+    "Verify AI agents with executable contracts, real endpoint tests, reliability evidence, and shareable verification reports.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "/",
+    siteName: "AgentProof",
+    title: "AgentProof | AI Agent Verification and Testing",
+    description: "Turn AI agent promises into executable tests and verifiable reliability evidence.",
+    images: [{ url: "/icon.png", width: 512, height: 512, alt: "AgentProof" }]
+  },
+  twitter: {
+    card: "summary",
+    title: "AgentProof | AI Agent Verification and Testing",
+    description: "Turn AI agent promises into executable tests and verifiable reliability evidence.",
+    images: ["/icon.png"]
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" }
+  },
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

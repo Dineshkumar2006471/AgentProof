@@ -1,9 +1,14 @@
 import { Plus } from "lucide-react";
+import type { Metadata } from "next";
 import { AgentRegistry } from "@/components/agent-registry";
 import { AppShell } from "@/components/app-shell";
 import { ActionButton, KpiGrid, PageHeader } from "@/components/proof-ui";
 import { getLatestAgentVerification, listAgentsByOwner } from "@/lib/aws/dynamodb";
 import { requirePageUser } from "@/lib/auth/require-page-user";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
 
 export default async function Dashboard() {
   const user = await requirePageUser("/dashboard");

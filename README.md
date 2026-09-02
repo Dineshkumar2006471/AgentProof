@@ -275,6 +275,12 @@ To enable it in Amplify for the `main` branch, add `NEXT_PUBLIC_POSTHOG_KEY` wit
 
 Protect `main` in repository settings and require the `Quality and build` check before merging. Amplify should deploy only the protected `main` branch after the checks pass.
 
+### Search Visibility
+
+The application serves `https://agent-proof.dev/robots.txt` and `https://agent-proof.dev/sitemap.xml`. The sitemap intentionally includes only the AgentProof home page, Pricing page, and Sample Verification Report. Customer public reports are shareable by their direct URL but use `noindex` metadata so customer-controlled findings do not appear in search results.
+
+After the Amplify deployment succeeds, verify a Google Search Console **Domain property** for `agent-proof.dev` through DNS, submit `https://agent-proof.dev/sitemap.xml`, and use URL Inspection to request indexing for the home page. Crawling permission and sitemap submission improve discovery but do not guarantee a search position.
+
 ## AWS Deployment
 
 Infrastructure is defined in `infra/` using AWS CDK. Deploy separate development and production stacks so Cognito, DynamoDB, S3, SQS, and worker resources remain isolated.

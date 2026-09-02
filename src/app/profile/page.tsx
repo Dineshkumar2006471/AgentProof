@@ -1,9 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, ShieldCheck, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { requirePageUser } from "@/lib/auth/require-page-user";
 import { getBillingAccount, listAgentsByOwner } from "@/lib/aws/dynamodb";
 import { entitlementForPlan, getPricingPlan, resolveEntitledPlan } from "@/lib/pricing";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
 
 export default async function ProfilePage() {
   const user = await requirePageUser("/profile");

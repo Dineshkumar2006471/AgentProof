@@ -481,3 +481,18 @@
 - Run creation atomically reserves both monthly test and run capacity, and refunds both if SQS enqueue fails. One-time credits remain one run only and reject test matrices above 25 tests.
 - On approved billing-test accounts at mobile widths, the Continue button is fixed above the bottom safe area and full width. Accounts not listed in `DODO_TEST_USER_IDS` continue to see the intended test-checkout gate.
 - `npm run typecheck`, the full Vitest suite (22 tests), and `git diff --check` passed. The local Next production build stalled in this Windows/OneDrive workspace after standalone typecheck passed; GitHub Actions remains the authoritative build gate.
+
+## SEO And Google Indexing
+
+- [x] Add canonical sitemap and robots metadata routes for the public marketing surface.
+- [x] Add canonical, social, structured-data, and route-level indexing metadata.
+- [x] Keep authentication, workspace, checkout, private evidence, and customer public reports out of search results.
+- [x] Add focused SEO route regression coverage and update operator documentation.
+- [ ] Verify locally, push to `main`, and confirm the deployed sitemap and robots endpoints.
+
+### Review
+
+- The sitemap contains only `https://agent-proof.dev`, `/pricing`, and `/verify/demo`; robots permits public crawling and points Google to that sitemap while excluding API, auth, workspace, and checkout paths.
+- Root metadata defines the canonical domain, search/social summaries, and truthful Organization, WebSite, and SoftwareApplication JSON-LD. The landing page includes visible, product-accurate AI agent verification copy.
+- Dynamic customer public reports remain accessible by direct URL but use `noindex`; authentication, dashboard, profile, agents, and checkout routes use the same search exclusion.
+- Standalone metadata-route smoke checks, `npm run typecheck`, all 24 Vitest tests, and `git diff --check` passed. Local ESLint stalled with no diagnostic in this Windows/OneDrive workspace; GitHub Actions remains the authoritative lint and production-build gate.

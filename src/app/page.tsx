@@ -15,11 +15,36 @@ import {
 
 const builderPrice = pricingPlans.find((plan) => plan.id === "builder")?.price.replace(" / mo", "") ?? "₹199";
 const agencyPrice = pricingPlans.find((plan) => plan.id === "agency")?.price.replace(" / mo", "") ?? "₹499";
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "AgentProof",
+      url: "https://agent-proof.dev",
+      logo: "https://agent-proof.dev/icon.png"
+    },
+    {
+      "@type": "WebSite",
+      name: "AgentProof",
+      url: "https://agent-proof.dev"
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "AgentProof",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      url: "https://agent-proof.dev",
+      description: "AI agent verification software that turns operational promises into executable tests and reliability evidence."
+    }
+  ]
+};
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="landing-page overflow-x-clip bg-[var(--color-surface-bright)] min-h-screen font-body-md text-[var(--color-on-surface)] selection:bg-[var(--color-seal-indigo)] selection:text-white">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       {/* 1. Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-[var(--color-surface-bright)]/80 backdrop-blur-md border-b border-[var(--color-outline-variant)]">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-4">
@@ -108,6 +133,21 @@ export default function Home() {
           </div>
 
           <InteractiveCapabilities />
+        </div>
+      </section>
+
+      <section className="landing-secondary border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-24" aria-labelledby="verification-infrastructure-title">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.9fr)] lg:items-end">
+          <div>
+            <span className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]">AI AGENT VERIFICATION</span>
+            <h2 id="verification-infrastructure-title" className="mt-4 font-plex-mono text-3xl font-bold text-[var(--color-ink-graphite)] md:text-4xl">TEST THE PROMISES YOUR AI AGENT MAKES.</h2>
+            <p className="mt-5 max-w-2xl font-mono text-lg leading-relaxed text-[var(--color-on-surface-variant)]">AgentProof turns an agent&apos;s operational contract into executable AI agent tests, runs them against the live endpoint, and records reliability evidence that teams can inspect and share.</p>
+          </div>
+          <div className="grid gap-px overflow-hidden rounded border border-[var(--color-outline-variant)] bg-[var(--color-outline-variant)] sm:grid-cols-3">
+            <article className="bg-[var(--color-surface-bright)] p-5"><h3 className="font-data-label text-sm font-bold text-[var(--color-ink-graphite)]">EXECUTABLE CONTRACTS</h3><p className="mt-3 font-mono text-xs leading-relaxed text-[var(--color-on-surface-variant)]">Define what an AI agent can do, must never do, and how success is measured.</p></article>
+            <article className="bg-[var(--color-surface-bright)] p-5"><h3 className="font-data-label text-sm font-bold text-[var(--color-ink-graphite)]">REAL ENDPOINT TESTING</h3><p className="mt-3 font-mono text-xs leading-relaxed text-[var(--color-on-surface-variant)]">Test happy paths, boundaries, adversarial prompts, and real behavior from the deployed agent.</p></article>
+            <article className="bg-[var(--color-surface-bright)] p-5"><h3 className="font-data-label text-sm font-bold text-[var(--color-ink-graphite)]">RELIABILITY EVIDENCE</h3><p className="mt-3 font-mono text-xs leading-relaxed text-[var(--color-on-surface-variant)]">Issue a clear reliability score and public verification report backed by recorded evidence.</p></article>
+          </div>
         </div>
       </section>
 

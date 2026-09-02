@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import { ActionButton, KpiGrid, PageHeader } from "@/components/proof-ui";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getBillingAccount, listAgentsByOwner } from "@/lib/aws/dynamodb";
 import { entitlementForPlan, getPricingPlan, pricingPlans, resolveEntitledPlan } from "@/lib/pricing";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "Compare AgentProof verification capacity for AI agents, from free beta access to Builder and Agency plans.",
+  alternates: { canonical: "/pricing" }
+};
 
 export default async function PricingPage() {
   const user = await getCurrentUser();
