@@ -466,3 +466,18 @@
 - Outbound verification requests now pin the HTTPS connection to the public address obtained during validation, preserve TLS hostname validation, and do not follow redirects. This prevents an endpoint hostname from rebinding to a private AWS address after initial DNS validation.
 - Live smoke checks on `https://agent-proof.dev` returned `200` for landing, icon, favicon, and demo report; anonymous `/api/auth/me` returned `401`; `/dashboard` redirected with `307` to sign-in. `npm run typecheck`, 22 Vitest tests, `npm audit --omit=dev --audit-level=high`, both CDK synth targets, and `git diff --check` passed. Focused ESLint again stalled locally with no diagnostics; GitHub Actions is the authoritative Linux lint/build gate.
 - The local AWS SSO token expired before Amplify branch configuration could be read; no secret values were requested or printed. A repository-standard security scan could not advance because this session has no delegated worker runtime, so it remains incomplete rather than being represented as a clean independent security report.
+
+## Pricing Quotas And Mobile Checkout Reachability
+
+- [x] Make the revised Free, Builder, Agency, and One-time quotas the shared pricing source of truth.
+- [x] Enforce monthly test and verification-run quotas transactionally in the verification API.
+- [x] Ensure the approved checkout action remains reachable on narrow and short mobile screens.
+- [x] Update visible plan surfaces, documentation, and regression tests.
+- [ ] Run release checks and push the verified correction directly to `main`.
+
+### Review
+
+- The shared plan definition now publishes: Free `₹0` / one agent / 15 tests / two runs monthly; Builder `₹199` / three agents / 100 tests / 10 runs monthly; Agency `₹499` / 10 agents / 500 tests / 50 runs monthly; and One-time `₹49` / one run / up to 25 tests.
+- Run creation atomically reserves both monthly test and run capacity, and refunds both if SQS enqueue fails. One-time credits remain one run only and reject test matrices above 25 tests.
+- On approved billing-test accounts at mobile widths, the Continue button is fixed above the bottom safe area and full width. Accounts not listed in `DODO_TEST_USER_IDS` continue to see the intended test-checkout gate.
+- `npm run typecheck`, the full Vitest suite (22 tests), and `git diff --check` passed. The local Next production build stalled in this Windows/OneDrive workspace after standalone typecheck passed; GitHub Actions remains the authoritative build gate.

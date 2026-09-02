@@ -220,7 +220,7 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Optional PostHog browser project key and ingestion host. Analytics remains disabled when the key is empty. |
 | `AWS_REGION` | AWS region for application services. |
 | `AGENTPROOF_BETA_MODE` | Enables open-beta usage limits when set to `true`. |
-| Plan entitlements | The server enforces plan capacity: Free supports two agents, Builder three, and Agency ten. Billing state is derived from verified Dodo webhook records, not browser redirects. |
+| Plan entitlements | The server enforces the published plan capacity: Free supports one agent, 15 tests, and two verification runs per month; Builder supports three agents, 100 tests, and 10 runs; Agency supports 10 agents, 500 tests, and 50 runs. One-time purchases provide one verification run with up to 25 tests. Billing state is derived from verified Dodo webhook records, not browser redirects. |
 | `AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY` | Maximum verification runs per agent in a rolling 24-hour window; defaults to `10`. |
 | `AGENTPROOF_DYNAMODB_TABLE` | DynamoDB table name. |
 | `AGENTPROOF_REPORTS_BUCKET` | S3 bucket for report artifacts. |
@@ -304,7 +304,7 @@ Amplify provides the always-on public application URL. The local `3002` server i
 
 ### Dodo Test Billing
 
-Create the Builder, Agency, and One-run products in Dodo test mode using the shared beta prices of `₹199 / month`, `₹399 / month`, and `₹49`. Configure the webhook endpoint as `https://agent-proof.dev/api/webhooks/dodo` only after the custom domain is available. Checkout remains disabled for the cohort until approved Cognito test-user IDs are configured.
+Create the Builder, Agency, and One-run products in Dodo test mode using the shared beta prices of `₹199 / month`, `₹499 / month`, and `₹49`. Configure the webhook endpoint as `https://agent-proof.dev/api/webhooks/dodo` only after the custom domain is available. Checkout remains disabled for the cohort until approved Cognito test-user IDs are configured.
 
 ## First Verification Run
 

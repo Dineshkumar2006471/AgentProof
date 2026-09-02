@@ -194,6 +194,7 @@ export async function listTests(agentId: string, contractId?: string) {
 export type RunUsageReservation = {
   ownerId: string;
   monthlyTestLimit?: number;
+  monthlyRunLimit?: number;
   consumeOneRunCredit?: boolean;
 };
 
@@ -254,6 +255,26 @@ export async function createVerificationRun(input: Omit<VerificationRun, "id">, 
     });
   }
 
+  if (reservation?.monthlyRunLimit !== undefined) {
+    const runLimit = reservation.monthlyRunLimit;
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: `USAGE#RUNS#${currentUsageMonth()}` },
+        UpdateExpression: "SET #entityType = :entityType, #updatedAt = :updatedAt ADD #runs :runCount",
+        ConditionExpression: "(attribute_not_exists(#runs) AND :runCount <= :runLimit) OR #runs <= :remaining",
+        ExpressionAttributeNames: { "#entityType": "entityType", "#updatedAt": "updatedAt", "#runs": "runsUsed" },
+        ExpressionAttributeValues: {
+          ":entityType": "MonthlyRunUsage",
+          ":updatedAt": now(),
+          ":runCount": 1,
+          ":runLimit": runLimit,
+          ":remaining": runLimit - 1
+        }
+      }
+    });
+  }
+
   await getDynamoDb().send(new TransactWriteCommand({ TransactItems: transactItems }));
   return item as VerificationRun & Record<string, unknown>;
 }
@@ -282,6 +303,19 @@ export async function releaseVerificationRunReservation(totalTests: number, rese
         ConditionExpression: "#tests >= :minimum",
         ExpressionAttributeNames: { "#updatedAt": "updatedAt", "#tests": "testsUsed" },
         ExpressionAttributeValues: { ":updatedAt": now(), ":refund": -totalTests, ":minimum": totalTests }
+      }
+    });
+  }
+
+  if (reservation.monthlyRunLimit !== undefined) {
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: `USAGE#RUNS#${currentUsageMonth()}` },
+        UpdateExpression: "SET #updatedAt = :updatedAt ADD #runs :refund",
+        ConditionExpression: "#runs >= :minimum",
+        ExpressionAttributeNames: { "#updatedAt": "updatedAt", "#runs": "runsUsed" },
+        ExpressionAttributeValues: { ":updatedAt": now(), ":refund": -1, ":minimum": 1 }
       }
     });
   }

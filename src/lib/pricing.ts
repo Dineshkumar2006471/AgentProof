@@ -6,6 +6,9 @@ export type PricingPlan = {
   price: string;
   quota: string;
   maxAgents: number;
+  monthlyTestLimit?: number;
+  monthlyRunLimit?: number;
+  maxTestsPerRun?: number;
   reports: string;
   badge: string;
   support: string;
@@ -18,8 +21,10 @@ export const pricingPlans: PricingPlan[] = [
     id: "free",
     name: "Free",
     price: "₹0",
-    quota: "2 agents / open beta run limits",
-    maxAgents: 2,
+    quota: "1 agent / 15 tests per month / 2 verification runs per month",
+    maxAgents: 1,
+    monthlyTestLimit: 15,
+    monthlyRunLimit: 2,
     reports: "Public report",
     badge: "—",
     support: "Community",
@@ -30,8 +35,10 @@ export const pricingPlans: PricingPlan[] = [
     id: "builder",
     name: "Builder",
     price: "₹199 / mo",
-    quota: "3 agents / 25 tests per month",
+    quota: "3 agents / 100 tests per month / 10 verification runs per month",
     maxAgents: 3,
+    monthlyTestLimit: 100,
+    monthlyRunLimit: 10,
     reports: "Private + public",
     badge: "Included",
     support: "Priority",
@@ -41,9 +48,11 @@ export const pricingPlans: PricingPlan[] = [
   {
     id: "agency",
     name: "Agency",
-    price: "₹399 / mo",
-    quota: "10 agents / 100 tests per month",
+    price: "₹499 / mo",
+    quota: "10 agents / 500 tests per month / 50 verification runs per month",
     maxAgents: 10,
+    monthlyTestLimit: 500,
+    monthlyRunLimit: 50,
     reports: "White-label reports",
     badge: "Included",
     support: "Dedicated",
@@ -54,8 +63,9 @@ export const pricingPlans: PricingPlan[] = [
     id: "pay_per_verification",
     name: "One run",
     price: "₹49",
-    quota: "1 paid verification",
-    maxAgents: 2,
+    quota: "1 verification run / up to 25 tests",
+    maxAgents: 1,
+    maxTestsPerRun: 25,
     reports: "Public report",
     badge: "Included",
     support: "Self-serve",
@@ -95,7 +105,9 @@ export function entitlementForPlan(planId: PricingPlanId) {
   if (!plan) throw new Error(`Unknown pricing plan: ${planId}`);
   return {
     maxAgents: plan.maxAgents,
-    monthlyTestLimit: planId === "builder" ? 25 : planId === "agency" ? 100 : undefined,
+    monthlyTestLimit: plan.monthlyTestLimit,
+    monthlyRunLimit: plan.monthlyRunLimit,
+    maxTestsPerRun: plan.maxTestsPerRun,
     consumesOneRunCredit: planId === "pay_per_verification"
   };
 }

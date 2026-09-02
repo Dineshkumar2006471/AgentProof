@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const builderPrice = pricingPlans.find((plan) => plan.id === "builder")?.price.replace(" / mo", "") ?? "₹199";
-const agencyPrice = pricingPlans.find((plan) => plan.id === "agency")?.price.replace(" / mo", "") ?? "₹399";
+const agencyPrice = pricingPlans.find((plan) => plan.id === "agency")?.price.replace(" / mo", "") ?? "₹499";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -127,8 +127,8 @@ export default function Home() {
               <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">FOREVER</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 1 AGENT</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 5 TESTS PER RUN</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> BASIC RELIABILITY SCORE</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 15 TESTS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 2 VERIFICATION RUNS PER MONTH</li>
               </ul>
               <Link href="/auth/sign-up" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Get Started</Link>
             </div>
@@ -140,10 +140,10 @@ export default function Home() {
               <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">{builderPrice}</div>
               <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">PER MONTH</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> MULTIPLE AGENTS</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 25 TESTS PER MONTH</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> PUBLIC VERIFICATION REPORTS</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> REGRESSION SUITE</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 3 AGENTS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 100 TESTS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> 10 VERIFICATION RUNS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-pass-moss)] font-bold">✓</span> PRIVATE AND PUBLIC REPORTS</li>
               </ul>
               <Link href="/pricing/checkout?plan=builder" className="w-full bg-[var(--color-ink-graphite)] text-white font-data-label text-sm font-bold py-3 rounded shadow-sm hover:bg-black transition-colors text-center block">Upgrade to Builder</Link>
             </div>
@@ -154,10 +154,10 @@ export default function Home() {
               <div className="font-data-label font-bold text-5xl text-[var(--color-ink-graphite)] mb-2 tracking-tight">{agencyPrice}</div>
               <div className="font-data-label text-xs font-bold text-[var(--color-on-surface-variant)] mb-8">PER MONTH</div>
               <ul className="space-y-4 font-data-label text-sm text-[var(--color-ink-graphite)] mb-10">
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> EVERYTHING IN BUILDER</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 10 AGENTS</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 500 TESTS PER MONTH</li>
+                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> 50 VERIFICATION RUNS PER MONTH</li>
                 <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> WHITE-LABEL REPORTS</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> CLIENT PORTALS</li>
-                <li className="flex items-center gap-3"><span className="text-[var(--color-seal-indigo)] font-bold">✓</span> SCHEDULED RE-VERIFICATION</li>
               </ul>
               <Link href="/pricing/checkout?plan=agency" className="w-full border border-[var(--color-outline-variant)] text-[var(--color-ink-graphite)] font-data-label text-sm font-bold py-3 rounded hover:bg-[var(--color-surface-container)] transition-colors text-center block">Start Agency</Link>
             </div>

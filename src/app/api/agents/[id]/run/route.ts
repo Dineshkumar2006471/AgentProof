@@ -25,6 +25,9 @@ export async function POST(request: Request, context: RunRouteContext) {
     const billingAccount = await getBillingAccount(user.sub);
     const planId = resolveEntitledPlan(billingAccount);
     const entitlement = entitlementForPlan(planId);
+    if (entitlement.maxTestsPerRun !== undefined && tests.length > entitlement.maxTestsPerRun) {
+      throw new ApiError(422, `This one-time verification supports up to ${entitlement.maxTestsPerRun} tests.`);
+    }
     if (entitlement.monthlyTestLimit !== undefined && tests.length > entitlement.monthlyTestLimit) {
       throw new ApiError(422, `This test matrix has ${tests.length} tests, which exceeds the ${entitlement.monthlyTestLimit}-test monthly allowance for the current plan.`);
     }
@@ -43,6 +46,7 @@ export async function POST(request: Request, context: RunRouteContext) {
     const reservation = {
       ownerId: user.sub,
       monthlyTestLimit: entitlement.monthlyTestLimit,
+      monthlyRunLimit: entitlement.monthlyRunLimit,
       consumeOneRunCredit: entitlement.consumesOneRunCredit
     };
     let run;
@@ -64,7 +68,7 @@ export async function POST(request: Request, context: RunRouteContext) {
       if (error instanceof Error && error.name === "TransactionCanceledException") {
         throw new ApiError(429, planId === "pay_per_verification"
           ? "No paid one-run credit is available. Purchase another one-run verification to continue."
-          : "The current plan does not have enough monthly test capacity for this run.");
+          : "The current plan does not have enough monthly test or verification-run capacity for this run.");
       }
       throw error;
     }
