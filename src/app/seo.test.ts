@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
+import { describe, expect, it, vi } from "vitest";
 import OpenGraphImage, { contentType as openGraphImageContentType, size as openGraphImageSize } from "@/app/opengraph-image";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
@@ -10,10 +11,28 @@ describe("search metadata routes", () => {
   });
 
   it("renders the social card as a PNG response", async () => {
-    const response = OpenGraphImage();
+    const icon = await readFile(new URL("./icon.png", import.meta.url));
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 
-    expect(response.headers.get("content-type")).toContain("image/png");
-    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(10_000);
+      if (url === "https://agent-proof.dev/icon.png") {
+        return Promise.resolve(new Response(icon, {
+          headers: { "content-type": "image/png" }
+        }));
+      }
+
+      return originalFetch(input, init);
+    }));
+
+    try {
+      const response = OpenGraphImage();
+
+      expect(response.headers.get("content-type")).toContain("image/png");
+      expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(10_000);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("publishes only AgentProof-owned marketing pages in the sitemap", () => {
