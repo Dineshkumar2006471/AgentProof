@@ -116,7 +116,7 @@ function boundedState(value: Record<string, unknown>) {
 
 async function postToResolvedEndpoint(endpoint: ResolvedEndpoint, body: string, headers: Record<string, string>, signal: AbortSignal) {
   return new Promise<{ status: number; body: string }>((resolve, reject) => {
-    const options: RequestOptions = {
+    const options: RequestOptions & { servername?: string } = {
       protocol: endpoint.url.protocol,
       hostname: endpoint.url.hostname,
       port: endpoint.url.port || undefined,
