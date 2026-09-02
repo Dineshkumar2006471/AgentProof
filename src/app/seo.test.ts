@@ -16,7 +16,7 @@ describe("search metadata routes", () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 
-      if (url === "https://agent-proof.dev/icon.png") {
+      if (new URL(url).pathname === "/icon.png") {
         return Promise.resolve(new Response(icon, {
           headers: { "content-type": "image/png" }
         }));
