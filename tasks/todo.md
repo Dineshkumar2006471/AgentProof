@@ -1,5 +1,17 @@
 # AgentProof Level 1 Build Tracker
 
+## Repository Documentation Refresh
+
+- [x] Replace the internal-style README with a public product README and table of contents.
+- [x] Add accurate contributor and security disclosure guidance at the repository root.
+- [x] Verify repository links, license language, setup commands, and Markdown structure before pushing.
+
+### Review
+
+- Replaced the generic internal handoff with a branded public README covering product value, architecture, endpoint contract, setup, plans, operations, security, AWS deployment, and billing readiness.
+- Added local Contributing and Security guides so GitHub exposes standard repository guidance. README license language now matches the existing MIT license.
+- Removed `AgentProof-PRD.md` and `AgentProof-design.md` from version control at the request of the project owner. Markdown checks, local link targets, and README structure were verified before commit.
+
 ## Public Beta With Production Safeguards
 
 - [x] Replace cohort-only product wording and configuration with a public-beta launch model and production-ready safeguards.
