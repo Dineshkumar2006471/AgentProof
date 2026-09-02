@@ -12,6 +12,18 @@
 - Added local Contributing and Security guides so GitHub exposes standard repository guidance. README license language now matches the existing MIT license.
 - Removed `AgentProof-PRD.md` and `AgentProof-design.md` from version control at the request of the project owner. Markdown checks, local link targets, and README structure were verified before commit.
 
+## Dodo Live Payments Activation
+
+- [ ] Complete Dodo live-account and business verification, then create live Builder, Agency, and One-time products.
+- [ ] Register `https://agent-proof.dev/api/webhooks/dodo` in Dodo live mode and store its signing secret only in Amplify.
+- [ ] Set every required live Dodo variable in Amplify, enable checkout, and redeploy `main`.
+- [ ] Verify a real payment, cancellation, failed payment, and duplicate webhook before public promotion.
+
+### Review
+
+- The deployed webhook endpoint is publicly reachable and rejects an unsigned request with the intended `401 Invalid webhook signature` response. This is the correct pre-configuration health result.
+- Checkout stays disabled until the live API key, webhook signing secret, three live product IDs, `DODO_PAYMENTS_ENVIRONMENT=live_mode`, and `DODO_CHECKOUT_ENABLED=true` are all present. This prevents a customer from paying without a verified entitlement path.
+
 ## Public Beta With Production Safeguards
 
 - [x] Replace cohort-only product wording and configuration with a public-beta launch model and production-ready safeguards.
