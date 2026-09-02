@@ -51,3 +51,4 @@
 - Analytics for an agent-verification product must be explicit and privacy-minimal: disable automatic capture and replay, send only outcome metadata, identify accounts with an opaque internal subject, and reset that identity on sign-out.
 - The worker is bundled during Next.js production builds but was excluded from the local typecheck project; include worker sources explicitly so deployment-only TypeScript failures do not reach CI. DNS validation must also pin the subsequent outbound connection, otherwise a controlled hostname can rebind after validation.
 - Treat a published plan limit as a server-side entitlement, not marketing copy: keep prices, agent capacity, monthly test/run reservations, one-time limits, checkout summaries, and documentation derived from one source.
+- Use a dedicated 1200x630 social card for Open Graph metadata; a square favicon is only appropriate for browser chrome, not feed previews.

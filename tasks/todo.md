@@ -496,3 +496,15 @@
 - Root metadata defines the canonical domain, search/social summaries, and truthful Organization, WebSite, and SoftwareApplication JSON-LD. The landing page includes visible, product-accurate AI agent verification copy.
 - Dynamic customer public reports remain accessible by direct URL but use `noindex`; authentication, dashboard, profile, agents, and checkout routes use the same search exclusion.
 - Standalone metadata-route smoke checks, `npm run typecheck`, all 24 Vitest tests, and `git diff --check` passed. Local ESLint stalled with no diagnostic in this Windows/OneDrive workspace; GitHub Actions remains the authoritative lint and production-build gate.
+
+## Social Preview Card
+
+- [x] Replace the square favicon-based Open Graph image with a dedicated 1200x630 product card.
+- [x] Use an X/Twitter large-image card and retain the square icon exclusively for favicons.
+- [x] Add metadata regression coverage and verify the rendered social-image route.
+
+### Review
+
+- The root metadata now points Open Graph and X/Twitter to the generated `1200x630` PNG card at `/opengraph-image`; X uses `summary_large_image`, while the square icon remains favicon-only.
+- The card renders the AgentProof mark, `PROVE YOUR AI AGENT`, product-accurate supporting copy, and the canonical domain. Its renderer resolves the public canonical icon URL rather than a local filesystem path.
+- Focused image rendering, all 26 Vitest tests, TypeScript checking, and whitespace validation passed. Local ESLint again stalled without diagnostics in this Windows/OneDrive workspace; the GitHub Actions gate remains the authoritative lint and production-build check.

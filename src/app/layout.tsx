@@ -18,13 +18,28 @@ export const metadata: Metadata = {
     siteName: "AgentProof",
     title: "AgentProof | AI Agent Verification and Testing",
     description: "Turn AI agent promises into executable tests and verifiable reliability evidence.",
-    images: [{ url: "/icon.png", width: 512, height: 512, alt: "AgentProof" }]
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "AgentProof AI agent verification and testing"
+      }
+    ]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "AgentProof | AI Agent Verification and Testing",
     description: "Turn AI agent promises into executable tests and verifiable reliability evidence.",
-    images: ["/icon.png"]
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "AgentProof AI agent verification and testing"
+      }
+    ]
   },
   robots: {
     index: true,
