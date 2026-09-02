@@ -7,9 +7,10 @@ function test(type: VerificationTest["type"], result: "pass" | "fail" | "critica
 }
 
 describe("verification worker policies", () => {
-  it("blocks private and metadata endpoints", () => {
-    expect(() => validateEndpoint("http://169.254.169.254/latest/meta-data")).toThrow();
-    expect(() => validateEndpoint("file:///etc/passwd")).toThrow();
+  it("blocks private, metadata, and non-HTTPS endpoints", async () => {
+    await expect(validateEndpoint("http://169.254.169.254/latest/meta-data")).rejects.toThrow();
+    await expect(validateEndpoint("file:///etc/passwd")).rejects.toThrow();
+    await expect(validateEndpoint("http://example.com/run")).rejects.toThrow();
   });
 
   it("applies the required verification status thresholds", () => {

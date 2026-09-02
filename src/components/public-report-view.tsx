@@ -4,6 +4,7 @@ import { Check, CircleAlert } from "lucide-react";
 import type { PublicReport } from "@/lib/domain";
 import { KpiGrid } from "@/components/proof-ui";
 import { VerificationStamp } from "@/components/verification-stamp";
+import { PublicReportAnalytics } from "@/components/public-report-analytics";
 
 function displayDate(value: string) {
   return new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
@@ -19,6 +20,7 @@ export function PublicReportView({ report, demo = false }: { report: PublicRepor
 
   return (
     <main className="public-report-shell font-mono text-[var(--color-ink-graphite)]">
+      <PublicReportAnalytics demo={demo} status={report.status} />
       <div className="public-report-shell__inner">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-5 border-b border-[var(--color-outline-variant)] pb-6">
           <Link href="/" aria-label="AgentProof home">

@@ -7,6 +7,7 @@ import { ArrowRight, FileCode2, LoaderCircle, Save } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StepRail } from "@/components/proof-ui";
 import type { EndpointAuthType } from "@/lib/endpoint-auth";
+import { captureAnalytics } from "@/lib/analytics";
 
 type ContractDraft = Record<string, unknown> & { id?: string; version?: string };
 type GeneratedTest = Record<string, unknown> & { id?: string; type?: string; inputMessage?: string; expectedBehavior?: string };
@@ -82,6 +83,7 @@ export default function NewAgent() {
         if (!createdAgent?.id) throw new Error("Agent creation returned no agent ID.");
         currentAgentId = createdAgent.id;
         setAgentId(currentAgentId);
+        captureAnalytics("agent_created", { endpoint_authentication: formData.endpointAuthType });
       }
       const result = await requestJson(`/api/agents/${currentAgentId}/contract/draft`, { method: "POST", body: JSON.stringify(formData) });
       const nextContract = result.contractDraft as ContractDraft | undefined;
@@ -89,6 +91,7 @@ export default function NewAgent() {
       setContract(nextContract);
       setContractId(nextContract.id);
       setStep(2);
+      captureAnalytics("contract_drafted");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Contract drafting failed.");
     } finally {
@@ -104,6 +107,7 @@ export default function NewAgent() {
       const result = await requestJson(`/api/agents/${agentId}/generate-tests`, { method: "POST", body: JSON.stringify({ contractId }) });
       setTests((result.tests as GeneratedTest[] | undefined) ?? []);
       setStep(3);
+      captureAnalytics("test_matrix_generated", { test_count: (result.tests as GeneratedTest[] | undefined)?.length ?? 0 });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Test generation failed.");
     } finally {
@@ -119,6 +123,7 @@ export default function NewAgent() {
       const result = await requestJson(`/api/agents/${agentId}/run`, { method: "POST", body: JSON.stringify({ contractId }) });
       const run = result.run as { id?: string } | undefined;
       if (!run?.id) throw new Error("Verification queue returned no run ID.");
+      captureAnalytics("verification_started", { test_count: tests.length });
       router.push(`/agents/${agentId}/run?run=${encodeURIComponent(run.id)}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Verification could not be queued.");

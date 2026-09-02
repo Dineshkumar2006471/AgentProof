@@ -409,3 +409,44 @@
 - API-key endpoints use `x-api-key` by default and support a validated custom header name. Basic credentials are serialized only into the endpoint secret and converted to a Basic authorization header only within the worker.
 - Existing no-auth and bearer-token agents remain compatible.
 - Typecheck and 21 Vitest tests passed. Targeted ESLint completed without reported errors, the production build completed, and `git diff --check` passed.
+
+## Account Plan Visibility And Free Entitlements
+
+- [x] Define one server-side plan-entitlement model, including a two-agent Free account limit.
+- [x] Read the persisted Dodo billing record and show the current plan, billing state, and agent capacity in Profile Settings.
+- [x] Enforce the resolved plan's agent capacity in the agent-creation API.
+- [x] Document the current operator analytics surfaces and the remaining admin-analytics work.
+
+### Review
+
+- Free accounts resolve to a two-agent entitlement until a verified Dodo billing record grants an active paid plan.
+- Profile Settings and Plans & Usage now display the resolved plan and agent capacity. No browser redirect can create a paid entitlement.
+- A founder analytics dashboard remains intentionally unimplemented; Cognito, Dodo, Amplify, and CloudWatch are the current operational sources of truth.
+
+## Release Candidate Audit And Mobile Stability
+
+- [x] Verify public and protected route layout constraints at 360px and 390px widths; remove page-level horizontal overflow sources.
+- [x] Strengthen verification-worker SSRF validation for DNS-resolved private addresses and redirects.
+- [x] Enforce paid monthly test capacity and consume one-run credits inside the run-creation transaction.
+- [x] Complete production build, automated checks, and a final deployment readiness review.
+
+### Review
+
+- Mobile hardening removes the workflow rail's fixed width, makes long page-header and endpoint text wrap safely, and clips only page-level overflow while preserving deliberate inner-table scrolling.
+- The worker now requires HTTPS public endpoints in production, rejects private IP ranges after DNS lookup, refuses redirects, and bounds agent-controlled tool/state payloads before DynamoDB persistence.
+- Builder and Agency test allowances are reserved atomically for the calendar month. One-run credits are consumed atomically and restored if the SQS enqueue operation fails.
+- Full Vitest passed: 8 files and 22 tests. Local public routes and favicon returned `200`; an unauthenticated dashboard correctly redirected with `307`. Production build and both CDK synth targets completed. Targeted ESLint processes stalled in this Windows/OneDrive workspace and were stopped; no lint diagnostic was emitted.
+
+## Privacy-Safe PostHog Analytics
+
+- [x] Add an optional PostHog browser provider with automatic capture, session replay, and sensitive-content capture disabled.
+- [x] Track the public acquisition and product-activation funnel with a small, documented event taxonomy.
+- [x] Identify authenticated users only with their opaque Cognito subject; never send name, email, prompts, evidence, endpoint URLs, credentials, or report content.
+- [x] Add PostHog environment configuration and operator instructions for Amplify.
+- [x] Validate the disabled-by-default path, typecheck, tests, lint, production build, and whitespace check before deployment.
+
+### Review
+
+- PostHog is disabled unless `NEXT_PUBLIC_POSTHOG_KEY` is configured at build time. When enabled, page tracking omits query strings and product events carry only workflow state, plan, test count, endpoint-authentication mode, demo state, or report status.
+- The browser integration disables automatic capture, automatic pageviews, page-leave capture, and session recording. Account linkage uses the opaque Cognito subject with no person properties and resets on both workspace sign-out controls.
+- `npm run typecheck`, `npm test -- --run` (8 files, 22 tests), and `git diff --check` passed. The production build reached compilation and focused ESLint emitted no diagnostics, but their child processes stalled in this Windows/OneDrive workspace and were stopped; GitHub Actions remains the authoritative full build/lint gate. Windows line-ending warnings are informational only.

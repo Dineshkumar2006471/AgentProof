@@ -4,6 +4,7 @@ import { LogOut, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { resetAnalytics } from "@/lib/analytics";
 
 type ProfileIdentity = {
   name?: string;
@@ -52,6 +53,7 @@ export function ProfileMenu() {
     try {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } finally {
+      resetAnalytics();
       router.push("/");
       router.refresh();
     }

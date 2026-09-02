@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import type { SQSEvent, SQSBatchResponse } from "aws-lambda";
 import type { Evidence, TestResult, TestRun, VerificationTest } from "../../src/lib/domain";
 import {
@@ -21,8 +23,36 @@ import type { EndpointAuthType } from "../../src/lib/endpoint-auth";
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_DYNAMODB_RESPONSE_CHARS = 12_000;
+const MAX_TOOL_CALLS = 20;
+const MAX_TOOL_CALL_CHARS = 1_500;
+const MAX_STATE_CHARS = 6_000;
 
-function isBlockedHost(hostname: string) {
+function normalizedAddress(address: string) {
+  return address.replace(/^\[|\]$/g, "").toLowerCase();
+}
+
+function isPrivateAddress(address: string) {
+  const value = normalizedAddress(address);
+  const version = isIP(value);
+  if (version === 4) {
+    const [first, second] = value.split(".").map(Number);
+    return first === 0 || first === 10 || first === 127 ||
+      (first === 100 && second >= 64 && second <= 127) ||
+      (first === 169 && second === 254) ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168) ||
+      (first === 198 && (second === 18 || second === 19)) ||
+      first >= 224;
+  }
+  if (version === 6) {
+    const mappedIpv4 = value.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i)?.[1];
+    return value === "::" || value === "::1" || value.startsWith("fc") || value.startsWith("fd") ||
+      /^fe[89ab]/.test(value) || Boolean(mappedIpv4 && isPrivateAddress(mappedIpv4));
+  }
+  return false;
+}
+
+function isBlockedHostname(hostname: string) {
   const host = hostname.toLowerCase();
   return host === "localhost" || host.endsWith(".local") || host === "0.0.0.0" ||
     host === "127.0.0.1" || host === "169.254.169.254" ||
@@ -30,13 +60,45 @@ function isBlockedHost(hostname: string) {
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
 }
 
-export function validateEndpoint(endpointUrl: string) {
+export async function validateEndpoint(endpointUrl: string) {
   const url = new URL(endpointUrl);
   const localFixture = process.env.AGENTPROOF_ALLOW_LOCAL_ENDPOINTS === "true" && ["localhost", "127.0.0.1"].includes(url.hostname);
-  if (!["http:", "https:"].includes(url.protocol) || (isBlockedHost(url.hostname) && !localFixture)) {
-    throw new Error("Agent endpoint must use HTTP(S) and a public hostname.");
+  if ((url.protocol !== "https:" && !localFixture) || (isBlockedHostname(url.hostname) && !localFixture)) {
+    throw new Error("Agent endpoint must use HTTPS and a public hostname.");
+  }
+
+  const hostname = normalizedAddress(url.hostname);
+  if (isIP(hostname)) {
+    if (isPrivateAddress(hostname) && !localFixture) throw new Error("Agent endpoint must not resolve to a private network address.");
+    return url.toString();
+  }
+
+  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address))) {
+    throw new Error("Agent endpoint must resolve only to public network addresses.");
   }
   return url.toString();
+}
+
+function boundedValue(value: unknown, maxChars: number) {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized.length <= maxChars) return value;
+    return { truncated: true, preview: serialized.slice(0, maxChars) };
+  } catch {
+    return { truncated: true, preview: "Unserializable agent data omitted." };
+  }
+}
+
+function boundedToolCalls(value: unknown[]) {
+  return value.slice(0, MAX_TOOL_CALLS).map((item) => boundedValue(item, MAX_TOOL_CALL_CHARS));
+}
+
+function boundedState(value: Record<string, unknown>) {
+  const bounded = boundedValue(value, MAX_STATE_CHARS);
+  return typeof bounded === "object" && bounded !== null && !Array.isArray(bounded)
+    ? bounded as Record<string, unknown>
+    : {};
 }
 
 function concat(chunks: Uint8Array[], total: number) {
@@ -95,11 +157,12 @@ async function executeTest(endpointUrl: string, test: VerificationTest, endpoint
     const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
     const endpointSecret = endpointSecretArn ? await getSecretString(endpointSecretArn) : undefined;
     Object.assign(headers, buildEndpointAuthHeaders(endpointAuthType, endpointSecret, endpointAuthHeaderName));
-    const response = await fetch(validateEndpoint(endpointUrl), {
+    const response = await fetch(await validateEndpoint(endpointUrl), {
       method: "POST",
       headers,
       body: JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }),
-      signal: controller.signal
+      signal: controller.signal,
+      redirect: "error"
     });
     const raw = await readLimited(response);
     let payload: AgentResponse = {};
@@ -108,8 +171,8 @@ async function executeTest(endpointUrl: string, test: VerificationTest, endpoint
       ok: response.ok,
       response: payload.response ?? raw,
       rawResponse: raw,
-      toolCalls: Array.isArray(payload.tool_calls) ? payload.tool_calls : [],
-      actualState: payload.metadata?.state ?? {},
+      toolCalls: boundedToolCalls(Array.isArray(payload.tool_calls) ? payload.tool_calls : []),
+      actualState: boundedState(payload.metadata?.state ?? {}),
       httpStatus: response.status
     };
   } finally {

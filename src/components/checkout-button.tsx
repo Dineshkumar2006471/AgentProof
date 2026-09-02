@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import type { PricingPlanId } from "@/lib/pricing";
+import { captureAnalytics } from "@/lib/analytics";
 
 type PaidPlanId = Exclude<PricingPlanId, "free">;
 
@@ -22,6 +23,7 @@ export function CheckoutButton({ plan, label, featured = false }: { plan: PaidPl
       });
       const result = await response.json() as { checkoutUrl?: string; error?: string };
       if (!response.ok || !result.checkoutUrl) throw new Error(result.error ?? "Checkout could not be started.");
+      captureAnalytics("checkout_started", { plan });
       window.location.assign(result.checkoutUrl);
     } catch (checkoutError) {
       setError(checkoutError instanceof Error ? checkoutError.message : "Checkout could not be started.");

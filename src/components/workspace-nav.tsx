@@ -13,6 +13,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LogoLockup } from "@/components/logo-lockup";
+import { resetAnalytics } from "@/lib/analytics";
 
 type WorkspaceIdentity = {
   name?: string;
@@ -58,6 +59,7 @@ export function WorkspaceNav() {
     try {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } finally {
+      resetAnalytics();
       router.push("/");
       router.refresh();
     }

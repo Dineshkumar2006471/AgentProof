@@ -20,7 +20,7 @@ import type {
 } from "@/lib/domain";
 import { createEndpointSecret } from "@/lib/aws/secrets";
 import type { EndpointAuthType } from "@/lib/endpoint-auth";
-import type { PricingPlanId } from "@/lib/pricing";
+import type { BillingAccount, PricingPlanId } from "@/lib/pricing";
 
 let documentClient: DynamoDBDocumentClient | undefined;
 
@@ -92,6 +92,14 @@ export async function listAgentsByOwner(ownerId: string) {
     ScanIndexForward: false
   }));
   return (result.Items ?? []) as Array<Agent & Record<string, unknown>>;
+}
+
+export async function getBillingAccount(ownerId: string) {
+  const result = await getDynamoDb().send(new GetCommand({
+    TableName: tableName(),
+    Key: { PK: `USER#${ownerId}`, SK: "BILLING#ACCOUNT" }
+  }));
+  return (result.Item ?? null) as BillingAccount | null;
 }
 
 export async function getAgent(id: string) {
@@ -183,7 +191,17 @@ export async function listTests(agentId: string, contractId?: string) {
   return contractId ? tests.filter((test) => test.contractId === contractId) : tests;
 }
 
-export async function createVerificationRun(input: Omit<VerificationRun, "id">) {
+export type RunUsageReservation = {
+  ownerId: string;
+  monthlyTestLimit?: number;
+  consumeOneRunCredit?: boolean;
+};
+
+function currentUsageMonth(date = new Date()) {
+  return date.toISOString().slice(0, 7);
+}
+
+export async function createVerificationRun(input: Omit<VerificationRun, "id">, reservation?: RunUsageReservation) {
   const id = `run_${crypto.randomUUID()}`;
   const item = {
     PK: `RUN#${id}`,
@@ -194,8 +212,81 @@ export async function createVerificationRun(input: Omit<VerificationRun, "id">) 
     GSI3PK: `AGENT#${input.agentId}`,
     GSI3SK: `RUN#${input.startedAt}`
   };
-  await getDynamoDb().send(new PutCommand({ TableName: tableName(), Item: item }));
+  const transactItems: Array<Record<string, unknown>> = [{
+    Put: {
+      TableName: tableName(),
+      Item: item,
+      ConditionExpression: "attribute_not_exists(PK)"
+    }
+  }];
+
+  if (reservation?.consumeOneRunCredit) {
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: "BILLING#ACCOUNT" },
+        UpdateExpression: "SET #updatedAt = :updatedAt ADD #credits :decrement",
+        ConditionExpression: "#credits >= :minimum",
+        ExpressionAttributeNames: { "#credits": "oneRunCredits", "#updatedAt": "updatedAt" },
+        ExpressionAttributeValues: { ":decrement": -1, ":minimum": 1, ":updatedAt": now() }
+      }
+    });
+  }
+
+  if (reservation?.monthlyTestLimit !== undefined) {
+    const testCount = input.totalTests;
+    const testLimit = reservation.monthlyTestLimit;
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: `USAGE#TESTS#${currentUsageMonth()}` },
+        UpdateExpression: "SET #entityType = :entityType, #updatedAt = :updatedAt ADD #tests :testCount",
+        ConditionExpression: "(attribute_not_exists(#tests) AND :testCount <= :testLimit) OR #tests <= :remaining",
+        ExpressionAttributeNames: { "#entityType": "entityType", "#updatedAt": "updatedAt", "#tests": "testsUsed" },
+        ExpressionAttributeValues: {
+          ":entityType": "MonthlyTestUsage",
+          ":updatedAt": now(),
+          ":testCount": testCount,
+          ":testLimit": testLimit,
+          ":remaining": testLimit - testCount
+        }
+      }
+    });
+  }
+
+  await getDynamoDb().send(new TransactWriteCommand({ TransactItems: transactItems }));
   return item as VerificationRun & Record<string, unknown>;
+}
+
+export async function releaseVerificationRunReservation(totalTests: number, reservation: RunUsageReservation) {
+  const transactItems: Array<Record<string, unknown>> = [];
+
+  if (reservation.consumeOneRunCredit) {
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: "BILLING#ACCOUNT" },
+        UpdateExpression: "SET #updatedAt = :updatedAt ADD #credits :increment",
+        ExpressionAttributeNames: { "#credits": "oneRunCredits", "#updatedAt": "updatedAt" },
+        ExpressionAttributeValues: { ":increment": 1, ":updatedAt": now() }
+      }
+    });
+  }
+
+  if (reservation.monthlyTestLimit !== undefined) {
+    transactItems.push({
+      Update: {
+        TableName: tableName(),
+        Key: { PK: `USER#${reservation.ownerId}`, SK: `USAGE#TESTS#${currentUsageMonth()}` },
+        UpdateExpression: "SET #updatedAt = :updatedAt ADD #tests :refund",
+        ConditionExpression: "#tests >= :minimum",
+        ExpressionAttributeNames: { "#updatedAt": "updatedAt", "#tests": "testsUsed" },
+        ExpressionAttributeValues: { ":updatedAt": now(), ":refund": -totalTests, ":minimum": totalTests }
+      }
+    });
+  }
+
+  if (transactItems.length) await getDynamoDb().send(new TransactWriteCommand({ TransactItems: transactItems }));
 }
 
 export async function getRun(id: string) {
@@ -422,11 +513,21 @@ export async function applyDodoWebhook(webhookId: string, event: DodoWebhookEven
   }];
 
   if (ownerId) {
+    const planAssignment = details.plan ? "#plan = :plan" : "#plan = if_not_exists(#plan, :freePlan)";
+    const billingValues: Record<string, unknown> = {
+      ":entityType": "BillingAccount",
+      ":updatedAt": timestamp,
+      ":status": billingStatus,
+      ":customerId": details.customerId ?? "",
+      ":subscriptionId": details.subscriptionId ?? "",
+      ":oneRunCredits": isOneRun ? 1 : 0,
+      ...(details.plan ? { ":plan": details.plan } : { ":freePlan": "free" })
+    };
     transactItems.push({
       Update: {
         TableName: tableName(),
         Key: { PK: `USER#${ownerId}`, SK: "BILLING#ACCOUNT" },
-        UpdateExpression: "SET #entityType = :entityType, #updatedAt = :updatedAt, #status = :status, #plan = :plan, #customerId = if_not_exists(#customerId, :customerId), #subscriptionId = if_not_exists(#subscriptionId, :subscriptionId) ADD #oneRunCredits :oneRunCredits",
+        UpdateExpression: `SET #entityType = :entityType, #updatedAt = :updatedAt, #status = :status, ${planAssignment}, #customerId = if_not_exists(#customerId, :customerId), #subscriptionId = if_not_exists(#subscriptionId, :subscriptionId) ADD #oneRunCredits :oneRunCredits`,
         ExpressionAttributeNames: {
           "#entityType": "entityType",
           "#updatedAt": "updatedAt",
@@ -436,15 +537,7 @@ export async function applyDodoWebhook(webhookId: string, event: DodoWebhookEven
           "#subscriptionId": "dodoSubscriptionId",
           "#oneRunCredits": "oneRunCredits"
         },
-        ExpressionAttributeValues: {
-          ":entityType": "BillingAccount",
-          ":updatedAt": timestamp,
-          ":status": billingStatus,
-          ":plan": details.plan ?? "free",
-          ":customerId": details.customerId ?? "",
-          ":subscriptionId": details.subscriptionId ?? "",
-          ":oneRunCredits": isOneRun ? 1 : 0
-        }
+        ExpressionAttributeValues: billingValues
       }
     });
   }

@@ -47,3 +47,5 @@
 - Separate production-facing execution labels from implementation identifiers: show test ordinals and version context by default, while preserving raw run/test IDs in an explicitly technical evidence surface.
 - Public reports must summarize only actionable failures; never render passing judgment placeholders as findings or make report hashes and opaque IDs primary user-facing content.
 - Endpoint-authentication choices are a runtime contract, not a visual preference: only expose modes whose validation, secret storage, and worker header behavior are implemented together.
+- Mobile overflow is often caused by child minimum widths and unbroken dynamic strings, not the page container alone; remove fixed child constraints and make endpoint, heading, and metric text wrap safely while preserving intentional inner scrolling.
+- Analytics for an agent-verification product must be explicit and privacy-minimal: disable automatic capture and replay, send only outcome metadata, identify accounts with an opaque internal subject, and reset that identity on sign-out.

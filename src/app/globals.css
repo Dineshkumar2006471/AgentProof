@@ -104,9 +104,16 @@
   --font-body: "IBM Plex Mono", monospace;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-data-label);
 }
+
+img, svg { max-width: 100%; }
 
 .font-plex-mono {
   font-family: "IBM Plex Mono", monospace !important;
@@ -161,7 +168,7 @@ body {
 .action-button--quiet:hover { background: rgba(15,17,21,.06); }
 .step-rail { width: min(100%, 760px); }
 .step-rail--horizontal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto; padding: 2px 0 4px; }
-.step-rail__item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 130px; color: var(--muted); }
+.step-rail__item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; color: var(--muted); }
 .step-rail__connector { position: absolute; top: 15px; z-index: 0; height: 1px; background: var(--line); }
 .step-rail__connector--before { left: 0; right: 50%; }
 .step-rail__connector--after { left: 50%; right: 0; }
@@ -275,7 +282,7 @@ body {
 .workspace-page-header__copy { min-width: 0; }
 .workspace-page-header__copy .eyebrow { overflow-wrap: anywhere; }
 .workspace-page-header__copy .mono { overflow-wrap: anywhere; }
-.workspace-page-header__copy h1 { margin: 8px 0 0; color: var(--color-ink-graphite); font: 600 32px/1.15 var(--font-mono); letter-spacing: -.02em; }
+.workspace-page-header__copy h1 { margin: 8px 0 0; overflow-wrap: anywhere; color: var(--color-ink-graphite); font: 600 32px/1.15 var(--font-mono); letter-spacing: -.02em; }
 .workspace-page-header__copy p { max-width: 760px; margin-top: 10px; border-left: 2px solid var(--color-seal-indigo); padding-left: 12px; }
 .workspace-page-header__actions { display: flex; flex-wrap: wrap; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 10px; }
 .workspace-heading { margin: 0; color: var(--color-ink-graphite); font: 600 20px/1.25 var(--font-mono); letter-spacing: -.01em; }
@@ -353,6 +360,8 @@ body {
 .workflow-summary__details div { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--color-outline-variant); padding: 11px 0; }
 .workflow-summary__details dt { color: var(--color-on-surface-variant); font: 700 9px/1.2 var(--font-mono); letter-spacing: .08em; }
 .workflow-summary__details dd { overflow-wrap: anywhere; color: var(--color-ink-graphite); font: 500 11px/1.2 var(--font-mono); text-align: right; }
+.dossier-header-meta { min-width: 0; }
+.dossier-header-endpoint { min-width: 0; overflow-wrap: anywhere; }
 .workflow-aside { display: grid; gap: 14px; }
 .workflow-aside__item { border-left: 3px solid var(--color-outline-variant); padding: 2px 0 2px 14px; }
 .workflow-aside__item.is-active { border-left-color: var(--color-seal-indigo); }

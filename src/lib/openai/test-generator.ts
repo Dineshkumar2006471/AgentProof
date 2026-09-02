@@ -5,8 +5,8 @@ import type { AgentContract, TestType, VerificationTest } from "@/lib/domain";
 
 const generatedTestSchema = z.object({
   type: z.enum(["happy", "edge", "boundary", "adversarial"]),
-  inputMessage: z.string().min(1),
-  expectedBehavior: z.string().min(1)
+  inputMessage: z.string().min(1).max(4_000),
+  expectedBehavior: z.string().min(1).max(4_000)
 });
 
 const generatedTestsSchema = z.object({ tests: z.array(generatedTestSchema).min(4).max(100) });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PostHogProvider } from "@/components/posthog-provider";
 
 export const metadata: Metadata = {
   title: "AgentProof — Forensic Authority in AI Verification",
@@ -31,7 +32,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[var(--color-paper-cream)] text-[var(--color-on-surface)] font-body-md antialiased selection:bg-[var(--color-seal-indigo)] selection:text-white" suppressHydrationWarning>{children}</body>
+      <body className="bg-[var(--color-paper-cream)] text-[var(--color-on-surface)] font-body-md antialiased selection:bg-[var(--color-seal-indigo)] selection:text-white" suppressHydrationWarning><PostHogProvider>{children}</PostHogProvider></body>
     </html>
   );
 }

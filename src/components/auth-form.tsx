@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { captureAnalytics, identifyAnalytics } from "@/lib/analytics";
 
 type AuthMode = "sign-in" | "sign-up" | "forgot-password" | "reset-password";
 
 type AuthFormProps = { mode: AuthMode };
 
-type ApiResponse = { error?: string; confirmationRequired?: boolean };
+type ApiResponse = { error?: string; confirmationRequired?: boolean; userSub?: string };
 
 async function postAuth(path: string, body: Record<string, string>) {
   const response = await fetch(path, {
@@ -75,13 +76,17 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       if (currentMode === "sign-in") {
         await postAuth("/api/auth/sign-in", { email, password });
+        captureAnalytics("account_signed_in");
         router.push(safeNextPath());
       } else if (currentMode === "sign-up" && !isConfirmation) {
         const result = await postAuth("/api/auth/sign-up", { name, email, password });
+        if (result.userSub) identifyAnalytics(result.userSub);
+        captureAnalytics("account_signed_up");
         if (result.confirmationRequired !== false) setConfirmationRequired(true);
         else router.push("/dashboard");
       } else if (currentMode === "sign-up") {
         await postAuth("/api/auth/confirm-sign-up", { email, code });
+        captureAnalytics("account_confirmed");
         router.push("/auth/sign-in?confirmed=1");
       } else if (currentMode === "forgot-password") {
         await postAuth("/api/auth/forgot-password", { email });

@@ -217,9 +217,10 @@ Copy `.env.example` to `.env.local` and provide values appropriate to the enviro
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Canonical application URL used in links and reports. |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Optional PostHog browser project key and ingestion host. Analytics remains disabled when the key is empty. |
 | `AWS_REGION` | AWS region for application services. |
 | `AGENTPROOF_BETA_MODE` | Enables open-beta usage limits when set to `true`. |
-| `AGENTPROOF_BETA_MAX_AGENTS_PER_USER` | Maximum agents one beta account can register; defaults to `5`. |
+| Plan entitlements | The server enforces plan capacity: Free supports two agents, Builder three, and Agency ten. Billing state is derived from verified Dodo webhook records, not browser redirects. |
 | `AGENTPROOF_BETA_MAX_RUNS_PER_AGENT_PER_DAY` | Maximum verification runs per agent in a rolling 24-hour window; defaults to `10`. |
 | `AGENTPROOF_DYNAMODB_TABLE` | DynamoDB table name. |
 | `AGENTPROOF_REPORTS_BUCKET` | S3 bucket for report artifacts. |
@@ -252,6 +253,25 @@ Also check the browser at `1280x720`, `1440x900`, and `390x844`. Confirm redirec
 ## Continuous Integration
 
 GitHub Actions runs the same application and infrastructure checks on pull requests and pushes to `main` through `.github/workflows/ci.yml`. The workflow uses Node.js 22, installs from the lockfile, and does not require AWS credentials or production secrets.
+
+## Beta Operations And Analytics
+
+AgentProof currently has separate operator surfaces for distinct responsibilities:
+
+- **Accounts:** Amazon Cognito User Pools is the authoritative directory for sign-ups, confirmed email addresses, account status, and password resets.
+- **Plan entitlements:** Profile Settings and Plans & Usage show the signed-in account's resolved plan, billing state, and registered-agent capacity. The agent-creation API enforces the plan capacity server-side.
+- **Payments:** The Dodo dashboard is the source of truth for checkout, payments, subscriptions, and webhook deliveries. AgentProof grants paid access only after a signed webhook persists the billing state.
+- **Application traffic and errors:** Amplify Hosting and CloudWatch provide request volume, latency, error metrics, access logs, and SSR runtime logs. SQS, Lambda, and dead-letter-queue metrics monitor verification execution.
+
+There is not yet an in-product founder analytics dashboard. Build that as a separate, protected admin feature after the beta has enough real usage to define meaningful metrics. It must aggregate data, limit administrator access, and be covered by a privacy policy; do not expose individual customer prompts, endpoint secrets, or evidence by default.
+
+### PostHog Product Analytics
+
+PostHog is optional and disabled until `NEXT_PUBLIC_POSTHOG_KEY` is set in Amplify. The browser integration deliberately disables automatic click capture and session recording. It records only explicit, low-cardinality product events: page views, account sign-up/confirmation/sign-in, agent creation, contract drafting, test-matrix generation, verification starts, public report views, and checkout starts.
+
+The integration identifies a signed-in account only by its opaque Cognito subject. It never sends names, email addresses, agent names, endpoint URLs, prompts, responses, evidence, credentials, report content, or payment details. Configure a privacy notice and applicable consent flow before enabling analytics for users in jurisdictions where consent is required.
+
+To enable it in Amplify for the `main` branch, add `NEXT_PUBLIC_POSTHOG_KEY` with the project API key and set `NEXT_PUBLIC_POSTHOG_HOST` to `https://us.i.posthog.com` for US Cloud or `https://eu.i.posthog.com` for EU Cloud, then redeploy. Build a PostHog funnel from `page_viewed` to `account_signed_up`, `account_confirmed`, `agent_created`, `contract_drafted`, `test_matrix_generated`, and `verification_started`.
 
 Protect `main` in repository settings and require the `Quality and build` check before merging. Amplify should deploy only the protected `main` branch after the checks pass.
 
