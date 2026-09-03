@@ -112,6 +112,31 @@ export class AgentProofStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN
     });
 
+    const applicationUrl = this.node.tryGetContext("appUrl")
+      ?? process.env.AGENTPROOF_APP_URL
+      ?? (suffix === "production" ? "https://agent-proof.dev" : "http://localhost:3000");
+    const hostedUiDomain = userPool.addDomain("HostedUiDomain", {
+      cognitoDomain: { domainPrefix: `agentproof-${suffix}-${this.account}` }
+    });
+
+    const googleOauthSecretArn = process.env.GOOGLE_OAUTH_SECRET_ARN?.trim();
+    const googleOauthSecret = googleOauthSecretArn
+      ? secretsmanager.Secret.fromSecretCompleteArn(this, "GoogleOauthSecret", googleOauthSecretArn)
+      : undefined;
+    const googleIdentityProvider = googleOauthSecret
+      ? new cognito.UserPoolIdentityProviderGoogle(this, "GoogleIdentityProvider", {
+        userPool,
+        clientId: googleOauthSecret.secretValueFromJson("clientId").unsafeUnwrap(),
+        clientSecretValue: googleOauthSecret.secretValueFromJson("clientSecret"),
+        scopes: ["openid", "email", "profile"],
+        attributeMapping: {
+          email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+          emailVerified: cognito.ProviderAttribute.GOOGLE_EMAIL_VERIFIED,
+          fullname: cognito.ProviderAttribute.GOOGLE_NAME
+        }
+      })
+      : undefined;
+
     const userPoolClient = userPool.addClient("WebClient", {
       generateSecret: false,
       authFlows: {
@@ -120,10 +145,21 @@ export class AgentProofStack extends Stack {
       },
       preventUserExistenceErrors: true,
       enableTokenRevocation: true,
+      oAuth: {
+        flows: { authorizationCodeGrant: true },
+        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
+        callbackUrls: [`${applicationUrl}/api/auth/google/callback`],
+        logoutUrls: [applicationUrl]
+      },
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        ...(googleIdentityProvider ? [cognito.UserPoolClientIdentityProvider.GOOGLE] : [])
+      ],
       accessTokenValidity: Duration.hours(1),
       idTokenValidity: Duration.hours(1),
       refreshTokenValidity: Duration.days(30)
     });
+    if (googleIdentityProvider) userPoolClient.node.addDependency(googleIdentityProvider);
 
     const worker = new nodejs.NodejsFunction(this, "VerificationWorker", {
       functionName: `agentproof-verification-worker-${suffix}`,
@@ -226,6 +262,7 @@ export class AgentProofStack extends Stack {
     new cdk.CfnOutput(this, "AwsRegion", { value: this.region, exportName: `AgentProof-${suffix}-Region` });
     new cdk.CfnOutput(this, "CognitoUserPoolId", { value: userPool.userPoolId, exportName: `AgentProof-${suffix}-UserPoolId` });
     new cdk.CfnOutput(this, "CognitoClientId", { value: userPoolClient.userPoolClientId, exportName: `AgentProof-${suffix}-ClientId` });
+    new cdk.CfnOutput(this, "CognitoHostedUiDomain", { value: hostedUiDomain.baseUrl(), exportName: `AgentProof-${suffix}-HostedUiDomain` });
     new cdk.CfnOutput(this, "DynamoTableName", { value: table.tableName, exportName: `AgentProof-${suffix}-Table` });
     new cdk.CfnOutput(this, "ReportsBucketName", { value: reportsBucket.bucketName, exportName: `AgentProof-${suffix}-Bucket` });
     new cdk.CfnOutput(this, "VerificationQueueUrl", { value: verificationQueue.queueUrl, exportName: `AgentProof-${suffix}-QueueUrl` });

@@ -8,8 +8,8 @@ export const failureRuleSchema = z.object({
 });
 
 export const accountPasswordSchema = z.string()
-  .min(8, "Use at least 8 characters.")
-  .max(128, "Use no more than 128 characters.");
+  .min(8, "Choose a password with at least 8 characters.")
+  .max(128, "Choose a password with no more than 128 characters.");
 
 export const createAgentSchema = z.object({
   name: z.string().min(2),
@@ -77,6 +77,13 @@ export const confirmSignUpSchema = z.object({
 export const signInSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1).max(128)
+});
+
+export const googleAuthStartSchema = z.object({
+  intent: z.enum(["sign-in", "sign-up"]),
+  next: z.string().optional(),
+  acceptedPolicies: z.boolean().optional(),
+  captchaToken: z.string().min(1).max(2048).optional()
 });
 
 export const forgotPasswordSchema = z.object({

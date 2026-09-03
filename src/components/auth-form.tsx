@@ -12,7 +12,7 @@ type AuthMode = "sign-in" | "sign-up" | "forgot-password" | "reset-password";
 
 type AuthFormProps = { mode: AuthMode };
 
-type ApiResponse = { error?: string; confirmationRequired?: boolean; userSub?: string };
+type ApiResponse = { error?: string; confirmationRequired?: boolean; userSub?: string; authorizeUrl?: string };
 
 async function postAuth(path: string, body: Record<string, string | boolean>) {
   const response = await fetch(path, {
@@ -55,6 +55,13 @@ function Field({ id, label, type = "text", placeholder, value, required = true, 
   );
 }
 
+function initialOauthError() {
+  if (typeof window === "undefined") return "";
+  const oauthError = new URLSearchParams(window.location.search).get("oauth_error");
+  if (!oauthError) return "";
+  return oauthError === "cancelled" ? "Google sign-in was cancelled." : "Google sign-in could not be completed. Please try again.";
+}
+
 function PasswordField({ id = "password", label = "Password", value, onChange, autoComplete, showHint = true }: {
   id?: string;
   label?: string;
@@ -70,12 +77,12 @@ function PasswordField({ id = "password", label = "Password", value, onChange, a
   return <div>
     <label className="block text-xs font-bold text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-2" htmlFor={id}>{label}</label>
     <div className="relative">
-      <input type={visible ? "text" : "password"} id={id} autoComplete={autoComplete} minLength={8} required value={value} onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => setCapsLock(event.getModifierState("CapsLock"))} onKeyUp={(event) => setCapsLock(event.getModifierState("CapsLock"))} onBlur={() => setCapsLock(false)} aria-describedby={describedBy} className="w-full bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] rounded-md px-4 py-3 pr-12 text-sm focus:outline-none focus:border-[var(--color-seal-indigo)] focus:ring-1 focus:ring-[var(--color-seal-indigo)] transition-colors" placeholder="••••••••" />
+      <input type={visible ? "text" : "password"} id={id} autoComplete={autoComplete} maxLength={128} required value={value} onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => setCapsLock(event.getModifierState("CapsLock"))} onKeyUp={(event) => setCapsLock(event.getModifierState("CapsLock"))} onBlur={() => setCapsLock(false)} aria-describedby={describedBy} className="w-full bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] rounded-md px-4 py-3 pr-12 text-sm focus:outline-none focus:border-[var(--color-seal-indigo)] focus:ring-1 focus:ring-[var(--color-seal-indigo)] transition-colors" placeholder="••••••••" />
       <button type="button" onClick={() => setVisible((current) => !current)} className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--color-seal-indigo)]" aria-label={visible ? "Hide password" : "Show password"} title={visible ? "Hide password" : "Show password"}>
         {visible ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
       </button>
     </div>
-    {showHint && <p id={`${id}-hint`} className="mt-2 text-xs text-[var(--color-on-surface-variant)]">Use at least 8 characters.</p>}
+    {showHint && <p id={`${id}-hint`} className="mt-2 text-xs text-[var(--color-on-surface-variant)]">Any characters are allowed. Use 8 or more.</p>}
     {capsLock && <p id={`${id}-caps-lock`} role="status" className="mt-2 text-xs text-[var(--color-evidence-amber)]">Caps Lock is on.</p>}
   </div>;
 }
@@ -128,13 +135,38 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [captchaToken, setCaptchaToken] = useState("");
   const [confirmationRequired, setConfirmationRequired] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialOauthError);
   const [submitting, setSubmitting] = useState(false);
+  const [googleWorking, setGoogleWorking] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 
   const isConfirmation = currentMode === "sign-up" && confirmationRequired;
   const title = currentMode === "sign-in" ? "Sign In to AgentProof" : currentMode === "sign-up" ? (isConfirmation ? "Confirm Your Email" : "Create an Account") : currentMode === "forgot-password" ? "Reset Your Password" : "Choose a New Password";
   const submitLabel = submitting ? "Working..." : currentMode === "sign-in" ? "Sign In" : currentMode === "sign-up" ? (isConfirmation ? "Confirm Email" : "Sign Up") : currentMode === "forgot-password" ? "Send Reset Code" : "Reset Password";
+
+  async function continueWithGoogle() {
+    if (currentMode === "sign-up" && !acceptedPolicies) {
+      setError("Accept the Terms and Privacy Policy to continue with Google.");
+      return;
+    }
+
+    setError("");
+    setGoogleWorking(true);
+    try {
+      const result = await postAuth("/api/auth/google/start", {
+        intent: currentMode === "sign-up" ? "sign-up" : "sign-in",
+        next: safeNextPath(),
+        acceptedPolicies,
+        captchaToken
+      });
+      if (!result.authorizeUrl) throw new Error("Google sign-in is not available yet.");
+      window.location.assign(result.authorizeUrl);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Google sign-in could not be completed.");
+      setGoogleWorking(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -191,6 +223,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {(currentMode === "sign-up" && !isConfirmation) && <><label className="flex items-start gap-3 text-xs leading-relaxed text-[var(--color-on-surface-variant)]"><input type="checkbox" checked={acceptedPolicies} onChange={(event) => setAcceptedPolicies(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-seal-indigo)]" required /> <span>I agree to the <Link href={policyLinks.terms} className="text-[var(--color-seal-indigo)] underline">Terms</Link> and <Link href={policyLinks.privacy} className="text-[var(--color-seal-indigo)] underline">Privacy Policy</Link>.</span></label><TurnstileField onToken={setCaptchaToken} /></>}
           {currentMode === "forgot-password" && <TurnstileField onToken={setCaptchaToken} />}
           <button type="submit" disabled={submitting} className="w-full bg-[var(--color-seal-indigo)] text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md hover:bg-[#2A354C] disabled:opacity-60 disabled:cursor-wait transition-colors shadow-sm mt-4">{submitLabel}</button>
+          {googleEnabled && (currentMode === "sign-in" || (currentMode === "sign-up" && !isConfirmation)) && <><div className="flex items-center gap-3 text-xs uppercase tracking-widest text-[var(--color-on-surface-variant)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--color-outline-variant)]" />or continue with<span className="h-px flex-1 bg-[var(--color-outline-variant)]" /></div><button type="button" disabled={submitting || googleWorking} onClick={continueWithGoogle} className="flex w-full items-center justify-center gap-3 border border-[var(--color-outline-variant)] bg-white py-3 text-sm font-bold text-[var(--color-ink-graphite)] transition-colors hover:bg-[var(--color-surface-container)] disabled:cursor-wait disabled:opacity-60"><span aria-hidden="true" className="grid h-5 w-5 place-items-center rounded-full border border-[var(--color-outline-variant)] font-sans text-xs font-bold text-[var(--color-seal-indigo)]">G</span>{googleWorking ? "Opening Google..." : "Continue with Google"}</button></>}
         </form>
         <div className="mt-8 text-center text-sm text-[var(--color-on-surface-variant)]">
           {currentMode === "sign-in" && <>Don&apos;t have an account? <Link href="/auth/sign-up" className="text-[var(--color-seal-indigo)] font-bold hover:underline">Sign up</Link></>}

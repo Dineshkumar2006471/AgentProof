@@ -57,14 +57,14 @@ export default function Home() {
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#pricing">Pricing</Link>
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/docs">Docs</Link>
           </div>
-          <Link href="/auth/sign-in" className="hidden md:flex bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+          <Link href="/auth/sign-up" className="hidden md:flex bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
             Get started
           </Link>
           <button type="button" aria-label="Toggle navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)} className="md:hidden text-[var(--color-on-surface)]">
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/docs">Docs</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-in">Get started</Link></div></div>}
+        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/docs">Docs</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-up">Get started</Link></div></div>}
       </nav>
 
       {/* 2. Hero Section */}
@@ -84,7 +84,7 @@ export default function Home() {
               The verification infrastructure for AI agents. We convert natural-language promises into executable contracts, then prove whether your agent keeps them.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Link href="/auth/sign-in" className="bg-[var(--color-accent-violet)] text-white font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-lg shadow-[var(--color-accent-violet)]/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+              <Link href="/auth/sign-up" className="bg-[var(--color-accent-violet)] text-white font-data-label text-sm font-bold px-8 py-4 rounded-md shadow-lg shadow-[var(--color-accent-violet)]/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
                 Verify an Agent
                 <ArrowRight className="w-4 h-4" />
               </Link>

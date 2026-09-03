@@ -39,6 +39,7 @@ The product is available as an open public beta at <a href="https://agent-proof.
 - [Quick Start](#quick-start)
 - [Agent Endpoint Interface](#agent-endpoint-interface)
 - [Configuration](#configuration)
+- [Google Sign-In](#google-sign-in)
 - [Repository Structure](#repository-structure)
 - [Testing and CI](#testing-and-ci)
 - [Deploying to AWS](#deploying-to-aws)
@@ -243,6 +244,10 @@ The published capacity model is enforced server-side:
 | Builder | 3 agents, 100 tests/month, 10 verification runs/month |
 | Agency | 10 agents, 500 tests/month, 50 verification runs/month |
 | One-time | 1 verification run with up to 25 tests |
+
+### Google Sign-In
+
+Email/password remains available by default. Google sign-in uses Cognito's hosted authorization-code flow and is deliberately hidden until its Google Cloud client credentials and Cognito provider are configured. Follow [the Google sign-in setup guide](./docs/google-sign-in.md); do not put Google OAuth secrets in this repository or Amplify environment variables.
 
 ## Repository Structure
 

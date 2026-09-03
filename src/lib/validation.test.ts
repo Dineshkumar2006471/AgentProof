@@ -73,6 +73,17 @@ describe("account password validation", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a password with any character mix once it reaches eight characters", () => {
+    const result = signUpSchema.safeParse({
+      name: "Taylor Example",
+      email: "taylor@example.com",
+      password: "********",
+      acceptedPolicies: true
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects passwords shorter than eight characters for sign-up and reset", () => {
     const signUp = signUpSchema.safeParse({
       name: "Taylor Example",
@@ -88,7 +99,7 @@ describe("account password validation", () => {
 
     expect(signUp.success).toBe(false);
     expect(reset.success).toBe(false);
-    if (!signUp.success) expect(signUp.error.issues[0]?.message).toBe("Use at least 8 characters.");
+    if (!signUp.success) expect(signUp.error.issues[0]?.message).toBe("Choose a password with at least 8 characters.");
   });
 
   it("requires policy acceptance for new accounts", () => {

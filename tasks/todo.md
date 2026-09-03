@@ -1,5 +1,20 @@
 # AgentProof Level 1 Build Tracker
 
+## Conversion And Google Authentication
+
+- [x] Send every public "Get started" conversion CTA to sign-up.
+- [x] Keep email/password authentication permissive about character classes while requiring a clear 8-character minimum.
+- [x] Add a Cognito-hosted Google OAuth code flow with state validation, secure session creation, and policy acceptance recording.
+- [x] Add an opt-in CDK configuration and operator documentation for Google OAuth credentials; never commit the Google client secret.
+- [x] Verify auth validation, OAuth URL construction, callback state handling, production synthesis, and the live Cognito provider configuration.
+
+### Review
+
+- Public conversion CTAs now consistently take new users to sign-up. Passwords accept any character mix from 8 to 128 characters; only the minimum boundary remains.
+- Google sign-in uses Cognito's authorization-code flow. It validates an expiring state cookie, verifies returned JWTs before creating an AgentProof session, preserves safe internal destinations, and records accepted policy versions for Google registrations.
+- The Google Client ID and secret are held only in AWS Secrets Manager. Cognito's Hosted UI domain is active in production, Google is an allowed provider, and Amplify has the hosted-domain URL plus an enabled public UI flag.
+- `npm run typecheck`, the full Vitest suite (12 files, 34 tests), production build, both CDK synth targets, focused ESLint, and `git diff --check` passed locally before publication.
+
 ## Repository Documentation Refresh
 
 - [x] Replace the internal-style README with a public product README and table of contents.

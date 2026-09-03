@@ -54,3 +54,5 @@
 - Use a dedicated 1200x630 social card for Open Graph metadata; a square favicon is only appropriate for browser chrome, not feed previews.
 - Static social-image routes must use canonical public asset URLs rather than development app URLs, because CI can intentionally set the app URL to localhost while prerendering.
 - Treat launch stage and engineering maturity separately: a public beta can use production-grade infrastructure and nationwide signup while paid checkout, support operations, and incident response are still being validated. Do not relabel it general availability until those gates have real production evidence.
+- When a user asks for a normal password, preserve a concise minimum length for account safety but remove unrequested character-class rules and native browser errors that obscure the actual requirement.
+- Social sign-in must route Google through Cognito's hosted callback, not directly to the application. Keep the Google client secret in Secrets Manager, validate OAuth state server-side, and expose only the Cognito domain and a public enable flag to Amplify.
