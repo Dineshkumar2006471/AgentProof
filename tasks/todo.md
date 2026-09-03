@@ -16,7 +16,7 @@
 
 - [ ] Complete Dodo live-account and business verification, then create live Builder, Agency, and One-time products.
 - [ ] Register `https://agent-proof.dev/api/webhooks/dodo` in Dodo live mode and store its signing secret only in Amplify.
-- [x] Set every required live Dodo variable in Amplify, enable checkout, and redeploy `main`.
+- [ ] Set every required live Dodo variable in Amplify, enable checkout, and redeploy `main`.
 - [ ] Verify a real payment, cancellation, failed payment, and duplicate webhook before public promotion.
 
 ### Review
@@ -24,6 +24,7 @@
 - The deployed webhook endpoint is publicly reachable and rejects an unsigned request with the intended `401 Invalid webhook signature` response. This is the correct pre-configuration health result.
 - Checkout stays disabled until the live API key, webhook signing secret, three live product IDs, `DODO_PAYMENTS_ENVIRONMENT=live_mode`, and `DODO_CHECKOUT_ENABLED=true` are all present. This prevents a customer from paying without a verified entitlement path.
 - Amplify main was switched from `test_mode` to `live_mode`, retained checkout enablement, removed the obsolete `DODO_TEST_USER_IDS` gate, and deployed successfully through manual release job 29. No credential values were printed or committed.
+- A real checkout attempt then logged `401 {\"error\":\"Unauthorized\"}` from Dodo. The configured `DODO_PAYMENTS_API_KEY` is not accepted by Dodo live mode and must be replaced with a valid live secret key before the activation task can be completed.
 
 ## Public Beta With Production Safeguards
 
