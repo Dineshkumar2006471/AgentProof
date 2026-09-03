@@ -14,6 +14,7 @@
 - Google sign-in uses Cognito's authorization-code flow. It validates an expiring state cookie, verifies returned JWTs before creating an AgentProof session, preserves safe internal destinations, and records accepted policy versions for Google registrations.
 - The Google Client ID and secret are held only in AWS Secrets Manager. Cognito's Hosted UI domain is active in production, Google is an allowed provider, and Amplify has the hosted-domain URL plus an enabled public UI flag.
 - `npm run typecheck`, the full Vitest suite (12 files, 34 tests), production build, both CDK synth targets, focused ESLint, and `git diff --check` passed locally before publication.
+- Follow-up correction: optional CAPTCHA values are normalized before schema validation, so a disabled CAPTCHA integration cannot surface a raw Zod error for email sign-up, password recovery, or Google sign-up.
 
 ## Repository Documentation Refresh
 

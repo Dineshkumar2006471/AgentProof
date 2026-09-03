@@ -14,7 +14,7 @@ type AuthFormProps = { mode: AuthMode };
 
 type ApiResponse = { error?: string; confirmationRequired?: boolean; userSub?: string; authorizeUrl?: string };
 
-async function postAuth(path: string, body: Record<string, string | boolean>) {
+async function postAuth(path: string, body: Record<string, string | boolean | undefined>) {
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -158,7 +158,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         intent: currentMode === "sign-up" ? "sign-up" : "sign-in",
         next: safeNextPath(),
         acceptedPolicies,
-        captchaToken
+        captchaToken: captchaToken || undefined
       });
       if (!result.authorizeUrl) throw new Error("Google sign-in is not available yet.");
       window.location.assign(result.authorizeUrl);
@@ -179,7 +179,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         captureAnalytics("account_signed_in");
         router.push(safeNextPath());
       } else if (currentMode === "sign-up" && !isConfirmation) {
-        const result = await postAuth("/api/auth/sign-up", { name, email, password, acceptedPolicies, captchaToken });
+        const result = await postAuth("/api/auth/sign-up", { name, email, password, acceptedPolicies, captchaToken: captchaToken || undefined });
         if (result.userSub) identifyAnalytics(result.userSub);
         captureAnalytics("account_signed_up");
         if (result.confirmationRequired !== false) setConfirmationRequired(true);
@@ -189,7 +189,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         captureAnalytics("account_confirmed");
         router.push("/auth/sign-in?confirmed=1");
       } else if (currentMode === "forgot-password") {
-        await postAuth("/api/auth/forgot-password", { email, captchaToken });
+        await postAuth("/api/auth/forgot-password", { email, captchaToken: captchaToken || undefined });
         setMessage("A reset code has been sent. Enter it below.");
         setCurrentMode("reset-password");
       } else {
@@ -223,7 +223,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {(currentMode === "sign-up" && !isConfirmation) && <><label className="flex items-start gap-3 text-xs leading-relaxed text-[var(--color-on-surface-variant)]"><input type="checkbox" checked={acceptedPolicies} onChange={(event) => setAcceptedPolicies(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-seal-indigo)]" required /> <span>I agree to the <Link href={policyLinks.terms} className="text-[var(--color-seal-indigo)] underline">Terms</Link> and <Link href={policyLinks.privacy} className="text-[var(--color-seal-indigo)] underline">Privacy Policy</Link>.</span></label><TurnstileField onToken={setCaptchaToken} /></>}
           {currentMode === "forgot-password" && <TurnstileField onToken={setCaptchaToken} />}
           <button type="submit" disabled={submitting} className="w-full bg-[var(--color-seal-indigo)] text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md hover:bg-[#2A354C] disabled:opacity-60 disabled:cursor-wait transition-colors shadow-sm mt-4">{submitLabel}</button>
-          {googleEnabled && (currentMode === "sign-in" || (currentMode === "sign-up" && !isConfirmation)) && <><div className="flex items-center gap-3 text-xs uppercase tracking-widest text-[var(--color-on-surface-variant)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--color-outline-variant)]" />or continue with<span className="h-px flex-1 bg-[var(--color-outline-variant)]" /></div><button type="button" disabled={submitting || googleWorking} onClick={continueWithGoogle} className="flex w-full items-center justify-center gap-3 border border-[var(--color-outline-variant)] bg-white py-3 text-sm font-bold text-[var(--color-ink-graphite)] transition-colors hover:bg-[var(--color-surface-container)] disabled:cursor-wait disabled:opacity-60"><span aria-hidden="true" className="grid h-5 w-5 place-items-center rounded-full border border-[var(--color-outline-variant)] font-sans text-xs font-bold text-[var(--color-seal-indigo)]">G</span>{googleWorking ? "Opening Google..." : "Continue with Google"}</button></>}
+          {googleEnabled && (currentMode === "sign-in" || (currentMode === "sign-up" && !isConfirmation)) && <><div className="flex items-center gap-3 text-xs uppercase tracking-widest text-[var(--color-on-surface-variant)]" aria-hidden="true"><span className="h-px flex-1 bg-[var(--color-outline-variant)]" />or continue with<span className="h-px flex-1 bg-[var(--color-outline-variant)]" /></div><button type="button" disabled={submitting || googleWorking} onClick={continueWithGoogle} className="flex w-full items-center justify-center gap-3 border border-[var(--color-outline-variant)] bg-white py-3 text-sm font-bold text-[var(--color-ink-graphite)] transition-colors hover:bg-[var(--color-surface-container)] disabled:cursor-wait disabled:opacity-60"><Image src="/google-g-logo.svg" alt="" width={18} height={18} aria-hidden="true" />{googleWorking ? "Opening Google..." : "Continue with Google"}</button></>}
         </form>
         <div className="mt-8 text-center text-sm text-[var(--color-on-surface-variant)]">
           {currentMode === "sign-in" && <>Don&apos;t have an account? <Link href="/auth/sign-up" className="text-[var(--color-seal-indigo)] font-bold hover:underline">Sign up</Link></>}

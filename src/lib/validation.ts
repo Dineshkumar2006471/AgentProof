@@ -11,6 +11,11 @@ export const accountPasswordSchema = z.string()
   .min(8, "Choose a password with at least 8 characters.")
   .max(128, "Choose a password with no more than 128 characters.");
 
+const optionalCaptchaTokenSchema = z.preprocess(
+  (value) => value === "" ? undefined : value,
+  z.string().min(1).max(2048).optional()
+);
+
 export const createAgentSchema = z.object({
   name: z.string().min(2),
   endpointUrl: z.string().url(),
@@ -66,7 +71,7 @@ export const signUpSchema = z.object({
   email: z.string().trim().email().max(254),
   password: accountPasswordSchema,
   acceptedPolicies: z.literal(true, { errorMap: () => ({ message: "Accept the Terms and Privacy Policy to create an account." }) }),
-  captchaToken: z.string().min(1).max(2048).optional()
+  captchaToken: optionalCaptchaTokenSchema
 });
 
 export const confirmSignUpSchema = z.object({
@@ -83,12 +88,12 @@ export const googleAuthStartSchema = z.object({
   intent: z.enum(["sign-in", "sign-up"]),
   next: z.string().optional(),
   acceptedPolicies: z.boolean().optional(),
-  captchaToken: z.string().min(1).max(2048).optional()
+  captchaToken: optionalCaptchaTokenSchema
 });
 
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().email(),
-  captchaToken: z.string().min(1).max(2048).optional()
+  captchaToken: optionalCaptchaTokenSchema
 });
 
 export const resetPasswordSchema = z.object({

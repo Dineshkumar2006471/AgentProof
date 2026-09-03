@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAgentSchema, resetPasswordSchema, signUpSchema } from "@/lib/validation";
+import { createAgentSchema, forgotPasswordSchema, googleAuthStartSchema, resetPasswordSchema, signUpSchema } from "@/lib/validation";
 
 const baseAgent = {
   name: "Support Agent",
@@ -106,5 +106,18 @@ describe("account password validation", () => {
     const result = signUpSchema.safeParse({ name: "Taylor Example", email: "taylor@example.com", password: "eightchr", acceptedPolicies: false });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0]?.message).toBe("Accept the Terms and Privacy Policy to create an account.");
+  });
+});
+
+describe("optional CAPTCHA validation", () => {
+  it("normalizes an empty CAPTCHA value so sign-up, recovery, and Google authentication can begin without CAPTCHA configuration", () => {
+    const signUp = signUpSchema.safeParse({ name: "Taylor Example", email: "taylor@example.com", password: "eightchr", acceptedPolicies: true, captchaToken: "" });
+    const recovery = forgotPasswordSchema.safeParse({ email: "taylor@example.com", captchaToken: "" });
+    const google = googleAuthStartSchema.safeParse({ intent: "sign-up", acceptedPolicies: true, captchaToken: "" });
+
+    expect(signUp.success).toBe(true);
+    expect(recovery.success).toBe(true);
+    expect(google.success).toBe(true);
+    if (google.success) expect(google.data.captchaToken).toBeUndefined();
   });
 });
