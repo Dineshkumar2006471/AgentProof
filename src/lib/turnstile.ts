@@ -4,7 +4,8 @@ import { env } from "@/lib/env";
 type TurnstileResult = { success?: boolean };
 
 export function turnstileRequired() {
-  return env.AGENTPROOF_ENVIRONMENT === "production";
+  return env.AGENTPROOF_ENVIRONMENT === "production"
+    && Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && env.AGENTPROOF_TURNSTILE_SECRET_KEY);
 }
 
 export async function verifyTurnstile(token: string | undefined, remoteIp?: string) {

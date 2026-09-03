@@ -57,3 +57,4 @@
 - When a user asks for a normal password, preserve a concise minimum length for account safety but remove unrequested character-class rules and native browser errors that obscure the actual requirement.
 - Social sign-in must route Google through Cognito's hosted callback, not directly to the application. Keep the Google client secret in Secrets Manager, validate OAuth state server-side, and expose only the Cognito domain and a public enable flag to Amplify.
 - Optional browser fields must normalize blank strings at both the form and schema boundaries. An empty value is not equivalent to an omitted optional value in Zod, and raw validator messages must never reach an authentication screen.
+- A production security feature cannot be treated as mandatory before its complete configuration exists. Gate CAPTCHA enforcement on the complete key pair, retain rate limiting and confirmation as baseline safeguards, and add a regression test for the unconfigured state.
