@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: agentproof-ci-${{ github.workflow }}-${{ github.ref }}
@@ -41,7 +42,14 @@ jobs:
         run: npm run typecheck
 
       - name: Run tests
-        run: npm test -- --run
+        run: |
+          npm test -- --run > test_output.txt 2>&1 || (
+            echo "Tests failed. Uploading log to issue..."
+            gh issue create --title "CI Test Failure Log Run ${{ github.run_id }}" --body-file test_output.txt --repo ${{ github.repository }}
+            exit 1
+          )
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint
         run: npx eslint .
