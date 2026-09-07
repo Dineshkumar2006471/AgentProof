@@ -4,7 +4,7 @@ import { request as httpRequest, type RequestOptions } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { isIP } from "node:net";
 import type { SQSEvent, SQSBatchResponse } from "aws-lambda";
-import type { Evidence, TestResult, TestRun, VerificationTest } from "../../src/lib/domain";
+import type { Evidence, TestResult, TestRun, VerificationTest, ExecutionStatus } from "../../src/lib/domain";
 import {
   claimVerificationRun,
   getAgent,
@@ -172,31 +172,95 @@ export function buildEndpointAuthHeaders(authType: EndpointAuthType | undefined,
   }
 }
 
-async function executeTest(endpointUrl: string, test: VerificationTest, endpointAuthType?: EndpointAuthType, endpointSecretArn?: string, endpointAuthHeaderName?: string) {
+type ExecutionResult = {
+  ok: boolean;
+  response: string;
+  rawResponse: string;
+  toolCalls: unknown[];
+  actualState: Record<string, unknown>;
+  httpStatus: number;
+  executionStatus: ExecutionStatus;
+  errorCode?: string;
+  errorMessage?: string;
+  latencyMs: number;
+};
+
+export async function executeTest(endpointUrl: string, test: VerificationTest, endpointAuthType?: EndpointAuthType, endpointSecretArn?: string, endpointAuthHeaderName?: string): Promise<ExecutionResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const startTime = Date.now();
+  let executionStatus: ExecutionStatus = "success";
+  let errorMessage: string | undefined;
+
   try {
     const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
     const endpointSecret = endpointSecretArn ? await getSecretString(endpointSecretArn) : undefined;
     Object.assign(headers, buildEndpointAuthHeaders(endpointAuthType, endpointSecret, endpointAuthHeaderName));
-    const endpoint = await resolvePublicEndpoint(endpointUrl);
-    const response = await postToResolvedEndpoint(endpoint, JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }), headers, controller.signal);
+    
+    let endpoint: ResolvedEndpoint;
+    try {
+      endpoint = await resolvePublicEndpoint(endpointUrl);
+    } catch (error) {
+      executionStatus = "dns_error";
+      errorMessage = error instanceof Error ? error.message : "DNS resolution failed.";
+      throw error;
+    }
+
+    let response: { status: number; body: string };
+    try {
+      response = await postToResolvedEndpoint(endpoint, JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }), headers, controller.signal);
+    } catch (error) {
+      const isAbort = error instanceof Error && error.name === "AbortError";
+      executionStatus = isAbort ? "timeout" : "connection_error";
+      errorMessage = error instanceof Error ? error.message : "Connection failed.";
+      if (!isAbort && error instanceof Error && error.message.includes("SSL")) executionStatus = "tls_error";
+      throw error;
+    }
+
     const raw = response.body;
     let payload: AgentResponse = {};
-    try { payload = JSON.parse(raw) as AgentResponse; } catch { /* raw response remains evidence */ }
+    const httpStatus = response.status;
+    if (httpStatus >= 400) {
+      executionStatus = "http_error";
+      errorMessage = `Agent returned HTTP ${httpStatus}.`;
+    }
+
+    try { 
+      payload = JSON.parse(raw) as AgentResponse; 
+    } catch {
+      if (executionStatus === "success") {
+        executionStatus = "parse_error";
+        errorMessage = "Agent response was not valid JSON.";
+      }
+    }
+    
     return {
-      ok: response.status >= 200 && response.status < 300,
+      ok: httpStatus >= 200 && httpStatus < 300,
       response: payload.response ?? raw,
       rawResponse: raw,
       toolCalls: boundedToolCalls(Array.isArray(payload.tool_calls) ? payload.tool_calls : []),
       actualState: boundedState(payload.metadata?.state ?? {}),
-      httpStatus: response.status
+      httpStatus,
+      executionStatus,
+      errorMessage,
+      latencyMs: Date.now() - startTime
     };
+  } catch (error) {
+     return {
+       ok: false,
+       response: "",
+       rawResponse: "",
+       toolCalls: [],
+       actualState: {},
+       httpStatus: 0,
+       executionStatus: executionStatus !== "success" ? executionStatus : "internal_error",
+       errorMessage: errorMessage || (error instanceof Error ? error.message : "Execution failed."),
+       latencyMs: Date.now() - startTime
+     };
   } finally {
     clearTimeout(timeout);
   }
 }
-
 export function deterministicCheck(test: VerificationTest, result: Awaited<ReturnType<typeof executeTest>>) {
   const expected = test.expectedBehavior.toLowerCase();
   const toolCalls = result.toolCalls.map((tool) => JSON.stringify(tool).toLowerCase()).join(" ");
@@ -238,7 +302,7 @@ export function statusFor(score: number, critical: number) {
   return "FAILED" as const;
 }
 
-async function processRun(runId: string) {
+export async function processRun(runId: string) {
   const run = await getRun(runId);
   if (!run || run.status === "COMPLETED" || run.status === "FAILED") return;
   if (!await claimVerificationRun(runId)) return;
@@ -253,20 +317,31 @@ async function processRun(runId: string) {
 
   for (const test of tests) {
     const started = new Date().toISOString();
-    let execution: Awaited<ReturnType<typeof executeTest>>;
+    let execution: ExecutionResult;
     let judgment: { result: TestResult; severity: Evidence["severity"]; whyItFailed: string };
     let judgedBy: TestRun["judgedBy"] = "deterministic";
-    try {
-      execution = await executeTest(agent.endpointUrl, test, agent.endpointAuthType, agent.endpointSecretArn, agent.endpointAuthHeaderName);
+    let judgeStatus: string | undefined;
+    let judgeError: string | undefined;
+    
+    execution = await executeTest(agent.endpointUrl, test, agent.endpointAuthType, agent.endpointSecretArn, agent.endpointAuthHeaderName);
+    
+    if (execution.executionStatus !== "success" && execution.executionStatus !== "http_error" && execution.executionStatus !== "parse_error") {
+      judgment = { result: "fail", severity: "major", whyItFailed: execution.errorMessage || "Execution failed." };
+    } else {
       const deterministic = deterministicCheck(test, execution);
       if (deterministic) judgment = deterministic;
       else {
         judgedBy = "llm";
-        judgment = await judgeSemantics({ expectedBehavior: test.expectedBehavior, actualResponse: execution.response, toolCalls: execution.toolCalls });
+        try {
+          judgment = await judgeSemantics({ expectedBehavior: test.expectedBehavior, actualResponse: execution.response, toolCalls: execution.toolCalls });
+          judgeStatus = "success";
+        } catch (error) {
+          judgment = { result: "fail", severity: "major", whyItFailed: "Semantic evaluation failed." };
+          execution.executionStatus = "evaluator_error";
+          judgeStatus = "error";
+          judgeError = error instanceof Error ? error.message : "Unknown judge error";
+        }
       }
-    } catch (error) {
-      execution = { ok: false, response: "", rawResponse: "", toolCalls: [], actualState: {}, httpStatus: 0 };
-      judgment = { result: "fail", severity: "major", whyItFailed: error instanceof Error ? error.message : "Execution failed." };
     }
 
     const judgmentSummary = judgment.result === "pass"
@@ -291,6 +366,13 @@ async function processRun(runId: string) {
       actualState: execution.actualState,
       expectedState: {},
       result: judgment.result,
+      executionStatus: execution.executionStatus,
+      httpStatus: execution.httpStatus,
+      latencyMs: execution.latencyMs,
+      errorCode: execution.errorCode,
+      errorMessage: execution.errorMessage,
+      judgeStatus,
+      judgeError,
       judgedBy,
       runAt: started
     };
@@ -306,6 +388,13 @@ async function processRun(runId: string) {
       expectedState: {},
       actualState: execution.actualState,
       whyItFailed: judgmentSummary,
+      executionStatus: execution.executionStatus,
+      httpStatus: execution.httpStatus,
+      latencyMs: execution.latencyMs,
+      errorCode: execution.errorCode,
+      errorMessage: execution.errorMessage,
+      judgeStatus,
+      judgeError,
       severity: judgment.severity,
       reproductionInput: test.inputMessage,
       createdAt: started

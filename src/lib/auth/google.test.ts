@@ -16,11 +16,29 @@ afterEach(() => {
 
 describe("Google OAuth configuration", () => {
   it("keeps Google sign-in disabled unless the public flag and Cognito domain are present", async () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://production.com";
     process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED = "false";
-    process.env.COGNITO_DOMAIN = "https://agentproof-production-899640267626.auth.ap-south-1.amazoncognito.com";
+    process.env.COGNITO_DOMAIN = "https://agentproof-production.auth.com";
     process.env.COGNITO_CLIENT_ID = "client-id";
     const { googleSignInEnabled } = await import("@/lib/auth/google");
+    expect(googleSignInEnabled()).toBe(false);
+  });
 
+  it("Localhost never disables Google login (even if the public flag is false)", async () => {
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+    process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED = "false";
+    process.env.COGNITO_DOMAIN = "https://agentproof.auth.com";
+    process.env.COGNITO_CLIENT_ID = "client";
+    const { googleSignInEnabled } = await import("@/lib/auth/google");
+    expect(googleSignInEnabled()).toBe(true);
+  });
+
+  it("Production always disables Google login if COGNITO_DOMAIN is missing", async () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://production.com";
+    process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED = "true";
+    delete process.env.COGNITO_DOMAIN;
+    process.env.COGNITO_CLIENT_ID = "client";
+    const { googleSignInEnabled } = await import("@/lib/auth/google");
     expect(googleSignInEnabled()).toBe(false);
   });
 

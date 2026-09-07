@@ -59,6 +59,17 @@ export type VerificationRunStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED
 
 export type TestResult = "pass" | "fail" | "critical_fail";
 
+export type ExecutionStatus =
+  | "success"
+  | "dns_error"
+  | "tls_error"
+  | "timeout"
+  | "connection_error"
+  | "http_error"
+  | "parse_error"
+  | "evaluator_error"
+  | "internal_error";
+
 export type TestRun = {
   id: string;
   verificationRunId: string;
@@ -69,6 +80,13 @@ export type TestRun = {
   actualState: Record<string, unknown>;
   expectedState: Record<string, unknown>;
   result: TestResult;
+  executionStatus: ExecutionStatus;
+  httpStatus?: number;
+  latencyMs?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  judgeStatus?: string;
+  judgeError?: string;
   judgedBy: JudgmentMethod;
   runAt: string;
 };
@@ -122,6 +140,13 @@ export type Evidence = {
   expectedState: Record<string, unknown>;
   actualState: Record<string, unknown>;
   whyItFailed: string;
+  executionStatus: ExecutionStatus;
+  httpStatus?: number;
+  latencyMs?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  judgeStatus?: string;
+  judgeError?: string;
   severity: "info" | "minor" | "major" | "critical";
   reproductionInput: string;
   createdAt: string;

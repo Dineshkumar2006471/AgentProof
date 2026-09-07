@@ -1,0 +1,458 @@
+{
+  "/AgentProof-production": [
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/ApplicationTable": [
+    {
+      "type": "aws:cdk:hasPhysicalName",
+      "data": {
+        "Ref": "ApplicationTableC14D7B9E"
+      }
+    }
+  ],
+  "/AgentProof-production/OpenAiApiKeySecret": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OpenAiApiKeySecret"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:85:26)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/AwsRegion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AwsRegion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:200:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/CognitoUserPoolId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CognitoUserPoolId"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:201:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/CognitoClientId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CognitoClientId"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:202:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/DynamoTableName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DynamoTableName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:203:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/ReportsBucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReportsBucketName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:204:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationQueueUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationQueueUrl"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:205:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/OpenAiSecretArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OpenAiSecretArn"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:206:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/AmplifySsrComputeRoleArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AmplifySsrComputeRoleArn"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:207:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/AgentProof-production/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/AgentProof-production/ApplicationTable/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApplicationTableC14D7B9E"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Table2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:26:19)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/ReportsBucket/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReportsBucket4E7C5994"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:57:27)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationDeadLetterQueue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationDeadLetterQueueD2DE4F39"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Queue2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:68:29)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationQueue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationQueueE334D8C0"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Queue2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:74:31)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/UserPool/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPool6BA7E5F2"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new UserPool2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:90:22)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationWorkerLogs/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationWorkerLogs3C3DE852"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new LogGroup2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:131:17)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationWorker/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationWorker4B151C8A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:124:20)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/WorkerErrorsAlarm/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "WorkerErrorsAlarm1932B217"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Alarm2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:161:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/DeadLetterAlarm/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DeadLetterAlarmBB7AE56D"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Alarm2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:168:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/QueueAgeAlarm/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "QueueAgeAlarmC3F61350"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Alarm2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:175:5)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/AmplifySsrComputeRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AmplifySsrComputeRoleFB63CA7A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Role2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:183:32)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib, node internals...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/AgentProof-production/ReportsBucket/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReportsBucketPolicy11C4A507"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:57:27)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)"
+      ]
+    }
+  ],
+  "/AgentProof-production/UserPool/WebClient/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPoolWebClient4C9370B0"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.addClient in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:111:37)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationWorker/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationWorkerServiceRole5540DE44"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:124:20)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationWorker/SqsEventSource:AgentProofproductionVerificationQueue3083F066/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationWorkerSqsEventSourceAgentProofproductionVerificationQueue3083F066B288252A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...NodejsFunction.addEventSource in aws-cdk-lib...",
+        "new AgentProofStack (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\lib\\agentproof-stack.ts:156:12)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:8:1)",
+        "<anonymous> (C:\\Users\\bingi\\OneDrive\\Documents\\ChatGPT\\Agent-Proof\\infra\\bin\\agentproof.ts:14:2)",
+        "...node internals, tsx..."
+      ]
+    }
+  ],
+  "/AgentProof-production/AmplifySsrComputeRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AmplifySsrComputeRoleDefaultPolicyE92ACA8A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/AgentProof-production/VerificationWorker/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "VerificationWorkerServiceRoleDefaultPolicyADFA9E05"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "version": "54.0.0",
+  "files": {
+    "8d032e1ea50f95aec8bf7c86576fbd98bcad47b1cdeedf9001bee2a6a58b3682": {
+      "displayName": "VerificationWorker/Code",
+      "source": {
+        "path": "asset.8d032e1ea50f95aec8bf7c86576fbd98bcad47b1cdeedf9001bee2a6a58b3682",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-ap-south-1-33b4a101": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1",
+          "objectKey": "8d032e1ea50f95aec8bf7c86576fbd98bcad47b1cdeedf9001bee2a6a58b3682.zip",
+          "region": "ap-south-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-south-1"
+        }
+      }
+    },
+    "349333e0c373dcf923a80190ea2ff537d04cb39a3533aed2e72d99b852cf91a9": {
+      "displayName": "AgentProof-development Template",
+      "source": {
+        "path": "AgentProof-development.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-ap-south-1-07ea47f1": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1",
+          "objectKey": "349333e0c373dcf923a80190ea2ff537d04cb39a3533aed2e72d99b852cf91a9.json",
+          "region": "ap-south-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-ap-south-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

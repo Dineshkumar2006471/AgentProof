@@ -18,7 +18,13 @@ export function safeInternalPath(value: string | undefined) {
 }
 
 export function googleSignInEnabled() {
-  return env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true" && Boolean(env.COGNITO_DOMAIN && env.COGNITO_CLIENT_ID);
+  const hasDependencies = Boolean(env.COGNITO_DOMAIN && env.COGNITO_CLIENT_ID);
+  if (!hasDependencies) return false;
+  
+  const isLocal = env.NEXT_PUBLIC_APP_URL?.includes("localhost") || env.NEXT_PUBLIC_APP_URL?.includes("127.0.0.1");
+  if (isLocal) return true;
+  
+  return env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 }
 
 export function googleCallbackUrl() {

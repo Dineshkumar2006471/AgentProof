@@ -1,0 +1,1018 @@
+{
+ "Resources": {
+  "ApplicationTableC14D7B9E": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI1PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI1SK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI2PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI2SK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI3PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI3SK",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "GSI1",
+      "KeySchema": [
+       {
+        "AttributeName": "GSI1PK",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "GSI1SK",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "GSI2",
+      "KeySchema": [
+       {
+        "AttributeName": "GSI2PK",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "GSI2SK",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "GSI3",
+      "KeySchema": [
+       {
+        "AttributeName": "GSI3PK",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "GSI3SK",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "SSESpecification": {
+     "SSEEnabled": true
+    },
+    "TableName": "agentproof-production"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/ApplicationTable/Resource"
+   }
+  },
+  "ReportsBucket4E7C5994": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": {
+     "Fn::Join": [
+      "",
+      [
+       "agentproof-reports-production-",
+       {
+        "Ref": "AWS::AccountId"
+       }
+      ]
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "ExpirationInDays": 365,
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/ReportsBucket/Resource"
+   }
+  },
+  "ReportsBucketPolicy11C4A507": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "ReportsBucket4E7C5994"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ReportsBucket4E7C5994",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ReportsBucket4E7C5994",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/ReportsBucket/Policy/Resource"
+   }
+  },
+  "VerificationDeadLetterQueueD2DE4F39": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "agentproof-verification-dlq-production",
+    "SqsManagedSseEnabled": true
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationDeadLetterQueue/Resource"
+   }
+  },
+  "VerificationQueueE334D8C0": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 345600,
+    "QueueName": "agentproof-verification-production",
+    "RedrivePolicy": {
+     "deadLetterTargetArn": {
+      "Fn::GetAtt": [
+       "VerificationDeadLetterQueueD2DE4F39",
+       "Arn"
+      ]
+     },
+     "maxReceiveCount": 3
+    },
+    "SqsManagedSseEnabled": true,
+    "VisibilityTimeout": 600
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationQueue/Resource"
+   }
+  },
+  "OpenAiApiKeySecret": {
+   "Type": "AWS::SecretsManager::Secret",
+   "Properties": {
+    "Description": "AgentProof OpenAI API key. Value is seeded outside CloudFormation.",
+    "Name": "agentproof/openai/production"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/OpenAiApiKeySecret"
+   }
+  },
+  "UserPool6BA7E5F2": {
+   "Type": "AWS::Cognito::UserPool",
+   "Properties": {
+    "AccountRecoverySetting": {
+     "RecoveryMechanisms": [
+      {
+       "Name": "verified_email",
+       "Priority": 1
+      }
+     ]
+    },
+    "AdminCreateUserConfig": {
+     "AllowAdminCreateUserOnly": false
+    },
+    "AutoVerifiedAttributes": [
+     "email"
+    ],
+    "EmailVerificationMessage": "Your AgentProof verification code is {####}.",
+    "EmailVerificationSubject": "Confirm your AgentProof account",
+    "Policies": {
+     "PasswordPolicy": {
+      "MinimumLength": 8,
+      "RequireLowercase": false,
+      "RequireNumbers": false,
+      "RequireSymbols": false,
+      "RequireUppercase": false
+     }
+    },
+    "Schema": [
+     {
+      "Mutable": false,
+      "Name": "email",
+      "Required": true
+     }
+    ],
+    "SmsVerificationMessage": "The verification code to your new account is {####}",
+    "UserPoolName": "agentproof-users-production",
+    "UsernameAttributes": [
+     "email"
+    ],
+    "VerificationMessageTemplate": {
+     "DefaultEmailOption": "CONFIRM_WITH_CODE",
+     "EmailMessage": "Your AgentProof verification code is {####}.",
+     "EmailSubject": "Confirm your AgentProof account",
+     "SmsMessage": "The verification code to your new account is {####}"
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/UserPool/Resource"
+   }
+  },
+  "UserPoolWebClient4C9370B0": {
+   "Type": "AWS::Cognito::UserPoolClient",
+   "Properties": {
+    "AccessTokenValidity": 60,
+    "AllowedOAuthFlows": [
+     "implicit",
+     "code"
+    ],
+    "AllowedOAuthFlowsUserPoolClient": true,
+    "AllowedOAuthScopes": [
+     "profile",
+     "phone",
+     "email",
+     "openid",
+     "aws.cognito.signin.user.admin"
+    ],
+    "CallbackURLs": [
+     "https://example.com"
+    ],
+    "EnableTokenRevocation": true,
+    "ExplicitAuthFlows": [
+     "ALLOW_USER_PASSWORD_AUTH",
+     "ALLOW_USER_SRP_AUTH",
+     "ALLOW_REFRESH_TOKEN_AUTH"
+    ],
+    "GenerateSecret": false,
+    "IdTokenValidity": 60,
+    "PreventUserExistenceErrors": "ENABLED",
+    "RefreshTokenValidity": 43200,
+    "SupportedIdentityProviders": [
+     "COGNITO"
+    ],
+    "TokenValidityUnits": {
+     "AccessToken": "minutes",
+     "IdToken": "minutes",
+     "RefreshToken": "minutes"
+    },
+    "UserPoolId": {
+     "Ref": "UserPool6BA7E5F2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/UserPool/WebClient/Resource"
+   }
+  },
+  "VerificationWorkerLogs3C3DE852": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "RetentionInDays": 30
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationWorkerLogs/Resource"
+   }
+  },
+  "VerificationWorkerServiceRole5540DE44": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationWorker/ServiceRole/Resource"
+   }
+  },
+  "VerificationWorkerServiceRoleDefaultPolicyADFA9E05": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ApplicationTableC14D7B9E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ApplicationTableC14D7B9E",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ApplicationTableC14D7B9E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ApplicationTableC14D7B9E",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ReportsBucket4E7C5994",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ReportsBucket4E7C5994",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "VerificationQueueE334D8C0",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "OpenAiApiKeySecret"
+       }
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:ap-south-1:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":secret:agentproof/agents/production/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "VerificationWorkerServiceRoleDefaultPolicyADFA9E05",
+    "Roles": [
+     {
+      "Ref": "VerificationWorkerServiceRole5540DE44"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationWorker/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "VerificationWorker4B151C8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-ap-south-1"
+     },
+     "S3Key": "8d032e1ea50f95aec8bf7c86576fbd98bcad47b1cdeedf9001bee2a6a58b3682.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "AGENTPROOF_ENVIRONMENT": "production",
+      "AGENTPROOF_DYNAMODB_TABLE": {
+       "Ref": "ApplicationTableC14D7B9E"
+      },
+      "AGENTPROOF_REPORTS_BUCKET": {
+       "Ref": "ReportsBucket4E7C5994"
+      },
+      "AGENTPROOF_VERIFICATION_QUEUE_URL": {
+       "Ref": "VerificationQueueE334D8C0"
+      },
+      "OPENAI_SECRET_ARN": {
+       "Ref": "OpenAiApiKeySecret"
+      }
+     }
+    },
+    "FunctionName": "agentproof-verification-worker-production",
+    "Handler": "index.handler",
+    "LoggingConfig": {
+     "LogGroup": {
+      "Ref": "VerificationWorkerLogs3C3DE852"
+     }
+    },
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "VerificationWorkerServiceRole5540DE44",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "VerificationWorkerServiceRoleDefaultPolicyADFA9E05",
+    "VerificationWorkerServiceRole5540DE44"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationWorker/Resource",
+    "aws:asset:path": "asset.8d032e1ea50f95aec8bf7c86576fbd98bcad47b1cdeedf9001bee2a6a58b3682",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "VerificationWorkerSqsEventSourceAgentProofproductionVerificationQueue3083F066B288252A": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "VerificationQueueE334D8C0",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "VerificationWorker4B151C8A"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/VerificationWorker/SqsEventSource:AgentProofproductionVerificationQueue3083F066/Resource"
+   }
+  },
+  "WorkerErrorsAlarm1932B217": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmName": "agentproof-worker-errors-production",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": {
+       "Ref": "VerificationWorker4B151C8A"
+      }
+     }
+    ],
+    "EvaluationPeriods": 1,
+    "MetricName": "Errors",
+    "Namespace": "AWS/Lambda",
+    "Period": 300,
+    "Statistic": "Sum",
+    "Threshold": 1,
+    "TreatMissingData": "notBreaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/WorkerErrorsAlarm/Resource"
+   }
+  },
+  "DeadLetterAlarmBB7AE56D": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmName": "agentproof-verification-dlq-production",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "QueueName",
+      "Value": {
+       "Fn::GetAtt": [
+        "VerificationDeadLetterQueueD2DE4F39",
+        "QueueName"
+       ]
+      }
+     }
+    ],
+    "EvaluationPeriods": 1,
+    "MetricName": "ApproximateNumberOfMessagesVisible",
+    "Namespace": "AWS/SQS",
+    "Period": 300,
+    "Statistic": "Maximum",
+    "Threshold": 1,
+    "TreatMissingData": "notBreaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/DeadLetterAlarm/Resource"
+   }
+  },
+  "QueueAgeAlarmC3F61350": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmName": "agentproof-verification-queue-age-production",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "QueueName",
+      "Value": {
+       "Fn::GetAtt": [
+        "VerificationQueueE334D8C0",
+        "QueueName"
+       ]
+      }
+     }
+    ],
+    "EvaluationPeriods": 2,
+    "MetricName": "ApproximateAgeOfOldestMessage",
+    "Namespace": "AWS/SQS",
+    "Period": 300,
+    "Statistic": "Maximum",
+    "Threshold": 300,
+    "TreatMissingData": "notBreaching"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/QueueAgeAlarm/Resource"
+   }
+  },
+  "AmplifySsrComputeRoleFB63CA7A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "amplify.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Least-privilege runtime role for AgentProof Amplify SSR routes",
+    "RoleName": "agentproof-amplify-ssr-production"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/AmplifySsrComputeRole/Resource"
+   }
+  },
+  "AmplifySsrComputeRoleDefaultPolicyE92ACA8A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ApplicationTableC14D7B9E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ApplicationTableC14D7B9E",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ApplicationTableC14D7B9E",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ApplicationTableC14D7B9E",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ReportsBucket4E7C5994",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ReportsBucket4E7C5994",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "VerificationQueueE334D8C0",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "OpenAiApiKeySecret"
+       }
+      },
+      {
+       "Action": "secretsmanager:CreateSecret",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:ap-south-1:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":secret:agentproof/agents/production/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AmplifySsrComputeRoleDefaultPolicyE92ACA8A",
+    "Roles": [
+     {
+      "Ref": "AmplifySsrComputeRoleFB63CA7A"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/AmplifySsrComputeRole/DefaultPolicy/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WRT0/DMAzFPwv3zKAhdt8q4MKfscJ5ctO0ZEvjUiebpijfHSXtNiRO7+cX+0VO5jBfLODuBo88k/V+ZnQFoXQo9wKPvA31yWJHdQXhEyujRNHYDFHwPYSVl3vlkjnRKGsyWp6u9lSPxQo5Tf8whA+vfI7MEAUrOSjHHVps1QBFY8vsCEmt1Y4gfLEa1kQmDV34DIXRyrq/R6MThaGWIbxQ+zyQ71PHmaMw2FU1bi3VasfwluXJW+k0WaGxg7ChcfGs191GSg+xRWblGJZJpkAIRWMvOY8HZV1JfpDqFfte2zYl/HejkIZ8fUQnvyEsDQ5daswQo9gozt0i31Q6bKekd+9676JIW8CObw/zB0jfumOtZ4O3TncKNqP+AkcdMdXzAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AgentProof-production/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "AwsRegion": {
+   "Value": "ap-south-1",
+   "Export": {
+    "Name": "AgentProof-production-Region"
+   }
+  },
+  "CognitoUserPoolId": {
+   "Value": {
+    "Ref": "UserPool6BA7E5F2"
+   },
+   "Export": {
+    "Name": "AgentProof-production-UserPoolId"
+   }
+  },
+  "CognitoClientId": {
+   "Value": {
+    "Ref": "UserPoolWebClient4C9370B0"
+   },
+   "Export": {
+    "Name": "AgentProof-production-ClientId"
+   }
+  },
+  "DynamoTableName": {
+   "Value": {
+    "Ref": "ApplicationTableC14D7B9E"
+   },
+   "Export": {
+    "Name": "AgentProof-production-Table"
+   }
+  },
+  "ReportsBucketName": {
+   "Value": {
+    "Ref": "ReportsBucket4E7C5994"
+   },
+   "Export": {
+    "Name": "AgentProof-production-Bucket"
+   }
+  },
+  "VerificationQueueUrl": {
+   "Value": {
+    "Ref": "VerificationQueueE334D8C0"
+   },
+   "Export": {
+    "Name": "AgentProof-production-QueueUrl"
+   }
+  },
+  "OpenAiSecretArn": {
+   "Value": {
+    "Ref": "OpenAiApiKeySecret"
+   },
+   "Export": {
+    "Name": "AgentProof-production-OpenAiSecretArn"
+   }
+  },
+  "AmplifySsrComputeRoleArn": {
+   "Value": {
+    "Fn::GetAtt": [
+     "AmplifySsrComputeRoleFB63CA7A",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "AgentProof-production-AmplifyRoleArn"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
