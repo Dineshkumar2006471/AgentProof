@@ -79,7 +79,6 @@ describe("handler executeTest regressions", () => {
     // trying to speak HTTPS to an HTTP server causes a TLS/SSL error
     const res = await executeTest(`https://127.0.0.1:${port}/`, defaultTest);
     expect(res.ok).toBe(false);
-    expect(res.executionStatus).toBe("connection_error"); // or tls_error depending on node version, but wait, http module says "socket hang up" or "Client network socket disconnected before secure TLS connection was established". Usually maps to connection_error or tls_error.
     expect(["connection_error", "tls_error"]).toContain(res.executionStatus);
   });
 
