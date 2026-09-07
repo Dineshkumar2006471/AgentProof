@@ -23,7 +23,7 @@ import { putRawResponse } from "../../src/lib/aws/s3";
 import type { EndpointAuthType } from "../../src/lib/endpoint-auth";
 
 const MAX_RESPONSE_BYTES = 1024 * 1024;
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = process.env.AGENTPROOF_TEST_TIMEOUT_MS ? parseInt(process.env.AGENTPROOF_TEST_TIMEOUT_MS) : 30_000;
 const MAX_DYNAMODB_RESPONSE_CHARS = 12_000;
 const MAX_TOOL_CALLS = 20;
 const MAX_TOOL_CALL_CHARS = 1_500;

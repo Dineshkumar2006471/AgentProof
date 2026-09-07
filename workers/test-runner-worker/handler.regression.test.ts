@@ -18,6 +18,7 @@ let currentHandler: (req: any, res: any) => void;
 
 beforeAll(async () => {
   process.env.AGENTPROOF_ALLOW_LOCAL_ENDPOINTS = "true";
+  process.env.AGENTPROOF_TEST_TIMEOUT_MS = "2000";
   server = createServer((req, res) => {
     if (currentHandler) currentHandler(req, res);
     else { res.statusCode = 200; res.end(JSON.stringify({ response: "default" })); }
@@ -71,7 +72,7 @@ describe("handler executeTest regressions", () => {
     const res = await executeTest(`http://127.0.0.1:${port}/`, defaultTest);
     expect(res.ok).toBe(false);
     expect(res.executionStatus).toBe("timeout");
-  }, 35000); // 30s timeout
+  }, 5000); // 5s timeout
 
   it("4. TLS failure", async () => {
     // trying to speak HTTPS to an HTTP server causes a TLS/SSL error
