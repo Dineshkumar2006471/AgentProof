@@ -37,12 +37,14 @@ export function WorkspaceNav() {
   useEffect(() => {
     let mounted = true;
     fetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
+      .then((response) => (response.ok ? response.json() : null))
       .then((payload: { user?: WorkspaceIdentity } | null) => {
         if (mounted && payload?.user) setIdentity(payload.user);
       })
       .catch(() => undefined);
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const accountName = identity?.name?.trim() || identity?.username?.trim() || identity?.email?.split("@")[0] || "Account";
@@ -57,33 +59,81 @@ export function WorkspaceNav() {
   async function signOut() {
     setSigningOut(true);
     try {
-      await fetch("/api/auth/sign-out", { method: "POST" });
-    } finally {
+      const response = await fetch("/api/auth/sign-out", { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      resetAnalytics();
+      if (data?.cognitoLogoutUrl) {
+        window.location.assign(data.cognitoLogoutUrl);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch {
       resetAnalytics();
       router.push("/");
       router.refresh();
+    } finally {
+      setSigningOut(false);
     }
   }
 
   return (
     <>
-      {!open && <button type="button" className="workspace-mobile-toggle" aria-label="Open workspace navigation" aria-expanded={false} onClick={() => setOpen(true)}><Menu size={19} /></button>}
-      {open && <button type="button" aria-label="Close workspace navigation" className="workspace-nav-overlay" onClick={() => setOpen(false)} />}
+      {!open && (
+        <button
+          type="button"
+          className="workspace-mobile-toggle"
+          aria-label="Open workspace navigation"
+          aria-expanded={false}
+          onClick={() => setOpen(true)}
+        >
+          <Menu size={19} />
+        </button>
+      )}
+      {open && (
+        <button
+          type="button"
+          aria-label="Close workspace navigation"
+          className="workspace-nav-overlay"
+          onClick={() => setOpen(false)}
+        />
+      )}
       <aside className={`workspace-sidebar ${open ? "is-open" : ""}`}>
-        <button type="button" className="workspace-sidebar__close" aria-label="Close workspace navigation" onClick={() => setOpen(false)}><ArrowLeft size={18} /></button>
-        <Link href="/" aria-label="AgentProof home" className="workspace-sidebar__brand" onClick={() => setOpen(false)}>
+        <button
+          type="button"
+          className="workspace-sidebar__close"
+          aria-label="Close workspace navigation"
+          onClick={() => setOpen(false)}
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <Link
+          href="/"
+          aria-label="AgentProof home"
+          className="workspace-sidebar__brand"
+          onClick={() => setOpen(false)}
+        >
           <LogoLockup compact />
         </Link>
 
         <div className="workspace-sidebar__section-label">Workspace</div>
         <nav className="workspace-sidebar__nav" aria-label="Workspace navigation">
           {navItems.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)} className={`workspace-nav-item ${isActive(href) ? "is-active" : ""}`}>
+            <Link
+              key={href}
+              href={href}
+              onClick={() => setOpen(false)}
+              className={`workspace-nav-item ${isActive(href) ? "is-active" : ""}`}
+            >
               <Icon size={17} strokeWidth={1.8} />
               <span>{label}</span>
             </Link>
           ))}
-          <Link href="/agents/new" onClick={() => setOpen(false)} className={`workspace-nav-item ${pathname === "/agents/new" ? "is-active" : ""}`}>
+          <Link
+            href="/agents/new"
+            onClick={() => setOpen(false)}
+            className={`workspace-nav-item ${pathname === "/agents/new" ? "is-active" : ""}`}
+          >
             <Bot size={17} strokeWidth={1.8} />
             <span>New agent</span>
           </Link>
@@ -91,7 +141,11 @@ export function WorkspaceNav() {
 
         <div className="workspace-sidebar__section-label workspace-sidebar__section-label--secondary">Account</div>
         <nav className="workspace-sidebar__nav" aria-label="Account navigation">
-          <Link href="/profile" onClick={() => setOpen(false)} className={`workspace-nav-item ${pathname === "/profile" ? "is-active" : ""}`}>
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className={`workspace-nav-item ${pathname === "/profile" ? "is-active" : ""}`}
+          >
             <Settings2 size={17} strokeWidth={1.8} />
             <span>Profile settings</span>
           </Link>
@@ -102,7 +156,12 @@ export function WorkspaceNav() {
             <span className="workspace-avatar" aria-hidden="true">{initials}</span>
             <span><strong>{accountName}</strong></span>
           </div>
-          <button type="button" disabled={signingOut} onClick={signOut} className="workspace-signout">
+          <button
+            type="button"
+            disabled={signingOut}
+            onClick={signOut}
+            className="workspace-signout"
+          >
             <LogOut size={16} />
             {signingOut ? "Signing out..." : "Sign out"}
           </button>

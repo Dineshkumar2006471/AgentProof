@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { policyLinks } from "@/lib/policies";
+import { PublicNavAuth } from "@/components/public-nav-auth";
 
 export function PublicSiteShell({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen bg-[var(--color-surface-bright)] font-mono text-[var(--color-ink-graphite)]">
     <header className="border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-5 px-6 py-5">
         <Link href="/" aria-label="AgentProof home"><Image src="/logo-agentproof.png" alt="AgentProof" width={140} height={34} priority style={{ mixBlendMode: "multiply" }} /></Link>
-        <nav className="flex flex-wrap justify-end gap-4 text-xs font-bold uppercase text-[var(--color-on-surface-variant)]" aria-label="Public navigation"><Link className="hover:text-[var(--color-seal-indigo)]" href="/docs">Docs</Link><Link className="hover:text-[var(--color-seal-indigo)]" href="/pricing">Pricing</Link><Link className="hover:text-[var(--color-seal-indigo)]" href="/verify/demo">Sample report</Link><Link className="hover:text-[var(--color-seal-indigo)]" href="/auth/sign-in">Sign in</Link></nav>
+        <nav className="flex flex-wrap items-center justify-end gap-4 text-xs font-bold uppercase text-[var(--color-on-surface-variant)]" aria-label="Public navigation"><Link className="hover:text-[var(--color-seal-indigo)]" href="/docs">Docs</Link><Link className="hover:text-[var(--color-seal-indigo)]" href="/pricing">Pricing</Link><Link className="hover:text-[var(--color-seal-indigo)]" href="/verify/demo">Sample report</Link><PublicNavAuth /></nav>
       </div>
     </header>
     {children}

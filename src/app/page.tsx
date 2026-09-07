@@ -6,7 +6,8 @@ import { HeroGradient } from "@/components/hero-gradient";
 import { SketchyPipelineTerminal } from "@/components/sketchy-pipeline-terminal";
 import { InteractiveCapabilities } from "@/components/interactive-capabilities";
 import { pricingPlans } from "@/lib/pricing";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ProfileMenu } from "@/components/profile-menu";
 import {
   Menu,
   ArrowRight,
@@ -40,8 +41,35 @@ const structuredData = {
   ]
 };
 
+type AuthIdentity = {
+  name?: string;
+  email?: string;
+  username?: string;
+};
+
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<AuthIdentity | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: { user?: AuthIdentity } | null) => {
+        if (mounted) {
+          if (payload?.user) setUser(payload.user);
+          setAuthChecked(true);
+        }
+      })
+      .catch(() => {
+        if (mounted) setAuthChecked(true);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div className="landing-page overflow-x-clip bg-[var(--color-surface-bright)] min-h-screen font-body-md text-[var(--color-on-surface)] selection:bg-[var(--color-seal-indigo)] selection:text-white">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
@@ -57,14 +85,66 @@ export default function Home() {
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="#pricing">Pricing</Link>
             <Link className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] transition-colors" href="/docs">Docs</Link>
           </div>
-          <Link href="/auth/sign-up" className="hidden md:flex bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-            Get started
-          </Link>
+          <div className="hidden md:flex items-center gap-3">
+            {authChecked && user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-[var(--color-seal-indigo)] font-data-label text-xs font-bold px-4 py-2 rounded-md hover:border-[var(--color-seal-indigo)] transition-all"
+                >
+                  Dashboard
+                </Link>
+                <ProfileMenu user={user} />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/sign-in"
+                  className="font-data-label text-sm text-[var(--color-on-surface-variant)] hover:text-[var(--color-seal-indigo)] font-bold transition-colors px-3 py-2"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/sign-up"
+                  className="bg-[var(--color-seal-indigo)] text-white font-data-label text-sm font-bold px-5 py-2.5 rounded-md shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                >
+                  Get started
+                </Link>
+              </>
+            )}
+          </div>
           <button type="button" aria-label="Toggle navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)} className="md:hidden text-[var(--color-on-surface)]">
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        {mobileMenuOpen && <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4"><div className="flex flex-col gap-4"><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/docs">Docs</Link><Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-up">Get started</Link></div></div>}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] px-6 py-4">
+            <div className="flex flex-col gap-4">
+              <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-seal-indigo)]" href="#platform">Platform</Link>
+              <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#evidence">Evidence</Link>
+              <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="#pricing">Pricing</Link>
+              <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/docs">Docs</Link>
+              {authChecked && user ? (
+                <>
+                  <div className="border-t border-[var(--color-outline-variant)] pt-3 flex items-center justify-between">
+                    <span className="font-data-label text-xs font-bold uppercase text-[var(--color-on-surface-variant)] truncate max-w-[180px]">
+                      {user.name || user.email || user.username || "Account"}
+                    </span>
+                    <ProfileMenu user={user} />
+                  </div>
+                  <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/dashboard">
+                    Go to Dashboard →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm text-[var(--color-on-surface-variant)]" href="/auth/sign-in">Sign in</Link>
+                  <Link onClick={() => setMobileMenuOpen(false)} className="font-data-label text-sm font-bold text-[var(--color-seal-indigo)]" href="/auth/sign-up">Get started</Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* 2. Hero Section */}

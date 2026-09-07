@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (input.intent === "sign-up") await verifyTurnstile(input.captchaToken, requestIp(request));
 
     const state = createGoogleOauthState();
-    const response = jsonOk({ authorizeUrl: googleAuthorizationUrl(state) });
+    const response = jsonOk({ authorizeUrl: googleAuthorizationUrl(state, request) });
     const options = cookieOptions();
     response.cookies.set(googleOauthCookies.state, state, options);
     response.cookies.set(googleOauthCookies.intent, input.intent, options);

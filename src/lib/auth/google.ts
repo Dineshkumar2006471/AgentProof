@@ -27,8 +27,8 @@ export function googleSignInEnabled() {
   return env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 }
 
-export function googleCallbackUrl() {
-  return new URL("/api/auth/google/callback", appUrl()).toString();
+export function googleCallbackUrl(request?: Request | { headers: Headers; url?: string }) {
+  return new URL("/api/auth/google/callback", appUrl(request)).toString();
 }
 
 function cognitoDomain() {
@@ -40,14 +40,26 @@ export function createGoogleOauthState() {
   return randomBytes(32).toString("base64url");
 }
 
-export function googleAuthorizationUrl(state: string) {
+export function googleAuthorizationUrl(state: string, request?: Request | { headers: Headers; url?: string }) {
   const url = new URL(`${cognitoDomain()}/oauth2/authorize`);
   url.searchParams.set("identity_provider", "Google");
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", requireEnv("COGNITO_CLIENT_ID"));
-  url.searchParams.set("redirect_uri", googleCallbackUrl());
+  url.searchParams.set("redirect_uri", googleCallbackUrl(request));
   url.searchParams.set("scope", "openid email profile");
   url.searchParams.set("state", state);
+  url.searchParams.set("prompt", "select_account");
+  return url.toString();
+}
+
+export function cognitoLogoutUrl(request?: Request | { headers: Headers; url?: string }) {
+  if (!env.COGNITO_DOMAIN || !env.COGNITO_CLIENT_ID) return null;
+  const domain = env.COGNITO_DOMAIN.replace(/\/$/, "");
+  const clientId = env.COGNITO_CLIENT_ID;
+  const logoutUri = appUrl(request);
+  const url = new URL(`${domain}/logout`);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("logout_uri", logoutUri);
   return url.toString();
 }
 
@@ -58,7 +70,7 @@ type CognitoTokenResponse = {
   expires_in?: number;
 };
 
-export async function exchangeGoogleAuthorizationCode(code: string): Promise<AuthenticationResultType> {
+export async function exchangeGoogleAuthorizationCode(code: string, request?: Request | { headers: Headers; url?: string }): Promise<AuthenticationResultType> {
   const response = await fetch(`${cognitoDomain()}/oauth2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -66,7 +78,7 @@ export async function exchangeGoogleAuthorizationCode(code: string): Promise<Aut
       grant_type: "authorization_code",
       client_id: requireEnv("COGNITO_CLIENT_ID"),
       code,
-      redirect_uri: googleCallbackUrl()
+      redirect_uri: googleCallbackUrl(request)
     }),
     cache: "no-store"
   }).catch(() => null);

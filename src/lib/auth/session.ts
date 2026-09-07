@@ -130,6 +130,25 @@ export async function userFromAuthenticationResult(result: AuthenticationResultT
   };
 }
 
-export function appUrl() {
+export function appUrl(request?: Request | { headers: Headers; url?: string }) {
+  if (request) {
+    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    if (host) {
+      const proto = request.headers.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
+      return `${proto}://${host}`;
+    }
+    if (request.url) {
+      try {
+        return new URL(request.url).origin;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (process.env.AGENTPROOF_ENVIRONMENT === "production" || process.env.NODE_ENV === "production") {
+    return "https://agent-proof.dev";
+  }
+
   return env.NEXT_PUBLIC_APP_URL;
 }

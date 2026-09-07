@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+const defaultAppUrl =
+  process.env.AGENTPROOF_ENVIRONMENT === "production" || process.env.NODE_ENV === "production"
+    ? "https://agent-proof.dev"
+    : "http://localhost:3000";
+
 const serverEnvSchema = z.object({
-  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_APP_URL: z.string().url().default(defaultAppUrl),
   NEXT_PUBLIC_POSTHOG_PROJECT_URL: z.string().url().optional(),
   AWS_REGION: z.string().min(1).optional(),
   AGENTPROOF_ENVIRONMENT: z.string().min(1).default("development"),

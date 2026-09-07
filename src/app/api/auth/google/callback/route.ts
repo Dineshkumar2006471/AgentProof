@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await exchangeGoogleAuthorizationCode(code);
+    const result = await exchangeGoogleAuthorizationCode(code, request);
     const user = await userFromAuthenticationResult(result);
 
     if (intent === "sign-up") {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       await recordPolicyAcceptance(user.sub, { version: policyVersion, acceptedAt: new Date().toISOString() });
     }
 
-    const response = NextResponse.redirect(new URL(safeInternalPath(next), appUrl()));
+    const response = NextResponse.redirect(new URL(safeInternalPath(next), appUrl(request)));
     setSessionOnResponse(response, result);
     clearGoogleOauthCookies(response);
     return response;
