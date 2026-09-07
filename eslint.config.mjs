@@ -5,7 +5,7 @@ const eslintConfig = [
   globalIgnores([
     ".next*/**",
     "node_modules*/**",
-    "cdk.out/**",
+    "cdk.out*/**",
     "tmp/**",
     "tasks/video_frames/**",
     "next-env.d.ts",
