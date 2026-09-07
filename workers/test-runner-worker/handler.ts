@@ -23,11 +23,10 @@ import { putRawResponse } from "../../src/lib/aws/s3";
 import type { EndpointAuthType } from "../../src/lib/endpoint-auth";
 
 const MAX_RESPONSE_BYTES = 1024 * 1024;
-const REQUEST_TIMEOUT_MS = process.env.AGENTPROOF_TEST_TIMEOUT_MS ? parseInt(process.env.AGENTPROOF_TEST_TIMEOUT_MS) : 30_000;
 const MAX_DYNAMODB_RESPONSE_CHARS = 12_000;
-const MAX_TOOL_CALLS = 20;
+const MAX_TOOL_CALLS = 100;
 const MAX_TOOL_CALL_CHARS = 1_500;
-const MAX_STATE_CHARS = 6_000;
+const MAX_STATE_CHARS = 10000;
 
 function normalizedAddress(address: string) {
   return address.replace(/^\[|\]$/g, "").toLowerCase();
@@ -186,8 +185,9 @@ type ExecutionResult = {
 };
 
 export async function executeTest(endpointUrl: string, test: VerificationTest, endpointAuthType?: EndpointAuthType, endpointSecretArn?: string, endpointAuthHeaderName?: string): Promise<ExecutionResult> {
+  const reqTimeoutMs = process.env.AGENTPROOF_TEST_TIMEOUT_MS ? parseInt(process.env.AGENTPROOF_TEST_TIMEOUT_MS) : 30_000;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), reqTimeoutMs);
   const startTime = Date.now();
   let executionStatus: ExecutionStatus = "success";
   let errorMessage: string | undefined;
