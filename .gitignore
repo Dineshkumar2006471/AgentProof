@@ -27,3 +27,4 @@ pnpm-debug.log*
 # Local review recordings and generated frame extraction
 *.mp4
 tasks/video_frames/
+scratch/

@@ -123,7 +123,19 @@ async function postToResolvedEndpoint(endpoint: ResolvedEndpoint, body: string, 
       method: "POST",
       headers: { ...headers, "content-length": Buffer.byteLength(body).toString() },
       signal,
-      lookup: (_hostname, _options, callback) => callback(null, endpoint.address, endpoint.family)
+      lookup: (_hostname, opts, cb) => {
+        let callback = cb;
+        let options = opts;
+        if (typeof options === "function") {
+          callback = options;
+          options = {};
+        }
+        if (options && typeof options === "object" && (options as { all?: boolean }).all) {
+          callback(null, [{ address: endpoint.address, family: endpoint.family }] as any);
+        } else {
+          callback(null, endpoint.address, endpoint.family);
+        }
+      }
     };
     if (endpoint.url.protocol === "https:") options.servername = endpoint.url.hostname;
     const send = endpoint.url.protocol === "https:" ? httpsRequest : httpRequest;
@@ -193,7 +205,11 @@ export async function executeTest(endpointUrl: string, test: VerificationTest, e
   let errorMessage: string | undefined;
 
   try {
-    const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+      accept: "application/json",
+      "user-agent": "AgentProof-Verification/1.0"
+    };
     const endpointSecret = endpointSecretArn ? await getSecretString(endpointSecretArn) : undefined;
     Object.assign(headers, buildEndpointAuthHeaders(endpointAuthType, endpointSecret, endpointAuthHeaderName));
     
@@ -208,7 +224,14 @@ export async function executeTest(endpointUrl: string, test: VerificationTest, e
 
     let response: { status: number; body: string };
     try {
-      response = await postToResolvedEndpoint(endpoint, JSON.stringify({ message: test.inputMessage, session_id: `agentproof-${test.id}` }), headers, controller.signal);
+      const requestPayload = JSON.stringify({
+        message: test.inputMessage,
+        input: test.inputMessage,
+        prompt: test.inputMessage,
+        messages: [{ role: "user", content: test.inputMessage }],
+        session_id: `agentproof-${test.id}`
+      });
+      response = await postToResolvedEndpoint(endpoint, requestPayload, headers, controller.signal);
     } catch (error) {
       const isAbort = error instanceof Error && error.name === "AbortError";
       executionStatus = isAbort ? "timeout" : "connection_error";
@@ -218,7 +241,7 @@ export async function executeTest(endpointUrl: string, test: VerificationTest, e
     }
 
     const raw = response.body;
-    let payload: AgentResponse = {};
+    let payload: Record<string, unknown> = {};
     const httpStatus = response.status;
     if (httpStatus >= 400) {
       executionStatus = "http_error";
@@ -226,20 +249,46 @@ export async function executeTest(endpointUrl: string, test: VerificationTest, e
     }
 
     try { 
-      payload = JSON.parse(raw) as AgentResponse; 
+      payload = JSON.parse(raw); 
     } catch {
       if (executionStatus === "success") {
         executionStatus = "parse_error";
         errorMessage = "Agent response was not valid JSON.";
       }
     }
+
+    const agentText = (typeof payload.response === "string" ? payload.response : undefined)
+      ?? (typeof payload.message === "string" ? payload.message : undefined)
+      ?? (typeof payload.content === "string" ? payload.content : undefined)
+      ?? (typeof payload.output === "string" ? payload.output : undefined)
+      ?? (Array.isArray(payload.choices) && typeof (payload.choices[0] as Record<string, unknown>)?.message === "object" && typeof ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>)?.content === "string"
+        ? ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).content as string
+        : undefined)
+      ?? raw;
+
+    const rawToolCalls = Array.isArray(payload.tool_calls)
+      ? payload.tool_calls
+      : Array.isArray(payload.toolCalls)
+        ? payload.toolCalls
+        : (Array.isArray(payload.choices) && typeof (payload.choices[0] as Record<string, unknown>)?.message === "object" && Array.isArray(((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>)?.tool_calls)
+          ? ((payload.choices[0] as Record<string, unknown>).message as Record<string, unknown>).tool_calls as unknown[]
+          : []);
+
+    const metadataObj = (payload.metadata && typeof payload.metadata === "object" && !Array.isArray(payload.metadata))
+      ? (payload.metadata as Record<string, unknown>)
+      : undefined;
+    const actualState = (metadataObj?.state && typeof metadataObj.state === "object" && !Array.isArray(metadataObj.state))
+      ? (metadataObj.state as Record<string, unknown>)
+      : (payload.state && typeof payload.state === "object" && !Array.isArray(payload.state))
+        ? (payload.state as Record<string, unknown>)
+        : {};
     
     return {
       ok: httpStatus >= 200 && httpStatus < 300,
-      response: payload.response ?? raw,
+      response: agentText,
       rawResponse: raw,
-      toolCalls: boundedToolCalls(Array.isArray(payload.tool_calls) ? payload.tool_calls : []),
-      actualState: boundedState(payload.metadata?.state ?? {}),
+      toolCalls: boundedToolCalls(rawToolCalls),
+      actualState: boundedState(actualState),
       httpStatus,
       executionStatus,
       errorMessage,

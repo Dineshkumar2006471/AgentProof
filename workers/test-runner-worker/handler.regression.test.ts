@@ -119,6 +119,36 @@ describe("handler executeTest regressions", () => {
     expect(res.executionStatus).toBe("parse_error");
     expect(res.response).toBe("");
   });
+
+  it("15. extracts agent response from 'message' field (e.g. Lovable/NovaShop)", async () => {
+    currentHandler = (req, res) => {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({
+        success: true,
+        message: "Hello! Welcome to NovaShop support.",
+        agent: "SupportBot"
+      }));
+    };
+    const res = await executeTest(`http://127.0.0.1:${port}/`, defaultTest);
+    expect(res.ok).toBe(true);
+    expect(res.executionStatus).toBe("success");
+    expect(res.response).toBe("Hello! Welcome to NovaShop support.");
+  });
+
+  it("16. extracts agent response from OpenAI choices format", async () => {
+    currentHandler = (req, res) => {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({
+        choices: [{ message: { role: "assistant", content: "OpenAI format reply" } }]
+      }));
+    };
+    const res = await executeTest(`http://127.0.0.1:${port}/`, defaultTest);
+    expect(res.ok).toBe(true);
+    expect(res.executionStatus).toBe("success");
+    expect(res.response).toBe("OpenAI format reply");
+  });
 });
 
 describe("handler processRun regressions", () => {
