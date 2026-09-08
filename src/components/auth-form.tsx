@@ -57,9 +57,13 @@ function Field({ id, label, type = "text", placeholder, value, required = true, 
 
 function initialOauthError() {
   if (typeof window === "undefined") return "";
-  const oauthError = new URLSearchParams(window.location.search).get("oauth_error");
+  const params = new URLSearchParams(window.location.search);
+  const oauthError = params.get("oauth_error");
   if (!oauthError) return "";
-  return oauthError === "cancelled" ? "Google sign-in was cancelled." : "Google sign-in could not be completed. Please try again.";
+  if (oauthError === "cancelled") return "Google sign-in was cancelled.";
+  const desc = params.get("oauth_desc");
+  if (desc) return `Google sign-in could not be completed: ${desc}`;
+  return "Google sign-in could not be completed. Please try again.";
 }
 
 function PasswordField({ id = "password", label = "Password", value, onChange, autoComplete, showHint = true }: {
@@ -141,6 +145,21 @@ export function AuthForm({ mode }: AuthFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("oauth_error")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("oauth_error");
+      url.searchParams.delete("oauth_desc");
+      const clean = url.pathname + (url.search ? url.search : "");
+      window.history.replaceState({}, "", clean);
+    }
+  }, []);
+
+  const clearErrorOnType = (setter: (val: string) => void) => (val: string) => {
+    setError("");
+    setter(val);
+  };
+
   const isConfirmation = currentMode === "sign-up" && confirmationRequired;
   const title = currentMode === "sign-in" ? "Sign In to AgentProof" : currentMode === "sign-up" ? (isConfirmation ? "Confirm Your Email" : "Create an Account") : currentMode === "forgot-password" ? "Reset Your Password" : "Choose a New Password";
   const submitLabel = submitting ? "Working..." : currentMode === "sign-in" ? "Sign In" : currentMode === "sign-up" ? (isConfirmation ? "Confirm Email" : "Sign Up") : currentMode === "forgot-password" ? "Send Reset Code" : "Reset Password";
@@ -178,12 +197,16 @@ export function AuthForm({ mode }: AuthFormProps) {
         await postAuth("/api/auth/sign-in", { email, password });
         captureAnalytics("account_signed_in");
         router.push(safeNextPath());
+        router.refresh();
       } else if (currentMode === "sign-up" && !isConfirmation) {
         const result = await postAuth("/api/auth/sign-up", { name, email, password, acceptedPolicies, captchaToken: captchaToken || undefined });
         if (result.userSub) identifyAnalytics(result.userSub);
         captureAnalytics("account_signed_up");
         if (result.confirmationRequired !== false) setConfirmationRequired(true);
-        else router.push("/dashboard");
+        else {
+          router.push("/dashboard");
+          router.refresh();
+        }
       } else if (currentMode === "sign-up") {
         await postAuth("/api/auth/confirm-sign-up", { email, code });
         captureAnalytics("account_confirmed");
@@ -197,7 +220,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         router.push("/auth/sign-in?reset=1");
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The request could not be completed.");
+      const rawMsg = caught instanceof Error ? caught.message : "The request could not be completed.";
+      if (rawMsg.includes("Authentication failed") || rawMsg.includes("Incorrect")) {
+        setError("Invalid email or password. If you registered with Google, please click 'Continue with Google' below.");
+      } else {
+        setError(rawMsg);
+      }
       window.setTimeout(() => formRef.current?.querySelector<HTMLElement>("[aria-invalid='true'], input, button")?.focus(), 0);
     } finally {
       setSubmitting(false);
@@ -213,13 +241,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         {message && <p role="status" aria-live="polite" className="mb-6 border-l-2 border-[var(--color-pass-moss)] pl-3 text-sm text-[var(--color-pass-moss)]">{message}</p>}
         {error && <p role="alert" aria-live="assertive" className="mb-6 border-l-2 border-[var(--color-fail-clay)] pl-3 text-sm text-[var(--color-fail-clay)]">{error}</p>}
         <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>
-          {currentMode === "sign-up" && !isConfirmation && <Field id="name" label="Full Name" placeholder="Jane Doe" autoComplete="name" value={name} onChange={setName} />}
-          <Field id="email" label="Email Address" type="email" placeholder="name@agency.com" autoComplete="email" value={email} onChange={setEmail} />
-          {isConfirmation && <Field id="code" label="Confirmation Code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={setCode} />}
-          {currentMode === "sign-in" && <div><div className="mb-2 flex justify-end"><Link href="/auth/forgot-password" className="text-xs text-[var(--color-seal-indigo)] hover:underline">Forgot password?</Link></div><PasswordField label="Password" value={password} onChange={setPassword} autoComplete="current-password" showHint={false} /></div>}
-          {currentMode === "sign-up" && !isConfirmation && <PasswordField value={password} onChange={setPassword} autoComplete="new-password" />}
+          {currentMode === "sign-up" && !isConfirmation && <Field id="name" label="Full Name" placeholder="Jane Doe" autoComplete="name" value={name} onChange={clearErrorOnType(setName)} />}
+          <Field id="email" label="Email Address" type="email" placeholder="name@agency.com" autoComplete="email" value={email} onChange={clearErrorOnType(setEmail)} />
+          {isConfirmation && <Field id="code" label="Confirmation Code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={clearErrorOnType(setCode)} />}
+          {currentMode === "sign-in" && <div><div className="mb-2 flex justify-end"><Link href="/auth/forgot-password" className="text-xs text-[var(--color-seal-indigo)] hover:underline">Forgot password?</Link></div><PasswordField label="Password" value={password} onChange={clearErrorOnType(setPassword)} autoComplete="current-password" showHint={false} /></div>}
+          {currentMode === "sign-up" && !isConfirmation && <PasswordField value={password} onChange={clearErrorOnType(setPassword)} autoComplete="new-password" />}
           {currentMode === "forgot-password" && <p className="text-sm text-[var(--color-on-surface-variant)]">We will send a six-digit code to your email address.</p>}
-          {currentMode === "reset-password" && <><Field id="code" label="Reset Code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={setCode} /><PasswordField label="New Password" value={password} onChange={setPassword} autoComplete="new-password" /></>}
+          {currentMode === "reset-password" && <><Field id="code" label="Reset Code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={clearErrorOnType(setCode)} /><PasswordField label="New Password" value={password} onChange={clearErrorOnType(setPassword)} autoComplete="new-password" /></>}
           {(currentMode === "sign-up" && !isConfirmation) && <><label className="flex items-start gap-3 text-xs leading-relaxed text-[var(--color-on-surface-variant)]"><input type="checkbox" checked={acceptedPolicies} onChange={(event) => setAcceptedPolicies(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-seal-indigo)]" required /> <span>I agree to the <Link href={policyLinks.terms} className="text-[var(--color-seal-indigo)] underline">Terms</Link> and <Link href={policyLinks.privacy} className="text-[var(--color-seal-indigo)] underline">Privacy Policy</Link>.</span></label><TurnstileField onToken={setCaptchaToken} /></>}
           {currentMode === "forgot-password" && <TurnstileField onToken={setCaptchaToken} />}
           <button type="submit" disabled={submitting} className="w-full bg-[var(--color-seal-indigo)] text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md hover:bg-[#2A354C] disabled:opacity-60 disabled:cursor-wait transition-colors shadow-sm mt-4">{submitLabel}</button>

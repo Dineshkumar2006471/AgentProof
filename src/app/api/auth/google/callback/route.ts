@@ -16,9 +16,12 @@ function clearGoogleOauthCookies(response: NextResponse) {
   }
 }
 
-function failedGoogleSignIn(request: NextRequest, reason: "cancelled" | "invalid" | "failed") {
+function failedGoogleSignIn(request: NextRequest, reason: "cancelled" | "invalid" | "failed", description?: string | null) {
   const url = new URL("/auth/sign-in", appUrl(request));
   url.searchParams.set("oauth_error", reason);
+  if (description) {
+    url.searchParams.set("oauth_desc", description);
+  }
   const response = NextResponse.redirect(url);
   clearGoogleOauthCookies(response);
   return response;
@@ -28,8 +31,12 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const providerError = request.nextUrl.searchParams.get("error");
+  const errorDescription = request.nextUrl.searchParams.get("error_description");
 
-  if (providerError) return failedGoogleSignIn(request, "cancelled");
+  if (providerError) {
+    const reason = providerError === "access_denied" ? "cancelled" : "failed";
+    return failedGoogleSignIn(request, reason, errorDescription);
+  }
   if (!code || !state) return failedGoogleSignIn(request, "invalid");
 
   const parsedState = parseGoogleOauthState(state);
