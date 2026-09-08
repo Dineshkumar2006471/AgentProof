@@ -3,6 +3,7 @@ import { ArrowDownToLine, ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ActionButton, KpiGrid, PageHeader } from "@/components/proof-ui";
+import { RunTriggerButton } from "@/components/run-trigger-button";
 import { StatusPill } from "@/components/status-pill";
 import { getAgentForOwner, getRunForOwner, getRunRecords, getVerificationStatus } from "@/lib/aws/dynamodb";
 import { requirePageUser } from "@/lib/auth/require-page-user";
@@ -77,14 +78,18 @@ export default async function PrivateReportPage({ params }: { params: Promise<{ 
           title="Verification report"
           description={`Builder-facing evidence for ${agent.name} version ${status.agentVersion}.`}
           actions={
-            <>
+            <div className="flex flex-wrap items-center gap-3">
+              <RunTriggerButton agentId={agent.id} label="Rerun verification" icon="refresh" />
+              <ActionButton variant="dark" href={`/agents/${agent.id}/edit`}>
+                Edit agent & endpoint
+              </ActionButton>
               <ActionButton variant="quiet" href={`/api/runs/${runId}/export`} icon={<ArrowDownToLine size={15} />}>
                 Export JSON
               </ActionButton>
               <ActionButton href={`/verify/${status.publicId}`} icon={<ExternalLink size={15} />}>
                 Public report
               </ActionButton>
-            </>
+            </div>
           }
         />
 
@@ -147,6 +152,15 @@ export default async function PrivateReportPage({ params }: { params: Promise<{ 
                 <div><dt className="eyebrow">STARTED</dt><dd className="mono">{new Date(run.startedAt).toLocaleString("en-IN")}</dd></div>
                 <div><dt className="eyebrow">RESULTS</dt><dd className="mono">{run.passed} passed / {run.failed} failed</dd></div>
               </dl>
+            </section>
+            <section className="workspace-panel p-5 space-y-3">
+              <span className="eyebrow">ACTIONS</span>
+              <div className="flex flex-col gap-2">
+                <RunTriggerButton agentId={agent.id} label="Rerun verification" icon="refresh" className="w-full" />
+                <ActionButton variant="dark" href={`/agents/${agent.id}/edit`}>
+                  Edit agent & endpoint
+                </ActionButton>
+              </div>
             </section>
             <Link href={`/agents/${agent.id}`} className="mono inline-flex items-center gap-2 text-[var(--color-seal-indigo)]">
               <ArrowLeft size={14} /> Back to dossier

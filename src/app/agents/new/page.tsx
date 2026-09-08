@@ -78,12 +78,22 @@ export default function NewAgent() {
     try {
       let currentAgentId = agentId;
       if (!currentAgentId) {
-        const created = await requestJson("/api/agents", { method: "POST", body: JSON.stringify(formData) });
-        const createdAgent = created.agent as { id?: string } | undefined;
-        if (!createdAgent?.id) throw new Error("Agent creation returned no agent ID.");
-        currentAgentId = createdAgent.id;
-        setAgentId(currentAgentId);
-        captureAnalytics("agent_created", { endpoint_authentication: formData.endpointAuthType });
+        try {
+          const created = await requestJson("/api/agents", { method: "POST", body: JSON.stringify(formData) });
+          const createdAgent = created.agent as { id?: string } | undefined;
+          if (!createdAgent?.id) throw new Error("Agent creation returned no agent ID.");
+          currentAgentId = createdAgent.id;
+          setAgentId(currentAgentId);
+          captureAnalytics("agent_created", { endpoint_authentication: formData.endpointAuthType });
+        } catch (agentError) {
+          const msg = agentError instanceof Error ? agentError.message : "";
+          if (msg.includes("limit reached")) {
+            throw new Error(`${msg} You can edit your existing agent's endpoint URL or delete it from the dashboard to create a new one.`);
+          }
+          throw agentError;
+        }
+      } else {
+        await requestJson(`/api/agents/${currentAgentId}`, { method: "PATCH", body: JSON.stringify(formData) });
       }
       const result = await requestJson(`/api/agents/${currentAgentId}/contract/draft`, { method: "POST", body: JSON.stringify(formData) });
       const nextContract = result.contractDraft as ContractDraft | undefined;

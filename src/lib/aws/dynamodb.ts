@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
+  DeleteCommand,
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
@@ -19,7 +20,7 @@ import type {
   VerificationStatusRecord,
   VerificationTest
 } from "@/lib/domain";
-import { createEndpointSecret } from "@/lib/aws/secrets";
+import { createEndpointSecret, upsertEndpointSecret } from "@/lib/aws/secrets";
 import type { EndpointAuthType } from "@/lib/endpoint-auth";
 import type { BillingAccount, PricingPlanId } from "@/lib/pricing";
 
@@ -93,6 +94,82 @@ export async function listAgentsByOwner(ownerId: string) {
     ScanIndexForward: false
   }));
   return (result.Items ?? []) as Array<Agent & Record<string, unknown>>;
+}
+
+export async function updateAgent(input: {
+  id: string;
+  ownerId: string;
+  name?: string;
+  endpointUrl?: string;
+  version?: string;
+  endpointAuthType?: EndpointAuthType;
+  endpointAuthToken?: string;
+  endpointAuthUsername?: string;
+  endpointAuthHeaderName?: string;
+}) {
+  const existing = await getAgentForOwner(input.id, input.ownerId);
+  if (!existing) throw new Error("Agent not found.");
+
+  const endpointAuthType = input.endpointAuthType ?? existing.endpointAuthType ?? "none";
+  let endpointSecretArn = existing.endpointSecretArn;
+
+  if (endpointAuthType !== "none" && input.endpointAuthToken) {
+    if (endpointAuthType === "basic" && !input.endpointAuthUsername) {
+      throw new Error("A Basic authentication username is required.");
+    }
+    const secretValue = endpointAuthType === "basic"
+      ? JSON.stringify({ username: input.endpointAuthUsername, password: input.endpointAuthToken })
+      : input.endpointAuthToken;
+    endpointSecretArn = await upsertEndpointSecret(input.id, secretValue, existing.endpointSecretArn);
+  } else if (endpointAuthType === "none") {
+    endpointSecretArn = undefined;
+  }
+
+  const name = input.name?.trim() || existing.name;
+  const endpointUrl = input.endpointUrl?.trim() || existing.endpointUrl;
+  const version = input.version?.trim() || existing.currentVersion;
+  const endpointAuthHeaderName = endpointAuthType === "api_key"
+    ? (input.endpointAuthHeaderName?.trim() || existing.endpointAuthHeaderName || "x-api-key")
+    : undefined;
+
+  const item: Agent & Record<string, unknown> = {
+    ...existing,
+    name,
+    endpointUrl,
+    currentVersion: version,
+    endpointAuthType,
+    updatedAt: now()
+  };
+
+  if (endpointSecretArn) {
+    item.endpointSecretArn = endpointSecretArn;
+  } else {
+    delete item.endpointSecretArn;
+  }
+
+  if (endpointAuthHeaderName) {
+    item.endpointAuthHeaderName = endpointAuthHeaderName;
+  } else {
+    delete item.endpointAuthHeaderName;
+  }
+
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: item
+  }));
+
+  return item;
+}
+
+export async function deleteAgent(id: string, ownerId: string) {
+  const existing = await getAgentForOwner(id, ownerId);
+  if (!existing) return false;
+
+  await getDynamoDb().send(new DeleteCommand({
+    TableName: tableName(),
+    Key: { PK: `AGENT#${id}`, SK: "META" }
+  }));
+  return true;
 }
 
 export async function getBillingAccount(ownerId: string) {
@@ -202,6 +279,24 @@ export async function createContractVersion(input: Omit<AgentContract, "id" | "c
     TableName: tableName(),
     Item: item,
     ConditionExpression: "attribute_not_exists(PK)"
+  }));
+  return item as AgentContract & Record<string, unknown>;
+}
+
+export async function upsertContractVersion(input: Omit<AgentContract, "id" | "createdAt">) {
+  const existing = await getContract(input.agentId, input.version);
+  const item = {
+    PK: `AGENT#${input.agentId}`,
+    SK: `CONTRACT#${input.version}`,
+    entityType: "AgentContract",
+    id: existing?.id ?? `contract_${crypto.randomUUID()}`,
+    ...input,
+    createdAt: existing?.createdAt ?? now(),
+    updatedAt: now()
+  };
+  await getDynamoDb().send(new PutCommand({
+    TableName: tableName(),
+    Item: item
   }));
   return item as AgentContract & Record<string, unknown>;
 }

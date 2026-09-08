@@ -46,6 +46,47 @@ export const createAgentSchema = z.object({
   }
 });
 
+export const updateAgentSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  endpointUrl: z.string().url().refine((val) => val.startsWith("https://") || val.startsWith("http://localhost") || val.startsWith("http://127.0.0.1"), {
+    message: "The agent endpoint must use HTTPS."
+  }).optional(),
+  version: z.string().min(1).max(50).optional(),
+  description: z.string().min(10).max(4000).optional(),
+  mustNeverDo: z.string().optional(),
+  successCriteria: z.string().optional(),
+  endpointAuthType: z.enum(endpointAuthTypes).optional(),
+  endpointAuthUsername: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().min(1).max(512).optional()
+  ),
+  endpointAuthHeaderName: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().regex(/^[a-zA-Z0-9-]+$/, "Use letters, numbers, and hyphens only.").max(80).optional()
+  ),
+  endpointAuthToken: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().min(1).max(4096).optional()
+  )
+}).superRefine((value, context) => {
+  if (value.endpointAuthType) {
+    if ((value.endpointAuthType === "bearer" || value.endpointAuthType === "api_key") && value.endpointAuthToken === "") {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endpointAuthToken"],
+        message: value.endpointAuthType === "bearer" ? "A bearer token is required." : "An API key is required."
+      });
+    }
+    if (value.endpointAuthType === "basic" && value.endpointAuthUsername === "") {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endpointAuthUsername"],
+        message: "A Basic authentication username is required."
+      });
+    }
+  }
+});
+
 export const updateContractSchema = z.object({
   version: z.string().min(1),
   capabilities: z.array(z.string().min(1)).min(1),

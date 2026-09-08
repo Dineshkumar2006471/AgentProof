@@ -9,14 +9,14 @@ describe("production pricing", () => {
   });
 
   it("keeps published quotas intentionally bounded", () => {
-    expect(getPricingPlan("free")?.quota).toBe("1 agent / 15 tests per month / 2 verification runs per month");
+    expect(getPricingPlan("free")?.quota).toBe("1 agent / 50 tests per month / 5 verification runs per month");
     expect(getPricingPlan("builder")?.quota).toBe("3 agents / 100 tests per month / 10 verification runs per month");
     expect(getPricingPlan("agency")?.quota).toBe("10 agents / 500 tests per month / 50 verification runs per month");
     expect(getPricingPlan("pay_per_verification")?.quota).toBe("1 verification run / up to 25 tests");
   });
 
   it("enforces the published capacity and honors only activated paid plans", () => {
-    expect(entitlementForPlan("free")).toMatchObject({ maxAgents: 1, monthlyTestLimit: 15, monthlyRunLimit: 2 });
+    expect(entitlementForPlan("free")).toMatchObject({ maxAgents: 1, monthlyTestLimit: 50, monthlyRunLimit: 5 });
     expect(entitlementForPlan("builder")).toMatchObject({ maxAgents: 3, monthlyTestLimit: 100, monthlyRunLimit: 10 });
     expect(entitlementForPlan("agency")).toMatchObject({ maxAgents: 10, monthlyTestLimit: 500, monthlyRunLimit: 50 });
     expect(entitlementForPlan("pay_per_verification")).toMatchObject({ maxAgents: 1, maxTestsPerRun: 25 });

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ActionButton, KpiGrid, PageHeader } from "@/components/proof-ui";
+import { RunTriggerButton } from "@/components/run-trigger-button";
 import { StatusPill } from "@/components/status-pill";
 import { VerificationStamp } from "@/components/verification-stamp";
 import { getAgentForOwner, getLatestContract, getVerificationStatus, listRunsByAgent } from "@/lib/aws/dynamodb";
@@ -40,7 +42,23 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
           title={agent.name}
           description="Operational health, contract coverage, and the latest verification evidence for this deployment."
           meta={<div className="dossier-header-meta flex flex-wrap gap-x-5 gap-y-2 mono"><span>VERSION / {agent.currentVersion}</span><span className="dossier-header-endpoint">ENDPOINT / {agent.endpointUrl}</span>{latest && <StatusPill status={latest.status} />}</div>}
-          actions={<><ActionButton href={`/agents/${agent.id}/run`}>Run verification</ActionButton>{reportHref && <ActionButton variant="quiet" href={reportHref} icon={null}>Public report</ActionButton>}</>}
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <RunTriggerButton
+                agentId={agent.id}
+                label={runs.length ? "Rerun verification" : "Run verification"}
+                icon={runs.length ? "refresh" : "play"}
+              />
+              <ActionButton variant="dark" href={`/agents/${agent.id}/edit`}>
+                Edit agent & endpoint
+              </ActionButton>
+              {reportHref && (
+                <ActionButton variant="quiet" href={reportHref} icon={null}>
+                  Public report
+                </ActionButton>
+              )}
+            </div>
+          }
         />
 
         <div className="dossier-kpi-grid">
@@ -55,9 +73,68 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
         <nav className="section-tabs" aria-label="Agent dossier sections"><a href="#overview">Overview</a><a href="#contract">Contract</a><a href="#runs">Runs</a><a href="#evidence">Evidence</a></nav>
         <div className="dossier-layout">
           <div className="dossier-main">
-            <section id="overview" className="workspace-panel"><div className="workspace-panel__title"><span className="eyebrow">OVERVIEW</span><h2 className="workspace-heading mt-2">Deployment details</h2></div><div className="metadata-grid"><div><span className="eyebrow">AGENT ID</span><strong>{agent.id}</strong></div><div><span className="eyebrow">CURRENT VERSION</span><strong>{agent.currentVersion}</strong></div><div><span className="eyebrow">ENDPOINT AUTH</span><strong>{endpointAuthLabel(agent.endpointAuthType)}</strong></div><div><span className="eyebrow">REGISTERED</span><strong>{new Date(agent.createdAt).toLocaleDateString("en-IN")}</strong></div></div></section>
-            <section id="contract" className="workspace-panel"><div className="workspace-panel__title"><span className="eyebrow">OPERATIONAL CONTRACT</span><h2 className="workspace-heading mt-2">What this agent promises</h2></div><div className="workspace-panel__body"><pre>{contract ? JSON.stringify({ agent: agent.name, version: contract.version, capabilities: contract.capabilities, restrictions: contract.restrictions, requiredBehavior: contract.requiredBehavior, failurePolicy: contract.failurePolicy }, null, 2) : "No operational contract has been drafted."}</pre></div></section>
-            <section id="runs" className="workspace-panel workspace-panel--table"><div className="workspace-panel__title"><span className="eyebrow">VERIFICATION HISTORY</span><h2 className="workspace-heading mt-2">Recent runs</h2></div><div className="workspace-table-wrap"><table className="workspace-table"><thead><tr><th>Run</th><th>Status</th><th>Score</th><th>Tests</th><th>Started</th></tr></thead><tbody>{runs.map((run, index) => { const status = statuses[index]; return <tr key={run.id}><td><span className="table-primary">{run.id.slice(-12).toUpperCase()}</span><span className="table-secondary">{run.testSuiteVersion}</span></td><td>{status ? <StatusPill status={status.status} /> : <span className="table-muted">{run.status}</span>}</td><td className="mono">{status ? `${status.overallScore}/100` : "--"}</td><td className="mono">{status ? `${status.passed}/${status.totalTests}` : `${run.totalTests} queued`}</td><td className="mono table-muted">{new Date(run.startedAt).toLocaleDateString("en-IN")}</td></tr>; })}{!runs.length && <tr><td colSpan={5}><div className="workspace-empty"><strong>No verification runs yet.</strong><span>Run the contract to start collecting evidence.</span></div></td></tr>}</tbody></table></div></section>
+            <section id="overview" className="workspace-panel">
+              <div className="workspace-panel__title flex items-center justify-between">
+                <div>
+                  <span className="eyebrow">OVERVIEW</span>
+                  <h2 className="workspace-heading mt-2">Deployment details</h2>
+                </div>
+                <Link href={`/agents/${agent.id}/edit`} className="mono text-xs text-[var(--color-seal-indigo)] hover:underline">
+                  Edit configuration
+                </Link>
+              </div>
+              <div className="metadata-grid">
+                <div><span className="eyebrow">AGENT ID</span><strong>{agent.id}</strong></div>
+                <div><span className="eyebrow">CURRENT VERSION</span><strong>{agent.currentVersion}</strong></div>
+                <div><span className="eyebrow">ENDPOINT AUTH</span><strong>{endpointAuthLabel(agent.endpointAuthType)}</strong></div>
+                <div><span className="eyebrow">REGISTERED</span><strong>{new Date(agent.createdAt).toLocaleDateString("en-IN")}</strong></div>
+              </div>
+            </section>
+            <section id="contract" className="workspace-panel">
+              <div className="workspace-panel__title flex items-center justify-between">
+                <div>
+                  <span className="eyebrow">OPERATIONAL CONTRACT</span>
+                  <h2 className="workspace-heading mt-2">What this agent promises</h2>
+                </div>
+                <Link href={`/agents/${agent.id}/edit`} className="mono text-xs text-[var(--color-seal-indigo)] hover:underline">
+                  Edit contract
+                </Link>
+              </div>
+              <div className="workspace-panel__body">
+                <pre>{contract ? JSON.stringify({ agent: agent.name, version: contract.version, capabilities: contract.capabilities, restrictions: contract.restrictions, requiredBehavior: contract.requiredBehavior, failurePolicy: contract.failurePolicy }, null, 2) : "No operational contract has been drafted."}</pre>
+              </div>
+            </section>
+            <section id="runs" className="workspace-panel workspace-panel--table">
+              <div className="workspace-panel__title">
+                <span className="eyebrow">VERIFICATION HISTORY</span>
+                <h2 className="workspace-heading mt-2">Recent runs</h2>
+              </div>
+              <div className="workspace-table-wrap">
+                <table className="workspace-table">
+                  <thead><tr><th>Run</th><th>Status</th><th>Score</th><th>Tests</th><th>Started</th></tr></thead>
+                  <tbody>
+                    {runs.map((run, index) => {
+                      const status = statuses[index];
+                      return (
+                        <tr key={run.id}>
+                          <td>
+                            <Link href={`/agents/${agent.id}/run?run=${run.id}`} className="hover:underline">
+                              <span className="table-primary">{run.id.slice(-12).toUpperCase()}</span>
+                              <span className="table-secondary">{run.testSuiteVersion}</span>
+                            </Link>
+                          </td>
+                          <td>{status ? <StatusPill status={status.status} /> : <span className="table-muted">{run.status}</span>}</td>
+                          <td className="mono">{status ? `${status.overallScore}/100` : "--"}</td>
+                          <td className="mono">{status ? `${status.passed}/${status.totalTests}` : `${run.totalTests} queued`}</td>
+                          <td className="mono table-muted">{new Date(run.startedAt).toLocaleDateString("en-IN")}</td>
+                        </tr>
+                      );
+                    })}
+                    {!runs.length && <tr><td colSpan={5}><div className="workspace-empty"><strong>No verification runs yet.</strong><span>Run the contract to start collecting evidence.</span></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </div>
           <aside className="dossier-side">
             <section className="workspace-panel workspace-panel--dark p-6 text-white"><span className="eyebrow text-[var(--color-paper-cream)]">CURRENT ATTESTATION</span><div className="mt-5 flex justify-center">{latest ? <VerificationStamp status={latest.status} size={132} /> : <span className="mono py-12 text-white/70">NOT YET VERIFIED</span>}</div><strong className="mt-5 block text-center font-mono text-sm">{agent.name}</strong><span className="mt-2 block text-center mono text-white/65">v{agent.currentVersion} / operational contract</span></section>

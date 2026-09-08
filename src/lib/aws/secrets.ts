@@ -1,6 +1,7 @@
 import {
   CreateSecretCommand,
   GetSecretValueCommand,
+  PutSecretValueCommand,
   SecretsManagerClient
 } from "@aws-sdk/client-secrets-manager";
 import { awsRegion, requireEnv } from "@/lib/env";
@@ -25,6 +26,21 @@ export async function createEndpointSecret(agentId: string, token: string) {
   }));
   if (!result.ARN) throw new Error("Endpoint credential secret was created without an ARN.");
   return result.ARN;
+}
+
+export async function upsertEndpointSecret(agentId: string, token: string, existingArn?: string) {
+  if (existingArn) {
+    try {
+      await getClient().send(new PutSecretValueCommand({
+        SecretId: existingArn,
+        SecretString: token
+      }));
+      return existingArn;
+    } catch (error) {
+      console.warn("Unable to update existing secret, creating new secret", error);
+    }
+  }
+  return createEndpointSecret(agentId, token);
 }
 
 export async function getSecretString(secretArn: string) {

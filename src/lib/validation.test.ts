@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createAgentSchema, forgotPasswordSchema, googleAuthStartSchema, resetPasswordSchema, signUpSchema } from "@/lib/validation";
+import { createAgentSchema, forgotPasswordSchema, googleAuthStartSchema, resetPasswordSchema, signUpSchema, updateAgentSchema } from "@/lib/validation";
 
 const baseAgent = {
   name: "Support Agent",
@@ -55,6 +55,44 @@ describe("createAgentSchema", () => {
       endpointAuthType: "basic",
       endpointAuthUsername: "agentproof",
       endpointAuthToken: ""
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("updateAgentSchema", () => {
+  it("allows updating endpoint URL, name, and auth type", () => {
+    const result = updateAgentSchema.safeParse({
+      name: "Updated Agent Name",
+      endpointUrl: "https://screen-snapshot-magic-80.lovable.app/api/chat",
+      version: "1.1.0",
+      endpointAuthType: "bearer",
+      endpointAuthToken: "new-token-123"
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.endpointUrl).toBe("https://screen-snapshot-magic-80.lovable.app/api/chat");
+      expect(result.data.name).toBe("Updated Agent Name");
+    }
+  });
+
+  it("allows partial updates (only endpointUrl)", () => {
+    const result = updateAgentSchema.safeParse({
+      endpointUrl: "https://new-api.example.com/chat"
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.endpointUrl).toBe("https://new-api.example.com/chat");
+      expect(result.data.name).toBeUndefined();
+    }
+  });
+
+  it("rejects non-HTTPS endpoint URLs in updates", () => {
+    const result = updateAgentSchema.safeParse({
+      endpointUrl: "http://insecure-api.example.com/chat"
     });
 
     expect(result.success).toBe(false);

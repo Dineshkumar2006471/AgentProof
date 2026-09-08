@@ -22,7 +22,10 @@ export async function POST(request: Request, context: RunRouteContext) {
     if (!agent) return jsonOk({ error: "Agent not found." }, { status: 404 });
     const contract = input.contractId ? await getContractById(id, input.contractId) : await getLatestContract(id);
     if (!contract) throw new ApiError(422, "Create a contract before starting verification.");
-    const tests = await listTests(id, contract.id);
+    let tests = await listTests(id, contract.id);
+    if (!tests.length) {
+      tests = await listTests(id);
+    }
     if (!tests.length) throw new ApiError(422, "Generate a test matrix before starting verification.");
     const billingAccount = await getBillingAccount(user.sub);
     const planId = resolveEntitledPlan(billingAccount);
