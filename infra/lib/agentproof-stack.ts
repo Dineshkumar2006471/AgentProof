@@ -91,12 +91,12 @@ export class AgentProofStack extends Stack {
       description: "AgentProof OpenAI API key. Value is seeded outside CloudFormation."
     });
 
-    const userPool = new cognito.UserPool(this, "UserPool", {
+    const userPool = new cognito.UserPool(this, "UserPoolV2", {
       userPoolName: `agentproof-users-${suffix}`,
       signInAliases: { email: true },
       selfSignUpEnabled: true,
       autoVerify: { email: true },
-      standardAttributes: { email: { required: true, mutable: false } },
+      standardAttributes: { email: { required: true, mutable: true } },
       passwordPolicy: {
         minLength: 8,
         requireLowercase: false,
@@ -109,13 +109,23 @@ export class AgentProofStack extends Stack {
         emailSubject: "Confirm your AgentProof account",
         emailBody: "Your AgentProof verification code is {####}."
       },
-      removalPolicy: RemovalPolicy.RETAIN
+      removalPolicy: RemovalPolicy.DESTROY
     });
+
+    const cfnUserPool = userPool.node.defaultChild as cognito.CfnUserPool;
+    cfnUserPool.schema = [
+      {
+        name: "email",
+        attributeDataType: "String",
+        mutable: true,
+        required: true
+      }
+    ];
 
     const applicationUrl = this.node.tryGetContext("appUrl")
       ?? process.env.AGENTPROOF_APP_URL
       ?? (suffix === "production" ? "https://agent-proof.dev" : "http://localhost:3000");
-    const hostedUiDomain = userPool.addDomain("HostedUiDomain", {
+    const hostedUiDomain = userPool.addDomain("HostedUiDomainV2", {
       cognitoDomain: { domainPrefix: `agentproof-${suffix}-${this.account}` }
     });
 
@@ -124,7 +134,7 @@ export class AgentProofStack extends Stack {
       ? secretsmanager.Secret.fromSecretCompleteArn(this, "GoogleOauthSecret", googleOauthSecretArn)
       : undefined;
     const googleIdentityProvider = googleOauthSecret
-      ? new cognito.UserPoolIdentityProviderGoogle(this, "GoogleIdentityProvider", {
+      ? new cognito.UserPoolIdentityProviderGoogle(this, "GoogleIdentityProviderV2", {
         userPool,
         clientId: googleOauthSecret.secretValueFromJson("clientId").unsafeUnwrap(),
         clientSecretValue: googleOauthSecret.secretValueFromJson("clientSecret"),
@@ -137,7 +147,7 @@ export class AgentProofStack extends Stack {
       })
       : undefined;
 
-    const userPoolClient = userPool.addClient("WebClient", {
+    const userPoolClient = userPool.addClient("WebClientV2", {
       generateSecret: false,
       authFlows: {
         userPassword: true,

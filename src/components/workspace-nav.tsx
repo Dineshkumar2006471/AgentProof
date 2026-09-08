@@ -108,8 +108,8 @@ export function WorkspaceNav() {
           <ArrowLeft size={18} />
         </button>
         <Link
-          href="/"
-          aria-label="AgentProof home"
+          href="/dashboard"
+          aria-label="AgentProof dashboard"
           className="workspace-sidebar__brand"
           onClick={() => setOpen(false)}
         >
