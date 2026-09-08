@@ -97,4 +97,55 @@ describe("Google OAuth configuration", () => {
     expect(safeInternalPath("https://attacker.example")).toBe("/dashboard");
     expect(safeInternalPath("//attacker.example")).toBe("/dashboard");
   });
+
+  it("signs and verifies stateless OAuth state payloads", async () => {
+    process.env.COGNITO_CLIENT_ID = "test-client-id";
+    const { createGoogleOauthState, parseGoogleOauthState } = await import("@/lib/auth/google");
+
+    const state = createGoogleOauthState({
+      intent: "sign-up",
+      next: "/agents/new",
+      policyAccepted: true
+    });
+
+    const parsed = parseGoogleOauthState(state);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.intent).toBe("sign-up");
+    expect(parsed?.next).toBe("/agents/new");
+    expect(parsed?.policyAccepted).toBe(true);
+
+    // Tampered state fails
+    const [payload] = state.split(".");
+    expect(parseGoogleOauthState(`${payload}.invalidsig`)).toBeNull();
+    expect(parseGoogleOauthState("invalid-state")).toBeNull();
+  });
+
+  it("strictly rejects internal Lambda localhost host headers in production appUrl", async () => {
+    process.env.AGENTPROOF_ENVIRONMENT = "production";
+    const { appUrl } = await import("@/lib/auth/session");
+
+    // Internal Lambda proxy passing Host: localhost:3000 MUST NEVER produce http://localhost:3000 in production
+    const lambdaRequest = {
+      headers: new Headers({
+        host: "localhost:3000"
+      })
+    };
+    expect(appUrl(lambdaRequest)).toBe("https://agent-proof.dev");
+
+    const forwardedLocalhostRequest = {
+      headers: new Headers({
+        "x-forwarded-host": "127.0.0.1:3000"
+      })
+    };
+    expect(appUrl(forwardedLocalhostRequest)).toBe("https://agent-proof.dev");
+
+    // Valid external domain is respected
+    const validDomainRequest = {
+      headers: new Headers({
+        "x-forwarded-host": "agent-proof.dev",
+        "x-forwarded-proto": "https"
+      })
+    };
+    expect(appUrl(validDomainRequest)).toBe("https://agent-proof.dev");
+  });
 });

@@ -131,10 +131,24 @@ export async function userFromAuthenticationResult(result: AuthenticationResultT
 }
 
 export function appUrl(request?: Request | { headers: Headers; url?: string }) {
+  const isProduction = process.env.AGENTPROOF_ENVIRONMENT === "production" || process.env.NODE_ENV === "production";
+
+  if (isProduction) {
+    if (request) {
+      const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+      if (forwardedHost && !forwardedHost.includes("localhost") && !forwardedHost.includes("127.0.0.1")) {
+        const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ?? "https";
+        return `${proto}://${forwardedHost}`;
+      }
+    }
+    return "https://agent-proof.dev";
+  }
+
   if (request) {
-    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    const rawHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    const host = rawHost?.split(",")[0]?.trim();
     if (host) {
-      const proto = request.headers.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
+      const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ?? (host.includes("localhost") ? "http" : "https");
       return `${proto}://${host}`;
     }
     if (request.url) {
@@ -146,9 +160,5 @@ export function appUrl(request?: Request | { headers: Headers; url?: string }) {
     }
   }
 
-  if (process.env.AGENTPROOF_ENVIRONMENT === "production" || process.env.NODE_ENV === "production") {
-    return "https://agent-proof.dev";
-  }
-
-  return env.NEXT_PUBLIC_APP_URL;
+  return env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }

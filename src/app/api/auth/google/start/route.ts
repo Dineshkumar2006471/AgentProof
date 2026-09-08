@@ -25,7 +25,11 @@ export async function POST(request: Request) {
     await enforceRateLimit(request, input.intent === "sign-up" ? rateLimits.signUp : rateLimits.signIn, requestIp(request));
     if (input.intent === "sign-up") await verifyTurnstile(input.captchaToken, requestIp(request));
 
-    const state = createGoogleOauthState();
+    const state = createGoogleOauthState({
+      intent: input.intent,
+      next: input.next,
+      policyAccepted: input.intent === "sign-up" ? input.acceptedPolicies === true : false
+    });
     const response = jsonOk({ authorizeUrl: googleAuthorizationUrl(state, request) });
     const options = cookieOptions();
     response.cookies.set(googleOauthCookies.state, state, options);

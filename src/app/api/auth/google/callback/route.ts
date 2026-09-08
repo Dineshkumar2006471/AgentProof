@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exchangeGoogleAuthorizationCode, googleOauthCookies, safeInternalPath } from "@/lib/auth/google";
+import { exchangeGoogleAuthorizationCode, googleOauthCookies, parseGoogleOauthState, safeInternalPath, type GoogleAuthIntent } from "@/lib/auth/google";
 import { appUrl, setSessionOnResponse, userFromAuthenticationResult } from "@/lib/auth/session";
 import { policyVersion } from "@/lib/policies";
 import { recordPolicyAcceptance } from "@/lib/aws/dynamodb";
@@ -17,7 +17,7 @@ function clearGoogleOauthCookies(response: NextResponse) {
 }
 
 function failedGoogleSignIn(request: NextRequest, reason: "cancelled" | "invalid" | "failed") {
-  const url = new URL("/auth/sign-in", request.url);
+  const url = new URL("/auth/sign-in", appUrl(request));
   url.searchParams.set("oauth_error", reason);
   const response = NextResponse.redirect(url);
   clearGoogleOauthCookies(response);
@@ -28,13 +28,23 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const providerError = request.nextUrl.searchParams.get("error");
-  const expectedState = request.cookies.get(googleOauthCookies.state)?.value;
-  const intent = request.cookies.get(googleOauthCookies.intent)?.value;
-  const next = request.cookies.get(googleOauthCookies.next)?.value;
-  const policyAccepted = request.cookies.get(googleOauthCookies.policyAccepted)?.value === "true";
 
   if (providerError) return failedGoogleSignIn(request, "cancelled");
-  if (!code || !state || !expectedState || state !== expectedState || (intent !== "sign-in" && intent !== "sign-up")) {
+  if (!code || !state) return failedGoogleSignIn(request, "invalid");
+
+  const parsedState = parseGoogleOauthState(state);
+  const cookieState = request.cookies.get(googleOauthCookies.state)?.value;
+
+  const isStateValid = (cookieState && cookieState === state) || Boolean(parsedState);
+  if (!isStateValid) {
+    return failedGoogleSignIn(request, "invalid");
+  }
+
+  const intent = parsedState?.intent ?? (request.cookies.get(googleOauthCookies.intent)?.value as GoogleAuthIntent);
+  const next = parsedState?.next ?? request.cookies.get(googleOauthCookies.next)?.value;
+  const policyAccepted = parsedState?.policyAccepted ?? (request.cookies.get(googleOauthCookies.policyAccepted)?.value === "true");
+
+  if (intent !== "sign-in" && intent !== "sign-up") {
     return failedGoogleSignIn(request, "invalid");
   }
 
